@@ -3,7 +3,7 @@
     "targets": ["omnifocus"],
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.ai-task-clarifier",
-    "version": "1.1.0",
+    "version": "1.4.0",
     "description": "Analyzes tasks using OpenAI GPT-5 to identify vague, non-actionable, or problematic tasks and provides improvement suggestions",
     "label": "AI Task Clarifier",
     "shortLabel": "AI Clarifier",
@@ -148,12 +148,12 @@
 
             console.log("Total tasks to analyze:", tasksToAnalyze.length);
 
-            // Limit to 50 tasks to avoid token limits
-            if (tasksToAnalyze.length > 50) {
-                console.log("Too many tasks, limiting to 50");
+            // Limit to 20 tasks to avoid timeout issues
+            if (tasksToAnalyze.length > 20) {
+                console.log("Too many tasks, limiting to 20");
                 const alert = new Alert(
                     "Too Many Tasks",
-                    `Found ${tasksToAnalyze.length} tasks. Will analyze the first 50 tasks only.`
+                    `Found ${tasksToAnalyze.length} tasks. Will analyze the first 20 tasks only to avoid timeouts.`
                 );
                 alert.addOption("Continue");
                 alert.addOption("Cancel");
@@ -163,8 +163,8 @@
                     return;
                 }
 
-                tasksToAnalyze = tasksToAnalyze.slice(0, 50);
-                console.log("Limited to 50 tasks");
+                tasksToAnalyze = tasksToAnalyze.slice(0, 20);
+                console.log("Limited to 20 tasks");
             }
             
             // Prepare task data for AI analysis
@@ -190,7 +190,7 @@
             request.url = URL.fromString("https://api.openai.com/v1/chat/completions");
             request.method = "POST";
             request.headers = {
-                "Authorization": `Bearer ${apiKey.substring(0, 10)}...`, // Log partial key for debugging
+                "Authorization": `Bearer ${apiKey}`,
                 "Content-Type": "application/json"
             };
 
@@ -204,10 +204,11 @@
 For each problematic task, provide:
 - Issue type (vague/broad/stale/ambiguous/missing-context)
 - Severity (low/medium/high)
-- Specific suggestion for improvement
+- Specific, actionable suggestion for improvement
 - Recommended action (clarify/break-down/defer/delete/add-context)
 
-Return JSON array with format: [{"index": 0, "issue": "vague", "severity": "high", "suggestion": "...", "action": "clarify"}]`;
+IMPORTANT: Return a JSON object with an "analysis" array. Each item must have: index, issue, severity, suggestion, action.
+Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high", "suggestion": "...", "action": "clarify"}]}`;
 
             const requestBody = {
                 model: "gpt-5-2025-08-07",
@@ -223,6 +224,7 @@ Return JSON array with format: [{"index": 0, "issue": "vague", "severity": "high
             console.log("=== OpenAI API Request ===");
             console.log("URL:", request.url.string);
             console.log("Method:", request.method);
+            console.log("API Key (first 20 chars):", apiKey.substring(0, 20) + "...");
             console.log("Headers:", JSON.stringify({
                 "Authorization": "Bearer [REDACTED]",
                 "Content-Type": "application/json"
@@ -230,11 +232,19 @@ Return JSON array with format: [{"index": 0, "issue": "vague", "severity": "high
             console.log("Request Body:", JSON.stringify(requestBody, null, 2));
             
             // Show progress
-            const progress = new Alert("Analyzing Tasks", "Sending tasks to AI for analysis...");
+            const progress = new Alert("Analyzing Tasks", "Sending tasks to AI for analysis...\n\nThis may take 30-60 seconds for GPT-5.");
             progress.show(() => {});
 
             console.log("Sending request to OpenAI...");
-            const response = await request.fetch();
+            console.log("Note: GPT-5 can take 30-60 seconds to respond");
+
+            let response;
+            try {
+                response = await request.fetch();
+            } catch (fetchError) {
+                console.error("Fetch error:", fetchError);
+                throw new Error(`Network request failed: ${fetchError.message || 'Request timed out'}. Try analyzing fewer tasks (5-10) or check your internet connection.`);
+            }
 
             console.log("=== OpenAI API Response ===");
             console.log("Status Code:", response.statusCode);
@@ -252,8 +262,8 @@ Return JSON array with format: [{"index": 0, "issue": "vague", "severity": "high
             const aiResponse = JSON.parse(data.choices[0].message.content);
             console.log("Parsed AI response:", JSON.stringify(aiResponse, null, 2));
             
-            // Process results
-            const issues = aiResponse.results || aiResponse.issues || [];
+            // Process results - GPT-5 may return different field names
+            const issues = aiResponse.results || aiResponse.issues || aiResponse.analysis || [];
             console.log("Issues found:", issues.length);
 
             if (issues.length === 0) {
@@ -262,19 +272,21 @@ Return JSON array with format: [{"index": 0, "issue": "vague", "severity": "high
                 return;
             }
 
-            // Create or get "AI Review" tag
-            console.log("Creating/finding 'AI Review' tag...");
-            let reviewTag = tags.byName("AI Review");
-            if (!reviewTag) {
-                reviewTag = new Tag("AI Review", tags.ending);
-                console.log("Created new 'AI Review' tag");
+            // Create or get "AI: Needs Improvement" tag
+            console.log("Creating/finding 'AI: Needs Improvement' tag...");
+            let improvementTag = tags.byName("AI: Needs Improvement");
+            if (!improvementTag) {
+                improvementTag = new Tag("AI: Needs Improvement", tags.ending);
+                console.log("Created new 'AI: Needs Improvement' tag");
             } else {
-                console.log("Found existing 'AI Review' tag");
+                console.log("Found existing 'AI: Needs Improvement' tag");
             }
             
             // Apply findings to tasks
             console.log("Applying findings to tasks...");
             let updatedCount = 0;
+            let flaggedCount = 0;
+
             issues.forEach((issue, idx) => {
                 console.log(`Processing issue ${idx + 1}/${issues.length}:`, JSON.stringify(issue));
                 const task = tasksToAnalyze[issue.index];
@@ -285,35 +297,49 @@ Return JSON array with format: [{"index": 0, "issue": "vague", "severity": "high
 
                 console.log(`Updating task: "${task.name}"`);
 
-                // Add AI analysis to task note
-                const analysisNote = `\n\n--- AI Analysis (${new Date().toLocaleDateString()}) ---\n` +
-                    `Issue: ${issue.issue}\n` +
-                    `Severity: ${issue.severity}\n` +
-                    `Suggestion: ${issue.suggestion}\n` +
-                    `Recommended Action: ${issue.action}`;
+                // Build a nicely formatted analysis note
+                const analysisNote = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🤖 AI IMPROVEMENT SUGGESTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 Date: ${new Date().toLocaleDateString()}
+
+⚠️  Issue Type: ${issue.issue.toUpperCase()}
+📊 Severity: ${issue.severity.toUpperCase()}
+
+💡 SUGGESTION:
+${issue.suggestion}
+
+🎯 Recommended Action: ${issue.action}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
                 task.note = (task.note || "") + analysisNote;
 
-                // Add review tag
-                task.addTag(reviewTag);
-                console.log(`Added 'AI Review' tag to task`);
+                // Add improvement tag
+                task.addTag(improvementTag);
+                console.log(`Added 'AI: Needs Improvement' tag to task`);
 
                 // Flag high severity issues
                 if (issue.severity === "high") {
                     task.flagged = true;
+                    flaggedCount++;
                     console.log(`Flagged task due to high severity`);
                 }
 
                 updatedCount++;
             });
-            console.log(`Updated ${updatedCount} tasks`);
+            console.log(`Updated ${updatedCount} tasks, flagged ${flaggedCount} high-severity tasks`);
             
             // Show summary
             const summary = `Analysis Complete!\n\n` +
                 `Tasks analyzed: ${tasksToAnalyze.length}\n` +
                 `Issues found: ${issues.length}\n` +
-                `Tasks updated: ${updatedCount}\n\n` +
-                `Tasks with issues have been tagged "AI Review" and notes added with suggestions.`;
+                `Tasks updated: ${updatedCount}\n` +
+                `High-severity flagged: ${flaggedCount}\n\n` +
+                `✅ Tagged with "AI: Needs Improvement"\n` +
+                `📝 Suggestions added to task notes\n` +
+                `🚩 High-severity tasks flagged\n\n` +
+                `Filter by tag to review improvements!`;
 
             console.log("=== Analysis Summary ===");
             console.log(summary);

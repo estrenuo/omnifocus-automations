@@ -13,6 +13,16 @@ Two powerful OmniFocus plugins that integrate AI and JIRA to supercharge your ta
 ### 1. AI Task Clarifier (`AI-Task-Clarifier.omnifocusjs`)
 Analyzes your tasks using OpenAI GPT-5 to identify and fix problems.
 
+### 2. AI Task Breakdown (`AI-Task-Breakdown.omnifocusjs`)
+Breaks down complex tasks into actionable subtasks using OpenAI GPT-5.
+
+### 3. JIRA Import (`JIRA-Import.omnifocusjs`)
+Imports all open JIRA issues as OmniFocus tasks with full field mapping.
+
+---
+
+### AI Task Clarifier
+
 **Features:**
 - ✅ Identifies vague or non-actionable tasks
 - ✅ Detects tasks that need breaking down

@@ -19,6 +19,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Plugin files
 PLUGINS=(
     "AI-Task-Clarifier.omnifocusjs"
+    "AI-Task-Breakdown.omnifocusjs"
     "JIRA-Import.omnifocusjs"
 )
 

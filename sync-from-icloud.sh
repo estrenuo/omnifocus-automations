@@ -22,6 +22,7 @@ ICLOUD_PLUGINS_DIR="/Users/$USER/Library/Mobile Documents/iCloud~com~omnigroup~O
 # Plugin files to sync
 PLUGINS=(
     "AI-Task-Clarifier.omnifocusjs"
+    "AI-Task-Breakdown.omnifocusjs"
     "JIRA-Import.omnifocusjs"
 )
 
