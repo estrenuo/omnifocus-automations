@@ -1,0 +1,3 @@
+# Treat .omnifocusjs files as JavaScript for GitHub/GitLab syntax highlighting
+*.omnifocusjs linguist-language=JavaScript
+

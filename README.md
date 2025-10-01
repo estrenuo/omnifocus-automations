@@ -162,7 +162,9 @@ The plugins will automatically appear in OmniFocus!
 - **[PLUGIN_SETUP_GUIDE.md](PLUGIN_SETUP_GUIDE.md)** - Detailed setup instructions, troubleshooting, and advanced usage
 - **[TECHNICAL_REFERENCE.md](TECHNICAL_REFERENCE.md)** - API details, field mappings, customization guide
 - **[DEBUG_LOGGING_GUIDE.md](DEBUG_LOGGING_GUIDE.md)** - Complete guide to debug logging and troubleshooting
+- **[CREDENTIAL_MANAGEMENT.md](CREDENTIAL_MANAGEMENT.md)** - Guide to managing API keys and credentials
 - **[SYNC_SCRIPTS_GUIDE.md](SYNC_SCRIPTS_GUIDE.md)** - Guide to using the iCloud sync scripts
+- **[EDITOR_SETUP.md](EDITOR_SETUP.md)** - Configure your editor for `.omnifocusjs` syntax highlighting
 - **[OMNIFOCUS_API_PRIMER.md](OMNIFOCUS_API_PRIMER.md)** - Complete OmniFocus JavaScript API reference
 
 ## 🔒 Security
