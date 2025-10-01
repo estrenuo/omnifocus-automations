@@ -43,12 +43,12 @@ Note includes formatted suggestion with issue type, severity, and actionable adv
 ### AI Task Breakdown
 
 **Features:**
-- ✅ Breaks down complex tasks into 2-10 actionable subtasks
+- ✅ Creates MINIMUM necessary subtasks (typically 2-5)
+- ✅ Succinct bullet-point style (no full sentences)
 - ✅ AI determines optimal number of steps
-- ✅ Creates subtasks automatically
+- ✅ Up to 10 subtasks for very complex tasks
 - ✅ Tags subtasks with "AI: Suggested"
 - ✅ Adds breakdown note to parent task
-- ✅ Handles preparation, execution, and verification steps
 - ✅ Built-in credential management
 - ✅ Comprehensive debug logging
 
@@ -56,14 +56,20 @@ Note includes formatted suggestion with issue type, severity, and actionable adv
 ```
 Task: "Go get a haircut"
 
-AI creates subtasks:
-  ☐ Research and choose a barbershop/salon [AI: Suggested]
-  ☐ Check available appointment times online [AI: Suggested]
-  ☐ Schedule appointment for convenient time [AI: Suggested]
-  ☐ Add appointment to calendar with reminder [AI: Suggested]
-  ☐ Check bank account balance for payment [AI: Suggested]
-  ☐ Plan departure time from office [AI: Suggested]
-  ☐ Get haircut at scheduled time [AI: Suggested]
+AI creates 3 subtasks:
+  ☐ Find and book appointment at barbershop [AI: Suggested]
+  ☐ Add to calendar with travel time [AI: Suggested]
+  ☐ Get haircut [AI: Suggested]
+
+Task: "Launch new website"
+
+AI creates 6 subtasks:
+  ☐ Complete final QA testing on staging [AI: Suggested]
+  ☐ Get stakeholder approval for launch [AI: Suggested]
+  ☐ Prepare deployment and rollback plan [AI: Suggested]
+  ☐ Deploy to production and verify [AI: Suggested]
+  ☐ Update DNS and SSL certificates [AI: Suggested]
+  ☐ Monitor for 24hrs and send announcement [AI: Suggested]
 ```
 
 ### JIRA Import

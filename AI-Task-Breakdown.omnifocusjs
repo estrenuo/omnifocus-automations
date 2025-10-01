@@ -154,19 +154,25 @@
             
             const systemPrompt = `You are a productivity expert helping break down tasks into actionable subtasks.
 
-For each task, create 2-10 concrete, actionable subtasks that represent the logical steps needed to complete the main task.
+For each task, create the MINIMUM number of essential subtasks needed (typically 2-5, maximum 10 for very complex tasks).
 
 Guidelines:
-- Each subtask should be a clear, actionable step
-- Start with preparation/planning steps if needed
-- Include any prerequisite actions
-- End with completion/verification steps
-- Be specific and practical
-- Consider time, resources, and dependencies
-- Maximum 10 subtasks per task
+- Be SUCCINCT - only include truly necessary steps
+- Use brief, bullet-point style (not full sentences)
+- Skip obvious/trivial steps
+- Combine related steps when possible
+- No punctuation needed (these are todo items)
+- Only break down if task genuinely needs it
+- Simple tasks may only need 2-3 subtasks
+- Complex tasks can have up to 10 subtasks
+
+Format:
+- Brief action phrases (e.g., "Schedule appointment", "Check account balance")
+- No periods, no "I will", no "You should"
+- Start with verb when possible
 
 IMPORTANT: Return a JSON object with a "breakdowns" array. Each item must have: index, subtasks (array of strings).
-Example format: {"breakdowns": [{"index": 0, "subtasks": ["Step 1", "Step 2", "Step 3"]}]}`;
+Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "Book appointment", "Add to calendar"]}]}`;
             
             const requestBody = {
                 model: "gpt-5-2025-08-07",

@@ -16,10 +16,11 @@ The AI Task Breakdown plugin uses OpenAI GPT-5 to automatically break down compl
 ## Features
 
 ### Intelligent Breakdown
-- ✅ AI determines optimal number of steps (2-10)
-- ✅ Includes preparation, execution, and verification steps
-- ✅ Considers dependencies and prerequisites
-- ✅ Creates specific, actionable subtasks
+- ✅ AI creates MINIMUM necessary steps (typically 2-5)
+- ✅ Succinct, bullet-point style subtasks
+- ✅ No unnecessary steps or fluff
+- ✅ Up to 10 subtasks for very complex tasks only
+- ✅ Brief action phrases, no full sentences
 
 ### Seamless Integration
 - ✅ Subtasks created as children of parent task
@@ -76,62 +77,50 @@ Summary shows:
 ```
 Original: "Go get a haircut"
 
-AI creates:
-☐ Research and choose a barbershop/salon
-☐ Check available appointment times online
-☐ Schedule appointment for convenient time
-☐ Add appointment to calendar with reminder
-☐ Check bank account balance for payment
-☐ Plan departure time from office
-☐ Get haircut at scheduled time
+AI creates (3 subtasks):
+☐ Find and book appointment at barbershop
+☐ Add to calendar with travel time
+☐ Get haircut
 ```
 
 **Example 2: Work Task**
 ```
 Original: "Launch new website"
 
-AI creates:
-☐ Review final design mockups and get stakeholder approval
-☐ Complete final QA testing on staging environment
-☐ Prepare rollback plan and document deployment steps
-☐ Schedule deployment window and notify team
-☐ Deploy to production and verify all pages load
-☐ Update DNS records and SSL certificates
-☐ Monitor error logs and performance metrics for 24 hours
-☐ Send launch announcement to stakeholders
-☐ Create post-launch retrospective document
+AI creates (6 subtasks):
+☐ Complete final QA testing on staging
+☐ Get stakeholder approval for launch
+☐ Prepare deployment and rollback plan
+☐ Deploy to production and verify
+☐ Update DNS and SSL certificates
+☐ Monitor for 24hrs and send announcement
 ```
 
 **Example 3: Personal Task**
 ```
 Original: "Plan vacation"
 
-AI creates:
-☐ Decide on destination and travel dates
-☐ Research and book flights
-☐ Research and book accommodation
-☐ Create itinerary with activities and restaurants
-☐ Check passport expiration and visa requirements
-☐ Purchase travel insurance
-☐ Arrange pet care or house sitting
-☐ Pack bags and prepare travel documents
+AI creates (5 subtasks):
+☐ Choose destination and dates
+☐ Book flights and accommodation
+☐ Check passport/visa requirements
+☐ Create itinerary and book activities
+☐ Arrange pet care and pack
 ```
 
 **Example 4: Complex Work Task**
 ```
 Original: "Implement new authentication system"
 
-AI creates:
-☐ Research authentication libraries and best practices
-☐ Design database schema for user accounts and sessions
-☐ Implement user registration endpoint with validation
-☐ Implement login endpoint with JWT token generation
-☐ Add password hashing and security measures
+AI creates (8 subtasks - complex task):
+☐ Research auth libraries and design schema
+☐ Implement registration endpoint with validation
+☐ Implement login with JWT tokens
+☐ Add password hashing and security
 ☐ Create middleware for protected routes
-☐ Write unit tests for authentication logic
-☐ Update API documentation with auth endpoints
-☐ Test authentication flow end-to-end
-☐ Deploy to staging and conduct security audit
+☐ Write unit tests for auth logic
+☐ Update API documentation
+☐ Deploy to staging and run security audit
 ```
 
 ## Best Practices
