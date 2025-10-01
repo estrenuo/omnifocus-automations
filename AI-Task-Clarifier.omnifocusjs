@@ -33,12 +33,12 @@
                     null
                 );
                 form.addField(apiKeyField);
-                
+
                 const formPrompt = await form.show(
                     "Enter your OpenAI API key (will be stored securely in Keychain)",
                     "Continue"
                 );
-                
+
                 apiKey = formPrompt.values.apiKey;
 
                 if (!apiKey) {
@@ -50,7 +50,55 @@
                 credentials.write("openai", "api-key", apiKey);
                 console.log("API key stored successfully");
             } else {
-                apiKey = storedCreds.password;
+                // Credentials exist - offer to use or clear them
+                const alert = new Alert(
+                    "OpenAI Credentials Found",
+                    "Stored API key found. What would you like to do?"
+                );
+                alert.addOption("Use Stored Key");
+                alert.addOption("Clear & Re-enter Key");
+                alert.addOption("Cancel");
+
+                const choice = await alert.show();
+
+                if (choice === 0) {
+                    // Use stored key
+                    apiKey = storedCreds.password;
+                    console.log("Using stored API key");
+                } else if (choice === 1) {
+                    // Clear and re-enter
+                    console.log("Clearing stored credentials...");
+                    credentials.remove("openai");
+                    console.log("Credentials cleared");
+
+                    // Prompt for new key
+                    const form = new Form();
+                    const apiKeyField = new Form.Field.Password(
+                        "apiKey",
+                        "OpenAI API Key",
+                        null
+                    );
+                    form.addField(apiKeyField);
+
+                    const formPrompt = await form.show(
+                        "Enter your OpenAI API key (will be stored securely in Keychain)",
+                        "Continue"
+                    );
+
+                    apiKey = formPrompt.values.apiKey;
+
+                    if (!apiKey) {
+                        throw new Error("API key is required");
+                    }
+
+                    console.log("Storing new API key in Keychain...");
+                    credentials.write("openai", "api-key", apiKey);
+                    console.log("API key stored successfully");
+                } else {
+                    // Cancel
+                    console.log("User cancelled");
+                    return;
+                }
             }
             
             // Get tasks to analyze

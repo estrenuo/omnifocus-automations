@@ -27,41 +27,41 @@
             if (!storedCreds) {
                 // Prompt for JIRA configuration
                 const form = new Form();
-                
+
                 const domainField = new Form.Field.String(
                     "domain",
                     "JIRA Domain",
                     "your-company.atlassian.net"
                 );
-                
+
                 const emailField = new Form.Field.String(
                     "email",
                     "JIRA Email",
                     null
                 );
-                
+
                 const apiTokenField = new Form.Field.Password(
                     "apiToken",
                     "JIRA API Token",
                     null
                 );
-                
+
                 const projectKeyField = new Form.Field.String(
                     "projectKey",
                     "Project Key (optional)",
                     "Leave empty to import from all projects"
                 );
-                
+
                 form.addField(domainField);
                 form.addField(emailField);
                 form.addField(apiTokenField);
                 form.addField(projectKeyField);
-                
+
                 const formPrompt = await form.show(
                     "Enter your JIRA credentials (will be stored securely)",
                     "Continue"
                 );
-                
+
                 jiraConfig = {
                     domain: formPrompt.values.domain,
                     email: formPrompt.values.email,
@@ -91,26 +91,115 @@
                 };
                 credentials.write("jira-settings", "config", JSON.stringify(settings));
                 console.log("Credentials stored successfully");
-                
+
             } else {
-                // Load stored credentials
-                console.log("Loading stored credentials...");
+                // Credentials exist - offer to use or clear them
                 const settingsData = credentials.read("jira-settings");
                 const settings = settingsData ? JSON.parse(settingsData.password) : {};
 
-                jiraConfig = {
-                    domain: settings.domain,
-                    email: storedCreds.user,
-                    apiToken: storedCreds.password,
-                    projectKey: settings.projectKey || ""
-                };
+                const alert = new Alert(
+                    "JIRA Credentials Found",
+                    `Stored credentials found for:\nDomain: ${settings.domain || 'Unknown'}\nEmail: ${storedCreds.user}\n\nWhat would you like to do?`
+                );
+                alert.addOption("Use Stored Credentials");
+                alert.addOption("Clear & Re-enter Credentials");
+                alert.addOption("Cancel");
 
-                console.log("Loaded config:", {
-                    domain: jiraConfig.domain,
-                    email: jiraConfig.email,
-                    apiToken: "[REDACTED]",
-                    projectKey: jiraConfig.projectKey || "(none)"
-                });
+                const choice = await alert.show();
+
+                if (choice === 0) {
+                    // Use stored credentials
+                    console.log("Loading stored credentials...");
+
+                    jiraConfig = {
+                        domain: settings.domain,
+                        email: storedCreds.user,
+                        apiToken: storedCreds.password,
+                        projectKey: settings.projectKey || ""
+                    };
+
+                    console.log("Loaded config:", {
+                        domain: jiraConfig.domain,
+                        email: jiraConfig.email,
+                        apiToken: "[REDACTED]",
+                        projectKey: jiraConfig.projectKey || "(none)"
+                    });
+                } else if (choice === 1) {
+                    // Clear and re-enter
+                    console.log("Clearing stored credentials...");
+                    credentials.remove("jira");
+                    credentials.remove("jira-settings");
+                    console.log("Credentials cleared");
+
+                    // Prompt for new credentials
+                    const form = new Form();
+
+                    const domainField = new Form.Field.String(
+                        "domain",
+                        "JIRA Domain",
+                        settings.domain || "your-company.atlassian.net"
+                    );
+
+                    const emailField = new Form.Field.String(
+                        "email",
+                        "JIRA Email",
+                        storedCreds.user || null
+                    );
+
+                    const apiTokenField = new Form.Field.Password(
+                        "apiToken",
+                        "JIRA API Token",
+                        null
+                    );
+
+                    const projectKeyField = new Form.Field.String(
+                        "projectKey",
+                        "Project Key (optional)",
+                        settings.projectKey || "Leave empty to import from all projects"
+                    );
+
+                    form.addField(domainField);
+                    form.addField(emailField);
+                    form.addField(apiTokenField);
+                    form.addField(projectKeyField);
+
+                    const formPrompt = await form.show(
+                        "Enter your JIRA credentials (will be stored securely)",
+                        "Continue"
+                    );
+
+                    jiraConfig = {
+                        domain: formPrompt.values.domain,
+                        email: formPrompt.values.email,
+                        apiToken: formPrompt.values.apiToken,
+                        projectKey: formPrompt.values.projectKey || ""
+                    };
+
+                    console.log("User entered config:", {
+                        domain: jiraConfig.domain,
+                        email: jiraConfig.email,
+                        apiToken: "[REDACTED]",
+                        projectKey: jiraConfig.projectKey || "(none)"
+                    });
+
+                    if (!jiraConfig.domain || !jiraConfig.email || !jiraConfig.apiToken) {
+                        throw new Error("Domain, email, and API token are required");
+                    }
+
+                    console.log("Storing new credentials in Keychain...");
+                    credentials.write("jira", jiraConfig.email, jiraConfig.apiToken);
+
+                    const newSettings = {
+                        domain: jiraConfig.domain,
+                        projectKey: jiraConfig.projectKey
+                    };
+                    credentials.write("jira-settings", "config", JSON.stringify(newSettings));
+                    console.log("Credentials stored successfully");
+                } else {
+                    // Cancel
+                    console.log("User cancelled");
+                    return;
+                }
             }
             
             // Build JQL query for open issues

@@ -94,6 +94,14 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 3. Enter your key and click "Continue"
 4. The key will be securely stored in your macOS Keychain
 
+**Subsequent Runs:**
+1. Click Automation menu → "AI Task Clarifier"
+2. You'll see a prompt: "OpenAI Credentials Found"
+3. Choose:
+   - "Use Stored Key" - Continue with saved credentials
+   - "Clear & Re-enter Key" - Update your API key
+   - "Cancel" - Exit without running
+
 **Analyzing Tasks:**
 
 **Option A: Analyze Selected Tasks**
@@ -138,6 +146,14 @@ Recommended Action: clarify
    - **Project Key** (optional): Leave empty to import from all projects, or enter a specific project key (e.g., "PROJ")
 3. Click "Continue"
 4. Credentials will be securely stored in your macOS Keychain
+
+**Subsequent Runs:**
+1. Click Automation menu → "Import JIRA Issues"
+2. You'll see a prompt showing your stored domain and email
+3. Choose:
+   - "Use Stored Credentials" - Continue with saved credentials
+   - "Clear & Re-enter Credentials" - Update your credentials
+   - "Cancel" - Exit without running
 
 **Importing Issues:**
 1. Click Automation menu → "Import JIRA Issues"
@@ -189,8 +205,17 @@ Folder: JIRA
 
 ### Updating Credentials
 
+Both plugins now include a built-in credential management feature!
+
+**Easy Method (Recommended):**
+1. Run the plugin (AI Task Clarifier or JIRA Import)
+2. When prompted, choose "Clear & Re-enter Key/Credentials"
+3. Enter your new credentials
+4. Done!
+
+**Manual Method (Alternative):**
+
 **OpenAI API Key:**
-To change your OpenAI API key:
 1. Open macOS Keychain Access
 2. Search for "openai"
 3. Delete the entry
@@ -198,7 +223,6 @@ To change your OpenAI API key:
 5. Enter your new API key
 
 **JIRA Credentials:**
-To change your JIRA credentials:
 1. Open macOS Keychain Access
 2. Search for "jira"
 3. Delete both "jira" and "jira-settings" entries

@@ -21,6 +21,7 @@ Analyzes your tasks using OpenAI GPT-5 to identify and fix problems.
 - ✅ Provides specific improvement suggestions
 - ✅ Auto-tags problematic tasks for review
 - ✅ Flags high-severity issues
+- ✅ Built-in credential management (easy to update API key)
 - ✅ Comprehensive debug logging for troubleshooting
 
 **Example Output:**
@@ -44,6 +45,7 @@ Imports all open JIRA issues as OmniFocus tasks with full field mapping.
 - ✅ Prevents duplicate imports
 - ✅ Organizes in dedicated JIRA folder/project
 - ✅ Includes clickable JIRA URLs
+- ✅ Built-in credential management (easy to update credentials)
 - ✅ Comprehensive debug logging for troubleshooting
 
 **Example Task:**
@@ -159,6 +161,8 @@ The plugins will automatically appear in OmniFocus!
 
 - **[PLUGIN_SETUP_GUIDE.md](PLUGIN_SETUP_GUIDE.md)** - Detailed setup instructions, troubleshooting, and advanced usage
 - **[TECHNICAL_REFERENCE.md](TECHNICAL_REFERENCE.md)** - API details, field mappings, customization guide
+- **[DEBUG_LOGGING_GUIDE.md](DEBUG_LOGGING_GUIDE.md)** - Complete guide to debug logging and troubleshooting
+- **[SYNC_SCRIPTS_GUIDE.md](SYNC_SCRIPTS_GUIDE.md)** - Guide to using the iCloud sync scripts
 - **[OMNIFOCUS_API_PRIMER.md](OMNIFOCUS_API_PRIMER.md)** - Complete OmniFocus JavaScript API reference
 
 ## 🔒 Security
