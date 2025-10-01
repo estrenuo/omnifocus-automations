@@ -36,16 +36,37 @@ Imports all open JIRA issues as OmniFocus tasks with full field mapping.
 
 **Example Output:**
 ```
-Task: "Think about website"
-AI Analysis:
-  Issue: vague
-  Severity: high
-  Suggestion: Change to "Draft 3 key features for website redesign"
-  Action: clarify
+Task: "Review PR" [Tagged: AI: Needs Improvement]
+Note includes formatted suggestion with issue type, severity, and actionable advice
 ```
 
-### 2. JIRA Import (`JIRA-Import.omnifocusjs`)
-Imports all open JIRA issues as OmniFocus tasks with full field mapping.
+### AI Task Breakdown
+
+**Features:**
+- ✅ Breaks down complex tasks into 2-10 actionable subtasks
+- ✅ AI determines optimal number of steps
+- ✅ Creates subtasks automatically
+- ✅ Tags subtasks with "AI: Suggested"
+- ✅ Adds breakdown note to parent task
+- ✅ Handles preparation, execution, and verification steps
+- ✅ Built-in credential management
+- ✅ Comprehensive debug logging
+
+**Example:**
+```
+Task: "Go get a haircut"
+
+AI creates subtasks:
+  ☐ Research and choose a barbershop/salon [AI: Suggested]
+  ☐ Check available appointment times online [AI: Suggested]
+  ☐ Schedule appointment for convenient time [AI: Suggested]
+  ☐ Add appointment to calendar with reminder [AI: Suggested]
+  ☐ Check bank account balance for payment [AI: Suggested]
+  ☐ Plan departure time from office [AI: Suggested]
+  ☐ Get haircut at scheduled time [AI: Suggested]
+```
+
+### JIRA Import
 
 **Features:**
 - ✅ Imports all unresolved JIRA issues
