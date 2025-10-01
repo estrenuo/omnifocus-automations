@@ -164,8 +164,10 @@ The plugins will automatically appear in OmniFocus!
 - **[DEBUG_LOGGING_GUIDE.md](DEBUG_LOGGING_GUIDE.md)** - Complete guide to debug logging and troubleshooting
 - **[CREDENTIAL_MANAGEMENT.md](CREDENTIAL_MANAGEMENT.md)** - Guide to managing API keys and credentials
 - **[SYNC_SCRIPTS_GUIDE.md](SYNC_SCRIPTS_GUIDE.md)** - Guide to using the iCloud sync scripts
+- **[VERSION_MANAGEMENT.md](VERSION_MANAGEMENT.md)** - Guide to version bumping and releases
 - **[EDITOR_SETUP.md](EDITOR_SETUP.md)** - Configure your editor for `.omnifocusjs` syntax highlighting
 - **[OMNIFOCUS_API_PRIMER.md](OMNIFOCUS_API_PRIMER.md)** - Complete OmniFocus JavaScript API reference
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
 
 ## 🔒 Security
 
@@ -217,6 +219,40 @@ Copies plugins from iCloud back to this repository:
 - ✅ Color-coded output
 - ✅ Safe (compares files before copying)
 - ✅ Automatic detection of iCloud folder
+
+## 🏷️ Version Management
+
+Scripts for managing plugin versions and releases:
+
+### bump-version.sh
+Quick version bumping:
+```bash
+# Bump patch version (1.0.0 → 1.0.1)
+./bump-version.sh patch
+
+# Bump minor version (1.0.0 → 1.1.0)
+./bump-version.sh minor
+
+# Bump major version (1.0.0 → 2.0.0)
+./bump-version.sh major
+```
+
+### release.sh
+Complete release workflow (recommended):
+```bash
+# Full release: version bump, changelog, sync, git tag
+./release.sh patch
+```
+
+**Features:**
+- ✅ Automatic version bumping (major/minor/patch)
+- ✅ Changelog generation
+- ✅ Git commit and tag creation
+- ✅ iCloud sync integration
+- ✅ Interactive prompts
+- ✅ Follows semantic versioning
+
+See [VERSION_MANAGEMENT.md](VERSION_MANAGEMENT.md) for details.
 
 ## 🛠️ Customization
 
