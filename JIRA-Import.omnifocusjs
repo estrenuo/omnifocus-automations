@@ -3,7 +3,7 @@
     "targets": ["omnifocus"],
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.jira-import",
-    "version": "1.2.0",
+    "version": "1.4.0",
     "description": "Imports all open JIRA issues as OmniFocus tasks with proper field mapping",
     "label": "Import JIRA Issues",
     "shortLabel": "JIRA Import",
@@ -217,8 +217,8 @@
                 }
             }
             
-            // Build JQL query for open issues
-            let jql = 'resolution = Unresolved ORDER BY created DESC';
+            // Build JQL query for open issues assigned to current user
+            let jql = 'assignee = currentUser() AND resolution = Unresolved ORDER BY created DESC';
             if (jiraConfig.projectKey) {
                 jql = `project = ${jiraConfig.projectKey} AND ${jql}`;
             }
@@ -227,7 +227,8 @@
             // Fetch issues from JIRA
             console.log("Preparing JIRA API request...");
             const request = new URL.FetchRequest();
-            const searchUrl = `https://${jiraConfig.domain}/rest/api/3/search`;
+            // Use API v2 for Server/DC compatibility (v3 is Cloud-only)
+            const searchUrl = `https://${jiraConfig.domain}/rest/api/2/search`;
             request.url = URL.fromString(searchUrl);
             request.method = "POST";
 
@@ -378,28 +379,42 @@
                 const taskName = `[${issueKey}] ${fields.summary}`;
                 const task = new Task(taskName, jiraProject.task.ending);
                 
-                // Build task note with JIRA details
-                let noteContent = `JIRA: ${issueKey}\n`;
-                noteContent += `URL: https://${jiraConfig.domain}/browse/${issueKey}\n`;
-                noteContent += `Status: ${fields.status.name}\n`;
-                noteContent += `Type: ${fields.issuetype.name}\n`;
-                noteContent += `Priority: ${fields.priority ? fields.priority.name : 'None'}\n`;
-                
+                // Build task note with JIRA details and clickable link
+                let noteContent = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                noteContent += `🔗 JIRA ISSUE: ${issueKey}\n`;
+                noteContent += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+                noteContent += `🌐 Link: https://${jiraConfig.domain}/browse/${issueKey}\n\n`;
+                noteContent += `📊 Status: ${fields.status.name}\n`;
+                noteContent += `📝 Type: ${fields.issuetype.name}\n`;
+                noteContent += `⚡ Priority: ${fields.priority ? fields.priority.name : 'None'}\n`;
+
                 if (fields.assignee) {
-                    noteContent += `Assignee: ${fields.assignee.displayName}\n`;
+                    noteContent += `👤 Assignee: ${fields.assignee.displayName}\n`;
                 }
-                
+
                 if (fields.reporter) {
-                    noteContent += `Reporter: ${fields.reporter.displayName}\n`;
+                    noteContent += `📢 Reporter: ${fields.reporter.displayName}\n`;
                 }
-                
-                noteContent += `Created: ${new Date(fields.created).toLocaleDateString()}\n`;
-                noteContent += `Updated: ${new Date(fields.updated).toLocaleDateString()}\n`;
-                
+
+                if (fields.labels && fields.labels.length > 0) {
+                    noteContent += `🏷️  Labels: ${fields.labels.join(', ')}\n`;
+                }
+
+                if (fields.components && fields.components.length > 0) {
+                    const componentNames = fields.components.map(c => c.name).join(', ');
+                    noteContent += `🔧 Components: ${componentNames}\n`;
+                }
+
+                noteContent += `📅 Created: ${new Date(fields.created).toLocaleDateString()}\n`;
+                noteContent += `🔄 Updated: ${new Date(fields.updated).toLocaleDateString()}\n`;
+
                 if (fields.description) {
-                    noteContent += `\n--- Description ---\n${fields.description}`;
+                    noteContent += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                    noteContent += `📄 DESCRIPTION\n`;
+                    noteContent += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+                    noteContent += fields.description;
                 }
-                
+
                 task.note = noteContent;
                 
                 // Set due date if available
@@ -408,50 +423,9 @@
                     console.log(`Set due date: ${fields.duedate}`);
                 }
 
-                // Add JIRA tag
+                // Add only the JIRA tag (all other info is in notes)
                 task.addTag(jiraTag);
                 console.log("Added JIRA tag");
-                
-                // Create and add priority tag
-                if (fields.priority) {
-                    const priorityName = `Priority: ${fields.priority.name}`;
-                    let priorityTag = tags.byName(priorityName);
-                    if (!priorityTag) {
-                        priorityTag = new Tag(priorityName, jiraTag.ending);
-                    }
-                    task.addTag(priorityTag);
-                }
-                
-                // Create and add issue type tag
-                const issueTypeName = `Type: ${fields.issuetype.name}`;
-                let issueTypeTag = tags.byName(issueTypeName);
-                if (!issueTypeTag) {
-                    issueTypeTag = new Tag(issueTypeName, jiraTag.ending);
-                }
-                task.addTag(issueTypeTag);
-                
-                // Add labels as tags
-                if (fields.labels && fields.labels.length > 0) {
-                    for (const label of fields.labels) {
-                        let labelTag = tags.byName(label);
-                        if (!labelTag) {
-                            labelTag = new Tag(label, tags.ending);
-                        }
-                        task.addTag(labelTag);
-                    }
-                }
-                
-                // Add components as tags
-                if (fields.components && fields.components.length > 0) {
-                    for (const component of fields.components) {
-                        const componentName = `Component: ${component.name}`;
-                        let componentTag = tags.byName(componentName);
-                        if (!componentTag) {
-                            componentTag = new Tag(componentName, jiraTag.ending);
-                        }
-                        task.addTag(componentTag);
-                    }
-                }
                 
                 importedCount++;
                 console.log(`Successfully created task for ${issueKey}`);
