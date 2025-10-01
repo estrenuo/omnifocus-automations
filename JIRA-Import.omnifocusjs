@@ -1,0 +1,373 @@
+/*{
+    "type": "action",
+    "targets": ["omnifocus"],
+    "author": "OmniFocus Automation",
+    "identifier": "com.omnifocus.jira-import",
+    "version": "1.0",
+    "description": "Imports all open JIRA issues as OmniFocus tasks with proper field mapping",
+    "label": "Import JIRA Issues",
+    "shortLabel": "JIRA Import",
+    "paletteLabel": "Import Open JIRA Issues",
+    "image": "square.and.arrow.down"
+}*/
+(() => {
+    // Credentials for storing JIRA credentials
+    const credentials = new Credentials();
+    
+    const action = new PlugIn.Action(async function(selection, sender) {
+        try {
+            console.log("=== JIRA Import Debug Log ===");
+            console.log("Starting plugin execution...");
+
+            // Get JIRA credentials
+            let jiraConfig = null;
+            const storedCreds = credentials.read("jira");
+            console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
+            
+            if (!storedCreds) {
+                // Prompt for JIRA configuration
+                const form = new Form();
+                
+                const domainField = new Form.Field.String(
+                    "domain",
+                    "JIRA Domain",
+                    "your-company.atlassian.net"
+                );
+                
+                const emailField = new Form.Field.String(
+                    "email",
+                    "JIRA Email",
+                    null
+                );
+                
+                const apiTokenField = new Form.Field.Password(
+                    "apiToken",
+                    "JIRA API Token",
+                    null
+                );
+                
+                const projectKeyField = new Form.Field.String(
+                    "projectKey",
+                    "Project Key (optional)",
+                    "Leave empty to import from all projects"
+                );
+                
+                form.addField(domainField);
+                form.addField(emailField);
+                form.addField(apiTokenField);
+                form.addField(projectKeyField);
+                
+                const formPrompt = await form.show(
+                    "Enter your JIRA credentials (will be stored securely)",
+                    "Continue"
+                );
+                
+                jiraConfig = {
+                    domain: formPrompt.values.domain,
+                    email: formPrompt.values.email,
+                    apiToken: formPrompt.values.apiToken,
+                    projectKey: formPrompt.values.projectKey || ""
+                };
+
+                console.log("User entered config:", {
+                    domain: jiraConfig.domain,
+                    email: jiraConfig.email,
+                    apiToken: "[REDACTED]",
+                    projectKey: jiraConfig.projectKey || "(none)"
+                });
+
+                if (!jiraConfig.domain || !jiraConfig.email || !jiraConfig.apiToken) {
+                    throw new Error("Domain, email, and API token are required");
+                }
+
+                console.log("Storing credentials in Keychain...");
+                // Store credentials
+                credentials.write("jira", jiraConfig.email, jiraConfig.apiToken);
+
+                // Store domain and project key separately (not sensitive)
+                const settings = {
+                    domain: jiraConfig.domain,
+                    projectKey: jiraConfig.projectKey
+                };
+                credentials.write("jira-settings", "config", JSON.stringify(settings));
+                console.log("Credentials stored successfully");
+                
+            } else {
+                // Load stored credentials
+                console.log("Loading stored credentials...");
+                const settingsData = credentials.read("jira-settings");
+                const settings = settingsData ? JSON.parse(settingsData.password) : {};
+
+                jiraConfig = {
+                    domain: settings.domain,
+                    email: storedCreds.user,
+                    apiToken: storedCreds.password,
+                    projectKey: settings.projectKey || ""
+                };
+
+                console.log("Loaded config:", {
+                    domain: jiraConfig.domain,
+                    email: jiraConfig.email,
+                    apiToken: "[REDACTED]",
+                    projectKey: jiraConfig.projectKey || "(none)"
+                });
+            }
+            
+            // Build JQL query for open issues
+            let jql = 'resolution = Unresolved ORDER BY created DESC';
+            if (jiraConfig.projectKey) {
+                jql = `project = ${jiraConfig.projectKey} AND ${jql}`;
+            }
+            console.log("JQL Query:", jql);
+
+            // Fetch issues from JIRA
+            console.log("Preparing JIRA API request...");
+            const request = new URL.FetchRequest();
+            const searchUrl = `https://${jiraConfig.domain}/rest/api/3/search`;
+            request.url = URL.fromString(searchUrl);
+            request.method = "POST";
+
+            // Create Basic Auth header
+            const authString = `${jiraConfig.email}:${jiraConfig.apiToken}`;
+            const authBase64 = Data.fromString(authString, null).toBase64();
+
+            request.headers = {
+                "Authorization": `Basic ${authBase64}`,
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            };
+
+            const requestBody = {
+                jql: jql,
+                maxResults: 100,
+                fields: [
+                    "summary",
+                    "description",
+                    "status",
+                    "priority",
+                    "issuetype",
+                    "assignee",
+                    "reporter",
+                    "created",
+                    "updated",
+                    "duedate",
+                    "labels",
+                    "components"
+                ]
+            };
+
+            request.bodyString = JSON.stringify(requestBody);
+
+            console.log("=== JIRA API Request ===");
+            console.log("URL:", searchUrl);
+            console.log("Method:", request.method);
+            console.log("Headers:", JSON.stringify({
+                "Authorization": "Basic [REDACTED]",
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }, null, 2));
+            console.log("Request Body:", JSON.stringify(requestBody, null, 2));
+            
+            // Show progress
+            const progress = new Alert("Importing JIRA Issues", "Fetching issues from JIRA...");
+            progress.show(() => {});
+
+            console.log("Sending request to JIRA...");
+            const response = await request.fetch();
+
+            console.log("=== JIRA API Response ===");
+            console.log("Status Code:", response.statusCode);
+            console.log("Response Body:", response.bodyString);
+
+            if (response.statusCode !== 200) {
+                console.error("JIRA API Error - Status:", response.statusCode);
+                console.error("JIRA API Error - Body:", response.bodyString);
+                throw new Error(`JIRA API Error: ${response.statusCode} - ${response.bodyString}`);
+            }
+
+            const data = JSON.parse(response.bodyString);
+            console.log("Parsed response data - Total issues:", data.total);
+            console.log("Issues returned:", data.issues ? data.issues.length : 0);
+
+            const issues = data.issues || [];
+            
+            if (issues.length === 0) {
+                console.log("No issues found");
+                new Alert("No Issues Found", "No open JIRA issues found matching the criteria.").show();
+                return;
+            }
+
+            console.log(`Found ${issues.length} issues to import`);
+
+            // Create or get JIRA project/folder
+            console.log("Setting up JIRA folder and project...");
+            let jiraFolder = library.byName("JIRA");
+            if (!jiraFolder) {
+                jiraFolder = new Folder("JIRA", library.ending);
+                console.log("Created JIRA folder");
+            } else {
+                console.log("Found existing JIRA folder");
+            }
+
+            // Create or get JIRA project
+            let jiraProject = jiraFolder.projectNamed("JIRA Issues");
+            if (!jiraProject) {
+                jiraProject = new Project("JIRA Issues", jiraFolder.ending);
+                console.log("Created JIRA Issues project");
+            } else {
+                console.log("Found existing JIRA Issues project");
+            }
+
+            // Create base JIRA tag
+            console.log("Setting up JIRA tag...");
+            let jiraTag = tags.byName("JIRA");
+            if (!jiraTag) {
+                jiraTag = new Tag("JIRA", tags.ending);
+                console.log("Created JIRA tag");
+            } else {
+                console.log("Found existing JIRA tag");
+            }
+            
+            // Process each issue
+            console.log("Processing issues...");
+            let importedCount = 0;
+            let skippedCount = 0;
+
+            for (const issue of issues) {
+                const fields = issue.fields;
+                const issueKey = issue.key;
+
+                console.log(`\nProcessing issue: ${issueKey}`);
+                console.log("Issue data:", JSON.stringify({
+                    key: issueKey,
+                    summary: fields.summary,
+                    status: fields.status?.name,
+                    type: fields.issuetype?.name,
+                    priority: fields.priority?.name
+                }, null, 2));
+
+                // Check if task already exists (by searching for JIRA key in notes)
+                const existingTask = flattenedTasks.find(task =>
+                    task.note && task.note.includes(`JIRA: ${issueKey}`)
+                );
+
+                if (existingTask) {
+                    console.log(`Skipping ${issueKey} - already exists`);
+                    skippedCount++;
+                    continue;
+                }
+
+                console.log(`Creating new task for ${issueKey}`);
+                
+                // Create task
+                const taskName = `[${issueKey}] ${fields.summary}`;
+                const task = new Task(taskName, jiraProject.task.ending);
+                
+                // Build task note with JIRA details
+                let noteContent = `JIRA: ${issueKey}\n`;
+                noteContent += `URL: https://${jiraConfig.domain}/browse/${issueKey}\n`;
+                noteContent += `Status: ${fields.status.name}\n`;
+                noteContent += `Type: ${fields.issuetype.name}\n`;
+                noteContent += `Priority: ${fields.priority ? fields.priority.name : 'None'}\n`;
+                
+                if (fields.assignee) {
+                    noteContent += `Assignee: ${fields.assignee.displayName}\n`;
+                }
+                
+                if (fields.reporter) {
+                    noteContent += `Reporter: ${fields.reporter.displayName}\n`;
+                }
+                
+                noteContent += `Created: ${new Date(fields.created).toLocaleDateString()}\n`;
+                noteContent += `Updated: ${new Date(fields.updated).toLocaleDateString()}\n`;
+                
+                if (fields.description) {
+                    noteContent += `\n--- Description ---\n${fields.description}`;
+                }
+                
+                task.note = noteContent;
+                
+                // Set due date if available
+                if (fields.duedate) {
+                    task.dueDate = new Date(fields.duedate);
+                    console.log(`Set due date: ${fields.duedate}`);
+                }
+
+                // Add JIRA tag
+                task.addTag(jiraTag);
+                console.log("Added JIRA tag");
+                
+                // Create and add priority tag
+                if (fields.priority) {
+                    const priorityName = `Priority: ${fields.priority.name}`;
+                    let priorityTag = tags.byName(priorityName);
+                    if (!priorityTag) {
+                        priorityTag = new Tag(priorityName, jiraTag.ending);
+                    }
+                    task.addTag(priorityTag);
+                }
+                
+                // Create and add issue type tag
+                const issueTypeName = `Type: ${fields.issuetype.name}`;
+                let issueTypeTag = tags.byName(issueTypeName);
+                if (!issueTypeTag) {
+                    issueTypeTag = new Tag(issueTypeName, jiraTag.ending);
+                }
+                task.addTag(issueTypeTag);
+                
+                // Add labels as tags
+                if (fields.labels && fields.labels.length > 0) {
+                    for (const label of fields.labels) {
+                        let labelTag = tags.byName(label);
+                        if (!labelTag) {
+                            labelTag = new Tag(label, tags.ending);
+                        }
+                        task.addTag(labelTag);
+                    }
+                }
+                
+                // Add components as tags
+                if (fields.components && fields.components.length > 0) {
+                    for (const component of fields.components) {
+                        const componentName = `Component: ${component.name}`;
+                        let componentTag = tags.byName(componentName);
+                        if (!componentTag) {
+                            componentTag = new Tag(componentName, jiraTag.ending);
+                        }
+                        task.addTag(componentTag);
+                    }
+                }
+                
+                importedCount++;
+                console.log(`Successfully created task for ${issueKey}`);
+            }
+
+            // Show summary
+            const summary = `JIRA Import Complete!\n\n` +
+                `Total issues found: ${issues.length}\n` +
+                `New tasks created: ${importedCount}\n` +
+                `Skipped (already imported): ${skippedCount}\n\n` +
+                `Tasks have been added to the "JIRA Issues" project in the "JIRA" folder.`;
+
+            console.log("=== Import Summary ===");
+            console.log(summary);
+            console.log("=== End Debug Log ===");
+
+            new Alert("JIRA Import", summary).show();
+
+        } catch (error) {
+            console.error("=== ERROR ===");
+            console.error("Error message:", error.message);
+            console.error("Error stack:", error.stack);
+            console.error("=== End Debug Log ===");
+            new Alert("Error", error.message).show();
+        }
+    });
+    
+    action.validate = function(selection, sender) {
+        return true; // Always available
+    };
+    
+    return action;
+})();
+

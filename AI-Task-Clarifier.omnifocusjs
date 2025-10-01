@@ -1,0 +1,291 @@
+/*{
+    "type": "action",
+    "targets": ["omnifocus"],
+    "author": "OmniFocus Automation",
+    "identifier": "com.omnifocus.ai-task-clarifier",
+    "version": "1.0",
+    "description": "Analyzes tasks using OpenAI GPT-5 to identify vague, non-actionable, or problematic tasks and provides improvement suggestions",
+    "label": "AI Task Clarifier",
+    "shortLabel": "AI Clarifier",
+    "paletteLabel": "Analyze Tasks with AI",
+    "image": "wand.and.stars"
+}*/
+(() => {
+    // Credentials for storing OpenAI API key
+    const credentials = new Credentials();
+    
+    const action = new PlugIn.Action(async function(selection, sender) {
+        try {
+            console.log("=== AI Task Clarifier Debug Log ===");
+            console.log("Starting plugin execution...");
+
+            // Get OpenAI API key from credentials
+            let apiKey = null;
+            const storedCreds = credentials.read("openai");
+            console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
+            
+            if (!storedCreds || !storedCreds.password) {
+                // Prompt for API key if not stored
+                const form = new Form();
+                const apiKeyField = new Form.Field.Password(
+                    "apiKey",
+                    "OpenAI API Key",
+                    null
+                );
+                form.addField(apiKeyField);
+                
+                const formPrompt = await form.show(
+                    "Enter your OpenAI API key (will be stored securely in Keychain)",
+                    "Continue"
+                );
+                
+                apiKey = formPrompt.values.apiKey;
+
+                if (!apiKey) {
+                    throw new Error("API key is required");
+                }
+
+                console.log("Storing new API key in Keychain...");
+                // Store the API key
+                credentials.write("openai", "api-key", apiKey);
+                console.log("API key stored successfully");
+            } else {
+                apiKey = storedCreds.password;
+            }
+            
+            // Get tasks to analyze
+            let tasksToAnalyze = [];
+
+            console.log("Selection check - tasks selected:", selection.tasks.length);
+
+            if (selection.tasks.length > 0) {
+                tasksToAnalyze = selection.tasks.filter(task => !task.completed);
+                console.log("Using selected tasks, filtered to incomplete:", tasksToAnalyze.length);
+            } else {
+                // Analyze all incomplete tasks if none selected
+                const form = new Form();
+                const scopeField = new Form.Field.Option(
+                    "scope",
+                    "Analyze which tasks?",
+                    ["Selected tasks only", "All incomplete tasks", "Tasks older than 30 days"],
+                    null,
+                    "All incomplete tasks"
+                );
+                form.addField(scopeField);
+                
+                const formPrompt = await form.show("Task Analysis Scope", "Continue");
+                const scope = formPrompt.values.scope;
+                console.log("User selected scope:", scope);
+
+                if (scope === "Selected tasks only") {
+                    throw new Error("No tasks selected. Please select tasks or choose a different scope.");
+                } else if (scope === "All incomplete tasks") {
+                    tasksToAnalyze = flattenedTasks.filter(task => !task.completed && !task.dropped);
+                    console.log("Analyzing all incomplete tasks:", tasksToAnalyze.length);
+                } else {
+                    // Tasks older than 30 days
+                    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+                    tasksToAnalyze = flattenedTasks.filter(task => {
+                        return !task.completed && !task.dropped && task.added && task.added < thirtyDaysAgo;
+                    });
+                    console.log("Analyzing tasks older than 30 days:", tasksToAnalyze.length);
+                }
+            }
+            
+            if (tasksToAnalyze.length === 0) {
+                console.log("No tasks found matching criteria");
+                new Alert("No Tasks Found", "No tasks match the selected criteria.").show();
+                return;
+            }
+
+            console.log("Total tasks to analyze:", tasksToAnalyze.length);
+
+            // Limit to 50 tasks to avoid token limits
+            if (tasksToAnalyze.length > 50) {
+                console.log("Too many tasks, limiting to 50");
+                const alert = new Alert(
+                    "Too Many Tasks",
+                    `Found ${tasksToAnalyze.length} tasks. Will analyze the first 50 tasks only.`
+                );
+                alert.addOption("Continue");
+                alert.addOption("Cancel");
+                const choice = await alert.show();
+                if (choice === 1) {
+                    console.log("User cancelled due to task limit");
+                    return;
+                }
+
+                tasksToAnalyze = tasksToAnalyze.slice(0, 50);
+                console.log("Limited to 50 tasks");
+            }
+            
+            // Prepare task data for AI analysis
+            console.log("Preparing task data for AI analysis...");
+            const taskData = tasksToAnalyze.map((task, index) => {
+                const age = task.added ? Math.floor((Date.now() - task.added.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+                return {
+                    index: index,
+                    name: task.name,
+                    note: task.note ? task.note.substring(0, 200) : "",
+                    age_days: age,
+                    has_due_date: !!task.dueDate,
+                    has_defer_date: !!task.deferDate,
+                    flagged: task.flagged,
+                    tags: task.tags.map(t => t.name).join(", ")
+                };
+            });
+            console.log("Task data prepared, sample:", JSON.stringify(taskData[0], null, 2));
+            
+            // Call OpenAI API
+            console.log("Preparing OpenAI API request...");
+            const request = new URL.FetchRequest();
+            request.url = URL.fromString("https://api.openai.com/v1/chat/completions");
+            request.method = "POST";
+            request.headers = {
+                "Authorization": `Bearer ${apiKey.substring(0, 10)}...`, // Log partial key for debugging
+                "Content-Type": "application/json"
+            };
+
+            const systemPrompt = `You are a productivity expert analyzing OmniFocus tasks. Identify tasks that are:
+1. Vague or non-actionable (e.g., "Think about project" instead of "Draft project proposal outline")
+2. Too broad (should be broken into subtasks)
+3. Missing critical context
+4. Stale (old tasks with no progress)
+5. Ambiguous or unclear
+
+For each problematic task, provide:
+- Issue type (vague/broad/stale/ambiguous/missing-context)
+- Severity (low/medium/high)
+- Specific suggestion for improvement
+- Recommended action (clarify/break-down/defer/delete/add-context)
+
+Return JSON array with format: [{"index": 0, "issue": "vague", "severity": "high", "suggestion": "...", "action": "clarify"}]`;
+
+            const requestBody = {
+                model: "gpt-5-2025-08-07",
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: `Analyze these tasks:\n${JSON.stringify(taskData, null, 2)}` }
+                ],
+                response_format: { type: "json_object" }
+            };
+
+            request.bodyString = JSON.stringify(requestBody);
+
+            console.log("=== OpenAI API Request ===");
+            console.log("URL:", request.url.string);
+            console.log("Method:", request.method);
+            console.log("Headers:", JSON.stringify({
+                "Authorization": "Bearer [REDACTED]",
+                "Content-Type": "application/json"
+            }, null, 2));
+            console.log("Request Body:", JSON.stringify(requestBody, null, 2));
+            
+            // Show progress
+            const progress = new Alert("Analyzing Tasks", "Sending tasks to AI for analysis...");
+            progress.show(() => {});
+
+            console.log("Sending request to OpenAI...");
+            const response = await request.fetch();
+
+            console.log("=== OpenAI API Response ===");
+            console.log("Status Code:", response.statusCode);
+            console.log("Response Body:", response.bodyString);
+
+            if (response.statusCode !== 200) {
+                console.error("API Error - Status:", response.statusCode);
+                console.error("API Error - Body:", response.bodyString);
+                throw new Error(`API Error: ${response.statusCode} - ${response.bodyString}`);
+            }
+
+            const data = JSON.parse(response.bodyString);
+            console.log("Parsed response data:", JSON.stringify(data, null, 2));
+
+            const aiResponse = JSON.parse(data.choices[0].message.content);
+            console.log("Parsed AI response:", JSON.stringify(aiResponse, null, 2));
+            
+            // Process results
+            const issues = aiResponse.results || aiResponse.issues || [];
+            console.log("Issues found:", issues.length);
+
+            if (issues.length === 0) {
+                console.log("No issues found, analysis complete");
+                new Alert("Analysis Complete", "No significant issues found! Your tasks look good.").show();
+                return;
+            }
+
+            // Create or get "AI Review" tag
+            console.log("Creating/finding 'AI Review' tag...");
+            let reviewTag = tags.byName("AI Review");
+            if (!reviewTag) {
+                reviewTag = new Tag("AI Review", tags.ending);
+                console.log("Created new 'AI Review' tag");
+            } else {
+                console.log("Found existing 'AI Review' tag");
+            }
+            
+            // Apply findings to tasks
+            console.log("Applying findings to tasks...");
+            let updatedCount = 0;
+            issues.forEach((issue, idx) => {
+                console.log(`Processing issue ${idx + 1}/${issues.length}:`, JSON.stringify(issue));
+                const task = tasksToAnalyze[issue.index];
+                if (!task) {
+                    console.warn(`Task not found at index ${issue.index}`);
+                    return;
+                }
+
+                console.log(`Updating task: "${task.name}"`);
+
+                // Add AI analysis to task note
+                const analysisNote = `\n\n--- AI Analysis (${new Date().toLocaleDateString()}) ---\n` +
+                    `Issue: ${issue.issue}\n` +
+                    `Severity: ${issue.severity}\n` +
+                    `Suggestion: ${issue.suggestion}\n` +
+                    `Recommended Action: ${issue.action}`;
+
+                task.note = (task.note || "") + analysisNote;
+
+                // Add review tag
+                task.addTag(reviewTag);
+                console.log(`Added 'AI Review' tag to task`);
+
+                // Flag high severity issues
+                if (issue.severity === "high") {
+                    task.flagged = true;
+                    console.log(`Flagged task due to high severity`);
+                }
+
+                updatedCount++;
+            });
+            console.log(`Updated ${updatedCount} tasks`);
+            
+            // Show summary
+            const summary = `Analysis Complete!\n\n` +
+                `Tasks analyzed: ${tasksToAnalyze.length}\n` +
+                `Issues found: ${issues.length}\n` +
+                `Tasks updated: ${updatedCount}\n\n` +
+                `Tasks with issues have been tagged "AI Review" and notes added with suggestions.`;
+
+            console.log("=== Analysis Summary ===");
+            console.log(summary);
+            console.log("=== End Debug Log ===");
+
+            new Alert("AI Task Clarifier", summary).show();
+
+        } catch (error) {
+            console.error("=== ERROR ===");
+            console.error("Error message:", error.message);
+            console.error("Error stack:", error.stack);
+            console.error("=== End Debug Log ===");
+            new Alert("Error", error.message).show();
+        }
+    });
+    
+    action.validate = function(selection, sender) {
+        return true; // Always available
+    };
+    
+    return action;
+})();
+
