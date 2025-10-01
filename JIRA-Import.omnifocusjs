@@ -3,7 +3,7 @@
     "targets": ["omnifocus"],
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.jira-import",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Imports all open JIRA issues as OmniFocus tasks with proper field mapping",
     "label": "Import JIRA Issues",
     "shortLabel": "JIRA Import",
@@ -30,19 +30,27 @@
 
                 const domainField = new Form.Field.String(
                     "domain",
-                    "JIRA Domain",
-                    "your-company.atlassian.net"
+                    "JIRA Domain/URL",
+                    "your-company.atlassian.net or https://jira.yourcompany.com"
+                );
+
+                const authTypeField = new Form.Field.Option(
+                    "authType",
+                    "Authentication Type",
+                    ["cloud", "server"],
+                    ["Cloud (Email + API Token)", "Server/DC (Personal Access Token)"],
+                    0
                 );
 
                 const emailField = new Form.Field.String(
                     "email",
-                    "JIRA Email",
+                    "Email (Cloud only)",
                     null
                 );
 
                 const apiTokenField = new Form.Field.Password(
                     "apiToken",
-                    "JIRA API Token",
+                    "API Token / Personal Access Token",
                     null
                 );
 
@@ -53,6 +61,7 @@
                 );
 
                 form.addField(domainField);
+                form.addField(authTypeField);
                 form.addField(emailField);
                 form.addField(apiTokenField);
                 form.addField(projectKeyField);
@@ -64,6 +73,7 @@
 
                 jiraConfig = {
                     domain: formPrompt.values.domain,
+                    authType: formPrompt.values.authType,
                     email: formPrompt.values.email,
                     apiToken: formPrompt.values.apiToken,
                     projectKey: formPrompt.values.projectKey || ""
@@ -71,13 +81,18 @@
 
                 console.log("User entered config:", {
                     domain: jiraConfig.domain,
-                    email: jiraConfig.email,
+                    authType: jiraConfig.authType,
+                    email: jiraConfig.email || "(not used for server auth)",
                     apiToken: "[REDACTED]",
                     projectKey: jiraConfig.projectKey || "(none)"
                 });
 
-                if (!jiraConfig.domain || !jiraConfig.email || !jiraConfig.apiToken) {
-                    throw new Error("Domain, email, and API token are required");
+                // Validate based on auth type
+                if (!jiraConfig.domain || !jiraConfig.apiToken) {
+                    throw new Error("Domain and API token are required");
+                }
+                if (jiraConfig.authType === "cloud" && !jiraConfig.email) {
+                    throw new Error("Email is required for Cloud authentication");
                 }
 
                 console.log("Storing credentials in Keychain...");
@@ -216,12 +231,22 @@
             request.url = URL.fromString(searchUrl);
             request.method = "POST";
 
-            // Create Basic Auth header
-            const authString = `${jiraConfig.email}:${jiraConfig.apiToken}`;
-            const authBase64 = Data.fromString(authString, null).toBase64();
+            // Create authentication header based on type
+            let authHeader;
+            if (jiraConfig.authType === "cloud") {
+                // Cloud: Basic Auth with email:token
+                const authString = `${jiraConfig.email}:${jiraConfig.apiToken}`;
+                const authBase64 = Data.fromString(authString, null).toBase64();
+                authHeader = `Basic ${authBase64}`;
+                console.log("Using Cloud authentication (Basic Auth)");
+            } else {
+                // Server/DC: Bearer token with Personal Access Token
+                authHeader = `Bearer ${jiraConfig.apiToken}`;
+                console.log("Using Server/DC authentication (Bearer Token)");
+            }
 
             request.headers = {
-                "Authorization": `Basic ${authBase64}`,
+                "Authorization": authHeader,
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             };
@@ -250,8 +275,9 @@
             console.log("=== JIRA API Request ===");
             console.log("URL:", searchUrl);
             console.log("Method:", request.method);
+            console.log("Auth Type:", jiraConfig.authType);
             console.log("Headers:", JSON.stringify({
-                "Authorization": "Basic [REDACTED]",
+                "Authorization": jiraConfig.authType === "cloud" ? "Basic [REDACTED]" : "Bearer [REDACTED]",
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             }, null, 2));
