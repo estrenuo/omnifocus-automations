@@ -55,34 +55,36 @@ Task data prepared, sample: {
 
 **API Request:**
 ```
-=== OpenAI API Request ===
-URL: https://api.openai.com/v1/chat/completions
+=== Claude API Request ===
+URL: https://api.anthropic.com/v1/messages
 Method: POST
 Headers: {
-  "Authorization": "Bearer [REDACTED]",
+  "x-api-key": "[REDACTED]",
+  "anthropic-version": "2023-06-01",
   "Content-Type": "application/json"
 }
 Request Body: {
-  "model": "gpt-5-2025-08-07",
-  "messages": [...],
-  "response_format": { "type": "json_object" }
+  "model": "claude-sonnet-4-20250514",
+  "max_tokens": 4096,
+  "system": "...",
+  "messages": [...]
 }
 ```
 
 **API Response:**
 ```
-=== OpenAI API Response ===
+=== Claude API Response ===
 Status Code: 200
 Response Body: {
-  "id": "chatcmpl-...",
-  "object": "chat.completion",
-  "created": 1234567890,
-  "model": "gpt-5-2025-08-07",
-  "choices": [...]
+  "id": "msg_...",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-sonnet-4-20250514",
+  "content": [...]
 }
 Parsed response data: {...}
 Parsed AI response: {
-  "results": [
+  "analysis": [
     {
       "index": 0,
       "issue": "vague",
@@ -243,7 +245,7 @@ Status Code: 401
 ```
 
 This means:
-- OpenAI: Invalid API key
+- Claude: Invalid API key
 - JIRA: Invalid email or API token
 
 **2. API Rate Limiting**
@@ -333,9 +335,9 @@ This usually means the API returned an unexpected response format.
 ## Privacy & Security
 
 **What's Redacted:**
-- API keys show only first 10 characters: `sk-proj-ab...`
+- API keys show only first 20 characters: `sk-ant-api03-...`
 - JIRA API tokens: `[REDACTED]`
-- Authorization headers: `Bearer [REDACTED]` or `Basic [REDACTED]`
+- Authorization headers: `x-api-key: [REDACTED]` or `Basic [REDACTED]`
 
 **What's NOT Redacted:**
 - Task names and notes (your data)
@@ -439,7 +441,7 @@ Credentials check: Found stored credentials
 Status Code: 401
 Error: API Error: 401 - Unauthorized
 
-I've verified my API key is correct in the OpenAI dashboard.
+I've verified my API key is correct in the Anthropic console.
 Using OmniFocus 4.2 on macOS 14.2.
 ```
 

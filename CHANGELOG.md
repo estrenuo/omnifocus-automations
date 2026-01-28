@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **AI Task Clarifier Plugin**
-  - Analyzes tasks using OpenAI GPT-5 to identify vague, non-actionable, or problematic tasks
+  - Analyzes tasks using Claude AI to identify vague, non-actionable, or problematic tasks
   - Provides specific improvement suggestions with severity levels
   - Auto-tags problematic tasks with "AI Review"
   - Flags high-severity issues automatically
@@ -63,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No sensitive data in error messages
 
 ### Technical
-- Uses OpenAI GPT-5 API (model: `gpt-5-2025-08-07`)
+- Uses Claude AI API (model: `claude-sonnet-4-20250514`)
 - Uses JIRA REST API v3
 - Supports OmniFocus 4 on macOS and iOS/iPadOS
 - Cross-platform JavaScript (ES6+)

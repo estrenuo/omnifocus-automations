@@ -264,7 +264,7 @@ Use `release.sh` when:
 ### Breaking Changes
 - Changed plugin identifier format
 - Removed deprecated features
-- Updated to GPT-6 API (requires new API key)
+- Updated to new Claude API version (requires new API key)
 ```
 
 ### When to Bump Minor (0.X.0)
@@ -332,7 +332,7 @@ Use `release.sh` when:
 **Good:**
 ```markdown
 ### Fixed
-- Fixed "temperature not supported" error in AI Task Clarifier when using GPT-5
+- Fixed "temperature not supported" error in AI Task Clarifier when using Claude API
 - Improved JIRA API error messages to show specific authentication issues
 ```
 

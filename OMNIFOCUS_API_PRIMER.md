@@ -184,14 +184,16 @@ const oldTasks = flattenedTasks.filter(task => {
 
 // Send to AI API for analysis
 const request = new URL.FetchRequest();
-request.url = URL.fromString("https://api.openai.com/v1/chat/completions");
+request.url = URL.fromString("https://api.anthropic.com/v1/messages");
 request.method = "POST";
 request.headers = {
-    "Authorization": "Bearer YOUR_API_KEY",
+    "x-api-key": "YOUR_API_KEY",
+    "anthropic-version": "2023-06-01",
     "Content-Type": "application/json"
 };
 request.bodyString = JSON.stringify({
-    model: "gpt-4",
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 4096,
     messages: [{
         role: "user",
         content: `Analyze these tasks and identify which are vague or non-actionable: ${JSON.stringify(oldTasks.map(t => t.name))}`
@@ -200,7 +202,7 @@ request.bodyString = JSON.stringify({
 
 request.fetch().then(response => {
     const data = JSON.parse(response.bodyString);
-    // Process AI recommendations
+    // Process AI recommendations from data.content[0].text
     // Tag problematic tasks, add notes, etc.
 });
 ```
@@ -385,7 +387,7 @@ const createPR = (task) => {
 
 ### Integration Architecture
 ```
-OmniFocus Plugin → HTTP Request → External API (OpenAI/Gemini/JIRA/GitHub)
+OmniFocus Plugin → HTTP Request → External API (Claude/JIRA/GitHub)
                                          ↓
                                    Process Response
                                          ↓

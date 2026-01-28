@@ -5,7 +5,7 @@ This repository contains two powerful OmniFocus automation plugins that integrat
 ## Plugins Included
 
 ### 1. AI Task Clarifier (`AI-Task-Clarifier.omnifocusjs`)
-Uses OpenAI GPT-5 to analyze your tasks and identify issues like:
+Uses Claude AI to analyze your tasks and identify issues like:
 - Vague or non-actionable tasks
 - Tasks that are too broad (need breaking down)
 - Missing critical context
@@ -23,17 +23,16 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 ## Prerequisites
 
 ### For AI Task Clarifier
-1. **OpenAI API Key**
-   - Sign up at https://platform.openai.com/
+1. **Anthropic API Key**
+   - Sign up at https://console.anthropic.com/
    - Navigate to API Keys section
    - Create a new API key
-   - **Important**: You need access to GPT-5 (released August 2025)
    - Keep your API key secure - it will be stored in your macOS Keychain
 
 ### For JIRA Import
 1. **JIRA Cloud Account**
    - You need access to a JIRA Cloud instance (e.g., `your-company.atlassian.net`)
-   
+
 2. **JIRA API Token**
    - Log in to https://id.atlassian.com/manage-profile/security/api-tokens
    - Click "Create API token"
@@ -90,13 +89,13 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 
 **First Run:**
 1. Click Automation menu → "AI Task Clarifier"
-2. You'll be prompted to enter your OpenAI API key
+2. You'll be prompted to enter your Anthropic API key
 3. Enter your key and click "Continue"
 4. The key will be securely stored in your macOS Keychain
 
 **Subsequent Runs:**
 1. Click Automation menu → "AI Task Clarifier"
-2. You'll see a prompt: "OpenAI Credentials Found"
+2. You'll see a prompt: "Anthropic Credentials Found"
 3. Choose:
    - "Use Stored Key" - Continue with saved credentials
    - "Clear & Re-enter Key" - Update your API key
@@ -107,7 +106,7 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 **Option A: Analyze Selected Tasks**
 1. Select one or more tasks in OmniFocus
 2. Click Automation menu → "AI Task Clarifier"
-3. Wait for analysis (usually 10-30 seconds)
+3. Wait for analysis (usually 15-30 seconds)
 
 **Option B: Analyze All Tasks**
 1. Don't select any tasks
@@ -118,7 +117,7 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 4. Wait for analysis
 
 **Understanding Results:**
-- Tasks with issues are tagged "AI Review"
+- Tasks with issues are tagged "AI: Needs Improvement"
 - High-severity issues are automatically flagged
 - AI suggestions are added to task notes with:
   - Issue type (vague/broad/stale/ambiguous/missing-context)
@@ -128,11 +127,20 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 
 **Example AI Analysis in Task Note:**
 ```
---- AI Analysis (1/26/2025) ---
-Issue: vague
-Severity: high
-Suggestion: Change "Think about website" to "Draft 3 key features for website redesign"
-Recommended Action: clarify
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🤖 AI IMPROVEMENT SUGGESTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 Date: 1/26/2025
+
+⚠️  Issue Type: VAGUE
+📊 Severity: HIGH
+
+💡 SUGGESTION:
+Change "Think about website" to "Draft 3 key features for website redesign"
+
+🎯 Recommended Action: clarify
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 ### JIRA Import
@@ -191,7 +199,7 @@ Folder: JIRA
   └─ Project: JIRA Issues
       └─ Task: [PROJ-123] Fix login bug
           Tags: JIRA, Priority: High, Type: Bug, frontend
-          Note: 
+          Note:
             JIRA: PROJ-123
             URL: https://mycompany.atlassian.net/browse/PROJ-123
             Status: In Progress
@@ -215,9 +223,9 @@ Both plugins now include a built-in credential management feature!
 
 **Manual Method (Alternative):**
 
-**OpenAI API Key:**
+**Anthropic API Key:**
 1. Open macOS Keychain Access
-2. Search for "openai"
+2. Search for "anthropic"
 3. Delete the entry
 4. Run the AI Task Clarifier plugin again
 5. Enter your new API key
@@ -296,12 +304,12 @@ Task data prepared, sample: {
   "age_days": 5,
   ...
 }
-=== OpenAI API Request ===
-URL: https://api.openai.com/v1/chat/completions
+=== Claude API Request ===
+URL: https://api.anthropic.com/v1/messages
 Method: POST
 Request Body: {...}
-Sending request to OpenAI...
-=== OpenAI API Response ===
+Sending request to Claude...
+=== Claude API Response ===
 Status Code: 200
 Response Body: {...}
 Issues found: 2
@@ -318,14 +326,14 @@ Issues found: 2
 - Delete the stored key from Keychain and re-enter
 
 **"API Error: 429"**
-- You've exceeded your OpenAI rate limit
+- You've exceeded your Anthropic rate limit
 - Wait a few minutes and try again
 - Consider analyzing fewer tasks at once
 
-**"Model not found" or "Access denied"**
-- You don't have access to GPT-5
-- Check your OpenAI account tier
-- You may need to upgrade your plan
+**"Could not parse JSON from Claude response"**
+- Temporary API issue
+- Try again with fewer tasks
+- Check the debug log for details
 
 **No issues found**
 - Your tasks are well-written! (Good job!)
@@ -355,10 +363,10 @@ Issues found: 2
 
 ## API Costs
 
-### OpenAI GPT-5
+### Anthropic (Claude)
 - Pricing varies based on usage
-- Typical cost: ~$0.01-0.05 per analysis run (50 tasks)
-- Check current pricing at https://openai.com/pricing
+- Typical cost: ~$0.003-0.015 per analysis run
+- Check current pricing at https://www.anthropic.com/pricing
 
 ### JIRA API
 - JIRA Cloud API is free for standard usage
@@ -402,14 +410,20 @@ For issues or questions:
 1. Check the troubleshooting section above
 2. Review the plugin source code
 3. Check OmniFocus forums: https://discourse.omnigroup.com/
-4. OpenAI API docs: https://platform.openai.com/docs/
+4. Anthropic API docs: https://docs.anthropic.com/
 5. JIRA API docs: https://developer.atlassian.com/cloud/jira/platform/rest/v3/
 
 ## Version History
 
+### Version 2.0 (January 2025)
+- Migrated to Claude AI (Anthropic) for AI-powered task analysis
+- Updated API integration for Claude Messages API
+- Improved JSON response parsing with fallback
+- Updated all documentation
+
 ### Version 1.0 (January 2025)
 - Initial release
-- AI Task Clarifier with GPT-5 support
+- AI Task Clarifier with Claude AI support
 - JIRA Import with comprehensive field mapping
 - Secure credential storage
 - Duplicate prevention
@@ -419,4 +433,3 @@ For issues or questions:
 
 These plugins are provided as-is for personal and commercial use.
 Feel free to modify and distribute as needed.
-
