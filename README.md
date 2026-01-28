@@ -2,19 +2,19 @@
 
 Two powerful OmniFocus plugins that integrate AI and JIRA to supercharge your task management workflow.
 
-## 🚀 Quick Start
+## Quick Start
 
 1. **Install plugins**: Double-click the `.omnifocusjs` files
 2. **Configure credentials**: Run each plugin once to enter API keys
 3. **Start automating**: Access via OmniFocus Automation menu
 
-## 📦 What's Included
+## What's Included
 
 ### 1. AI Task Clarifier (`AI-Task-Clarifier.omnifocusjs`)
-Analyzes your tasks using OpenAI GPT-5 to identify and fix problems.
+Analyzes your tasks using Claude AI to identify and fix problems.
 
 ### 2. AI Task Breakdown (`AI-Task-Breakdown.omnifocusjs`)
-Breaks down complex tasks into actionable subtasks using OpenAI GPT-5.
+Breaks down complex tasks into actionable subtasks using Claude AI.
 
 ### 3. JIRA Import (`JIRA-Import.omnifocusjs`)
 Imports all open JIRA issues as OmniFocus tasks with full field mapping.
@@ -24,15 +24,15 @@ Imports all open JIRA issues as OmniFocus tasks with full field mapping.
 ### AI Task Clarifier
 
 **Features:**
-- ✅ Identifies vague or non-actionable tasks
-- ✅ Detects tasks that need breaking down
-- ✅ Flags stale tasks (old with no progress)
-- ✅ Finds missing context or ambiguous tasks
-- ✅ Provides specific improvement suggestions
-- ✅ Auto-tags problematic tasks for review
-- ✅ Flags high-severity issues
-- ✅ Built-in credential management (easy to update API key)
-- ✅ Comprehensive debug logging for troubleshooting
+- Identifies vague or non-actionable tasks
+- Detects tasks that need breaking down
+- Flags stale tasks (old with no progress)
+- Finds missing context or ambiguous tasks
+- Provides specific improvement suggestions
+- Auto-tags problematic tasks for review
+- Flags high-severity issues
+- Built-in credential management (easy to update API key)
+- Comprehensive debug logging for troubleshooting
 
 **Example Output:**
 ```
@@ -43,47 +43,47 @@ Note includes formatted suggestion with issue type, severity, and actionable adv
 ### AI Task Breakdown
 
 **Features:**
-- ✅ Creates MINIMUM necessary subtasks (typically 2-5)
-- ✅ Succinct bullet-point style (no full sentences)
-- ✅ AI determines optimal number of steps
-- ✅ Up to 10 subtasks for very complex tasks
-- ✅ Tags subtasks with "AI: Suggested"
-- ✅ Adds breakdown note to parent task
-- ✅ Built-in credential management
-- ✅ Comprehensive debug logging
+- Creates MINIMUM necessary subtasks (typically 2-5)
+- Succinct bullet-point style (no full sentences)
+- AI determines optimal number of steps
+- Up to 10 subtasks for very complex tasks
+- Tags subtasks with "AI: Suggested"
+- Adds breakdown note to parent task
+- Built-in credential management
+- Comprehensive debug logging
 
 **Example:**
 ```
 Task: "Go get a haircut"
 
 AI creates 3 subtasks:
-  ☐ Find and book appointment at barbershop [AI: Suggested]
-  ☐ Add to calendar with travel time [AI: Suggested]
-  ☐ Get haircut [AI: Suggested]
+  - Find and book appointment at barbershop [AI: Suggested]
+  - Add to calendar with travel time [AI: Suggested]
+  - Get haircut [AI: Suggested]
 
 Task: "Launch new website"
 
 AI creates 6 subtasks:
-  ☐ Complete final QA testing on staging [AI: Suggested]
-  ☐ Get stakeholder approval for launch [AI: Suggested]
-  ☐ Prepare deployment and rollback plan [AI: Suggested]
-  ☐ Deploy to production and verify [AI: Suggested]
-  ☐ Update DNS and SSL certificates [AI: Suggested]
-  ☐ Monitor for 24hrs and send announcement [AI: Suggested]
+  - Complete final QA testing on staging [AI: Suggested]
+  - Get stakeholder approval for launch [AI: Suggested]
+  - Prepare deployment and rollback plan [AI: Suggested]
+  - Deploy to production and verify [AI: Suggested]
+  - Update DNS and SSL certificates [AI: Suggested]
+  - Monitor for 24hrs and send announcement [AI: Suggested]
 ```
 
 ### JIRA Import
 
 **Features:**
-- ✅ Imports all unresolved JIRA issues
-- ✅ Maps priorities, types, labels, and components to tags
-- ✅ Preserves JIRA metadata (assignee, reporter, dates)
-- ✅ Sets due dates from JIRA
-- ✅ Prevents duplicate imports
-- ✅ Organizes in dedicated JIRA folder/project
-- ✅ Includes clickable JIRA URLs
-- ✅ Built-in credential management (easy to update credentials)
-- ✅ Comprehensive debug logging for troubleshooting
+- Imports all unresolved JIRA issues
+- Maps priorities, types, labels, and components to tags
+- Preserves JIRA metadata (assignee, reporter, dates)
+- Sets due dates from JIRA
+- Prevents duplicate imports
+- Organizes in dedicated JIRA folder/project
+- Includes clickable JIRA URLs
+- Built-in credential management (easy to update credentials)
+- Comprehensive debug logging for troubleshooting
 
 **Example Task:**
 ```
@@ -97,10 +97,10 @@ Note:
   ...
 ```
 
-## 📋 Requirements
+## Requirements
 
-### AI Task Clarifier
-- OpenAI API key with GPT-5 access
+### AI Task Clarifier / AI Task Breakdown
+- Anthropic API key
 - Active internet connection
 - OmniFocus 4 (macOS or iOS)
 
@@ -110,7 +110,7 @@ Note:
 - Active internet connection
 - OmniFocus 4 (macOS or iOS)
 
-## 🔧 Installation
+## Installation
 
 ### Quick Install (Using Sync Script)
 
@@ -127,8 +127,8 @@ The plugins will automatically appear in OmniFocus!
 
 ### Step 1: Get API Credentials
 
-**OpenAI API Key:**
-1. Visit https://platform.openai.com/
+**Anthropic API Key:**
+1. Visit https://console.anthropic.com/
 2. Create an account or sign in
 3. Navigate to API Keys
 4. Create a new key
@@ -157,7 +157,7 @@ The plugins will automatically appear in OmniFocus!
 2. Enter your credentials when prompted
 3. Credentials are securely stored in macOS Keychain
 
-## 💡 Usage
+## Usage
 
 ### AI Task Clarifier
 
@@ -194,7 +194,7 @@ The plugins will automatically appear in OmniFocus!
 - Already-imported issues are skipped
 - Safe to run multiple times
 
-## 📚 Documentation
+## Documentation
 
 - **[PLUGIN_SETUP_GUIDE.md](PLUGIN_SETUP_GUIDE.md)** - Detailed setup instructions, troubleshooting, and advanced usage
 - **[TECHNICAL_REFERENCE.md](TECHNICAL_REFERENCE.md)** - API details, field mappings, customization guide
@@ -206,25 +206,25 @@ The plugins will automatically appear in OmniFocus!
 - **[OMNIFOCUS_API_PRIMER.md](OMNIFOCUS_API_PRIMER.md)** - Complete OmniFocus JavaScript API reference
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
 
-## 🔒 Security
+## Security
 
 - All credentials stored in macOS Keychain (encrypted)
 - HTTPS-only API communication
-- No data sent to third parties (except OpenAI/JIRA APIs)
+- No data sent to third parties (except Anthropic/JIRA APIs)
 - Open source - review the code yourself
 
-## 💰 Costs
+## Costs
 
-**OpenAI GPT-5:**
+**Claude AI (Anthropic):**
 - Pay-per-use pricing
-- Typical cost: $0.01-0.05 per analysis (50 tasks)
-- Check current pricing: https://openai.com/pricing
+- Typical cost: $0.003-0.015 per analysis
+- Check current pricing: https://www.anthropic.com/pricing
 
 **JIRA API:**
 - Free for standard usage
 - No additional costs
 
-## 🔄 Sync Scripts
+## Sync Scripts
 
 Two utility scripts are included for managing plugins with iCloud Drive:
 
@@ -251,13 +251,13 @@ Copies plugins from iCloud back to this repository:
 - You need to backup your modifications
 
 **Features:**
-- ✅ Portable (uses `$USER` variable)
-- ✅ Shows what changed (new/updated/unchanged)
-- ✅ Color-coded output
-- ✅ Safe (compares files before copying)
-- ✅ Automatic detection of iCloud folder
+- Portable (uses `$USER` variable)
+- Shows what changed (new/updated/unchanged)
+- Color-coded output
+- Safe (compares files before copying)
+- Automatic detection of iCloud folder
 
-## 🏷️ Version Management
+## Version Management
 
 Scripts for managing plugin versions and releases:
 
@@ -282,16 +282,16 @@ Complete release workflow (recommended):
 ```
 
 **Features:**
-- ✅ Automatic version bumping (major/minor/patch)
-- ✅ Changelog generation
-- ✅ Git commit and tag creation
-- ✅ iCloud sync integration
-- ✅ Interactive prompts
-- ✅ Follows semantic versioning
+- Automatic version bumping (major/minor/patch)
+- Changelog generation
+- Git commit and tag creation
+- iCloud sync integration
+- Interactive prompts
+- Follows semantic versioning
 
 See [VERSION_MANAGEMENT.md](VERSION_MANAGEMENT.md) for details.
 
-## 🛠️ Customization
+## Customization
 
 Both plugins are fully customizable:
 - Edit `.omnifocusjs` files in any text editor
@@ -300,7 +300,7 @@ Both plugins are fully customizable:
 - Use sync scripts to deploy changes
 - See TECHNICAL_REFERENCE.md for details
 
-## 🔍 Debug Logging
+## Debug Logging
 
 Both plugins include comprehensive debug logging visible in the OmniFocus Automation Console.
 
@@ -316,7 +316,7 @@ Both plugins include comprehensive debug logging visible in the OmniFocus Automa
 
 **See [DEBUG_LOGGING_GUIDE.md](DEBUG_LOGGING_GUIDE.md) for complete details.**
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -329,14 +329,13 @@ Both plugins include comprehensive debug logging visible in the OmniFocus Automa
 - Check project key filter
 - Verify JIRA permissions
 
-**"Model not found" (OpenAI)**
-- No GPT-5 access
-- Check OpenAI account tier
-- May need to upgrade plan
+**"Could not parse JSON from Claude response"**
+- Temporary API issue
+- Try again or reduce number of tasks
 
 See PLUGIN_SETUP_GUIDE.md for complete troubleshooting guide.
 
-## 🚀 Advanced Usage
+## Advanced Usage
 
 ### Automation Ideas
 
@@ -362,7 +361,7 @@ See PLUGIN_SETUP_GUIDE.md for complete troubleshooting guide.
 - Trigger from other automation tools
 - Build custom workflows
 
-## 📝 Examples
+## Examples
 
 ### AI Task Clarifier Output
 
@@ -411,13 +410,13 @@ Note:
   Reporter: Jane Smith
   Created: 1/15/2025
   Updated: 1/20/2025
-  
+
   --- Description ---
   Users cannot log in when using Safari browser.
   Steps to reproduce: ...
 ```
 
-## 🤝 Contributing
+## Contributing
 
 These plugins are open source. Feel free to:
 - Modify for your needs
@@ -425,31 +424,30 @@ These plugins are open source. Feel free to:
 - Report issues
 - Suggest features
 
-## 📄 License
+## License
 
 Provided as-is for personal and commercial use.
 Modify and distribute freely.
 
-## 🙏 Credits
+## Credits
 
 Built with:
 - OmniFocus Omni Automation framework
-- OpenAI GPT-5 API
+- Claude AI API (Anthropic)
 - JIRA REST API v3
 
-## 📞 Support
+## Support
 
 - Check documentation files in this repo
 - OmniFocus forums: https://discourse.omnigroup.com/
-- OpenAI docs: https://platform.openai.com/docs/
+- Anthropic docs: https://docs.anthropic.com/
 - JIRA docs: https://developer.atlassian.com/cloud/jira/
 
-## 🎯 Roadmap
+## Roadmap
 
 Future enhancements:
 - [ ] Bidirectional JIRA sync (update JIRA from OmniFocus)
 - [ ] GitHub issue import
-- [ ] AI-powered task breakdown (auto-create subtasks)
 - [ ] Scheduled automatic imports
 - [ ] Custom AI analysis profiles
 - [ ] Export analysis reports
@@ -457,5 +455,4 @@ Future enhancements:
 
 ---
 
-**Version 1.0** | January 2025 | Made with ❤️ for OmniFocus users
-
+**Version 2.0** | January 2025 | Made with love for OmniFocus users

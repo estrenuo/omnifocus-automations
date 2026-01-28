@@ -2,27 +2,27 @@
 
 ## Recent Improvements
 
-### 1. Fixed Response Parsing Bug ✅
+### 1. Fixed Response Parsing Bug
 
-**Problem:** Plugin was looking for `results` or `issues` but GPT-5 returned `analysis`
+**Problem:** Plugin was looking for `results` or `issues` but AI returned `analysis`
 
 **Fix:** Now checks all possible field names:
 ```javascript
 const issues = aiResponse.results || aiResponse.issues || aiResponse.analysis || [];
 ```
 
-### 2. Better Tagging System ✅
+### 2. Better Tagging System
 
 **Old:** Used "AI Review" tag
 **New:** Uses "AI: Needs Improvement" tag
 
 **Benefits:**
-- ✅ More descriptive and actionable
-- ✅ Single tag keeps your system clean
-- ✅ Easy to filter and process improvements
-- ✅ Clear that it's an AI suggestion, not a review
+- More descriptive and actionable
+- Single tag keeps your system clean
+- Easy to filter and process improvements
+- Clear that it's an AI suggestion, not a review
 
-### 3. Enhanced Note Formatting ✅
+### 3. Enhanced Note Formatting
 
 **Old Format:**
 ```
@@ -52,22 +52,22 @@ Recommended Action: clarify
 ```
 
 **Benefits:**
-- ✅ More visually distinct
-- ✅ Easier to scan
-- ✅ Professional appearance
-- ✅ Clear sections with emojis
+- More visually distinct
+- Easier to scan
+- Professional appearance
+- Clear sections with emojis
 
-### 4. Improved Summary ✅
+### 4. Improved Summary
 
 **New summary includes:**
 - Tasks analyzed count
 - Issues found count
 - Tasks updated count
 - High-severity flagged count
-- Visual indicators (✅ 📝 🚩)
+- Visual indicators
 - Reminder to filter by tag
 
-### 5. Better System Prompt ✅
+### 5. Better System Prompt
 
 **Updated to:**
 - Request specific JSON format
@@ -89,9 +89,9 @@ Recommended Action: clarify
    Automation menu → AI Task Clarifier
    ```
 
-3. **Wait for Analysis** (20-40 seconds)
+3. **Wait for Analysis** (15-30 seconds)
    ```
-   GPT-5 is analyzing your tasks...
+   Claude is analyzing your tasks...
    ```
 
 4. **Review Results**
@@ -125,7 +125,7 @@ Tags: (none)
 **After AI Analysis:**
 ```
 Name: Review PR
-Note: 
+Note:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🤖 AI IMPROVEMENT SUGGESTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -135,12 +135,12 @@ Note:
 📊 Severity: MEDIUM
 
 💡 SUGGESTION:
-Add the PR link/number, repo/branch, what to focus on 
-(e.g., correctness, tests, performance), and what 
-completion looks like (approve or request changes) with 
-a target time. Example: 'Review PR #123 in org/repo 
-(feature/xyz). Check transaction logic in OrderService, 
-confirm unit tests, and leave GitHub comments + 
+Add the PR link/number, repo/branch, what to focus on
+(e.g., correctness, tests, performance), and what
+completion looks like (approve or request changes) with
+a target time. Example: 'Review PR #123 in org/repo
+(feature/xyz). Check transaction logic in OrderService,
+confirm unit tests, and leave GitHub comments +
 approve/request changes by EOD Fri.'
 
 🎯 Recommended Action: add-context
@@ -154,7 +154,7 @@ Flagged: No (medium severity)
 **After You Improve It:**
 ```
 Name: Review PR #123 in org/repo (feature/xyz)
-Note: 
+Note:
 Focus areas:
 - Transaction logic in OrderService
 - Unit test coverage
@@ -230,7 +230,7 @@ Tags: (remove "AI: Needs Improvement" when done)
 
 **Settings:**
 - **Name:** High Priority AI
-- **Filter:** 
+- **Filter:**
   - Tag is "AI: Needs Improvement"
   - AND Flagged is true
 - **Sort by:** Due date
@@ -247,7 +247,7 @@ Tags: (remove "AI: Needs Improvement" when done)
 - Gradually increase to 10-20 tasks
 
 ### 2. Be Patient
-- GPT-5 takes 20-60 seconds
+- Claude takes 15-30 seconds
 - Don't cancel prematurely
 - Check console for progress
 
@@ -267,7 +267,7 @@ Tags: (remove "AI: Needs Improvement" when done)
 - Use the suggestions as inspiration, not rules
 
 ### 6. Use Severity Levels
-- **High** (🚩 Flagged): Address immediately
+- **High** (Flagged): Address immediately
 - **Medium**: Address this week
 - **Low**: Address when convenient
 
@@ -312,11 +312,11 @@ Create smart perspectives:
 ### Integration with Review Process
 
 **Weekly Review Checklist:**
-1. ☐ Review completed tasks
-2. ☐ Run AI Task Clarifier on active tasks
-3. ☐ Process "AI: Needs Improvement" tag
-4. ☐ Update project plans
-5. ☐ Set next week's priorities
+1. Review completed tasks
+2. Run AI Task Clarifier on active tasks
+3. Process "AI: Needs Improvement" tag
+4. Update project plans
+5. Set next week's priorities
 
 ## Troubleshooting
 
@@ -324,7 +324,7 @@ Create smart perspectives:
 
 **Possible reasons:**
 - Tasks are actually well-written
-- GPT-5 has high standards
+- Claude has high standards
 - Try analyzing different tasks
 
 **Solutions:**
@@ -357,7 +357,7 @@ Create smart perspectives:
 - Custom analysis profiles
 - Focus on specific issue types
 - Adjustable severity thresholds
-- Different AI models (GPT-4o for speed)
+- Different AI models for speed vs quality
 
 ## Metrics & Tracking
 
@@ -380,12 +380,12 @@ Create smart perspectives:
 ## Summary
 
 The improved AI Task Clarifier:
-- ✅ Uses single "AI: Needs Improvement" tag
-- ✅ Adds beautifully formatted suggestions to notes
-- ✅ Flags high-severity issues
-- ✅ Provides actionable, specific suggestions
-- ✅ Integrates seamlessly with OmniFocus workflow
-- ✅ Helps you build better task management habits
+- Uses single "AI: Needs Improvement" tag
+- Adds beautifully formatted suggestions to notes
+- Flags high-severity issues
+- Provides actionable, specific suggestions
+- Integrates seamlessly with OmniFocus workflow
+- Helps you build better task management habits
 
 **Key Benefits:**
 1. **Clean System** - One tag, not many
@@ -394,5 +394,4 @@ The improved AI Task Clarifier:
 4. **Filterable** - Easy to find and process
 5. **Educational** - Learn from AI suggestions
 
-Start with 3-5 tasks, process the improvements, and watch your task management skills improve! 🚀
-
+Start with 3-5 tasks, process the improvements, and watch your task management skills improve!

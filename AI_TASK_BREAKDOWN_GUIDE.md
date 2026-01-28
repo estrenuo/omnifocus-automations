@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AI Task Breakdown plugin uses OpenAI GPT-5 to automatically break down complex tasks into actionable subtasks. It's perfect for tasks that feel overwhelming or unclear about where to start.
+The AI Task Breakdown plugin uses Claude AI to automatically break down complex tasks into actionable subtasks. It's perfect for tasks that feel overwhelming or unclear about where to start.
 
 ## How It Works
 
@@ -16,23 +16,23 @@ The AI Task Breakdown plugin uses OpenAI GPT-5 to automatically break down compl
 ## Features
 
 ### Intelligent Breakdown
-- ✅ AI creates MINIMUM necessary steps (typically 2-5)
-- ✅ Succinct, bullet-point style subtasks
-- ✅ No unnecessary steps or fluff
-- ✅ Up to 10 subtasks for very complex tasks only
-- ✅ Brief action phrases, no full sentences
+- AI creates MINIMUM necessary steps (typically 2-5)
+- Succinct, bullet-point style subtasks
+- No unnecessary steps or fluff
+- Up to 10 subtasks for very complex tasks only
+- Brief action phrases, no full sentences
 
 ### Seamless Integration
-- ✅ Subtasks created as children of parent task
-- ✅ Tagged with "AI: Suggested" for filtering
-- ✅ Parent task gets breakdown note
-- ✅ Preserves existing task structure
+- Subtasks created as children of parent task
+- Tagged with "AI: Suggested" for filtering
+- Parent task gets breakdown note
+- Preserves existing task structure
 
 ### Smart & Fast
-- ✅ Processes 1-5 tasks at once
-- ✅ 30-60 second response time
-- ✅ Comprehensive debug logging
-- ✅ Built-in credential management
+- Processes 1-5 tasks at once
+- 15-30 second response time
+- Comprehensive debug logging
+- Built-in credential management
 
 ## Usage
 
@@ -53,7 +53,7 @@ Automation menu → AI Task Breakdown
 **Step 3: Wait for AI**
 ```
 Progress message shows: "Breaking Down Tasks..."
-Wait 30-60 seconds for GPT-5
+Wait 15-30 seconds for Claude
 ```
 
 **Step 4: Review Results**
@@ -78,9 +78,9 @@ Summary shows:
 Original: "Go get a haircut"
 
 AI creates (3 subtasks):
-☐ Find and book appointment at barbershop
-☐ Add to calendar with travel time
-☐ Get haircut
+- Find and book appointment at barbershop
+- Add to calendar with travel time
+- Get haircut
 ```
 
 **Example 2: Work Task**
@@ -88,12 +88,12 @@ AI creates (3 subtasks):
 Original: "Launch new website"
 
 AI creates (6 subtasks):
-☐ Complete final QA testing on staging
-☐ Get stakeholder approval for launch
-☐ Prepare deployment and rollback plan
-☐ Deploy to production and verify
-☐ Update DNS and SSL certificates
-☐ Monitor for 24hrs and send announcement
+- Complete final QA testing on staging
+- Get stakeholder approval for launch
+- Prepare deployment and rollback plan
+- Deploy to production and verify
+- Update DNS and SSL certificates
+- Monitor for 24hrs and send announcement
 ```
 
 **Example 3: Personal Task**
@@ -101,11 +101,11 @@ AI creates (6 subtasks):
 Original: "Plan vacation"
 
 AI creates (5 subtasks):
-☐ Choose destination and dates
-☐ Book flights and accommodation
-☐ Check passport/visa requirements
-☐ Create itinerary and book activities
-☐ Arrange pet care and pack
+- Choose destination and dates
+- Book flights and accommodation
+- Check passport/visa requirements
+- Create itinerary and book activities
+- Arrange pet care and pack
 ```
 
 **Example 4: Complex Work Task**
@@ -113,14 +113,14 @@ AI creates (5 subtasks):
 Original: "Implement new authentication system"
 
 AI creates (8 subtasks - complex task):
-☐ Research auth libraries and design schema
-☐ Implement registration endpoint with validation
-☐ Implement login with JWT tokens
-☐ Add password hashing and security
-☐ Create middleware for protected routes
-☐ Write unit tests for auth logic
-☐ Update API documentation
-☐ Deploy to staging and run security audit
+- Research auth libraries and design schema
+- Implement registration endpoint with validation
+- Implement login with JWT tokens
+- Add password hashing and security
+- Create middleware for protected routes
+- Write unit tests for auth logic
+- Update API documentation
+- Deploy to staging and run security audit
 ```
 
 ## Best Practices
@@ -190,7 +190,7 @@ Sort by: Creation date
 
 **"Tasks to Break Down"**
 ```
-Filter: 
+Filter:
   - No children (no subtasks)
   - Not tagged "AI: Suggested"
   - Estimated duration > 30 minutes
@@ -212,11 +212,11 @@ Filter:
 
 **Weekly Review Checklist:**
 ```
-☐ Review completed tasks
-☐ Identify complex upcoming tasks
-☐ Run AI Task Breakdown on 3-5 tasks
-☐ Review and adjust subtasks
-☐ Set priorities for next week
+- Review completed tasks
+- Identify complex upcoming tasks
+- Run AI Task Breakdown on 3-5 tasks
+- Review and adjust subtasks
+- Set priorities for next week
 ```
 
 ## Tips & Tricks
@@ -225,14 +225,14 @@ Filter:
 
 **Better results with context:**
 ```
-❌ "Website"
-✅ "Launch new marketing website"
+Bad: "Website"
+Good: "Launch new marketing website"
 
-❌ "Meeting"
-✅ "Prepare Q4 board meeting presentation"
+Bad: "Meeting"
+Good: "Prepare Q4 board meeting presentation"
 
-❌ "Project"
-✅ "Complete customer onboarding redesign project"
+Bad: "Project"
+Good: "Complete customer onboarding redesign project"
 ```
 
 ### 2. Use Task Notes
@@ -240,7 +240,7 @@ Filter:
 **AI considers notes:**
 ```
 Task: "Plan conference"
-Note: "Annual developer conference, 500 attendees, 
+Note: "Annual developer conference, 500 attendees,
        3-day event, need venue, speakers, catering"
 
 AI will create more specific subtasks based on this context
@@ -328,7 +328,7 @@ AI will create more specific subtasks based on this context
 
 ### AI Breakdown
 **Pros:**
-- Fast (30-60 seconds)
+- Fast (15-30 seconds)
 - Comprehensive (rarely misses steps)
 - Reduces mental load
 - Helps overcome procrastination
@@ -336,7 +336,7 @@ AI will create more specific subtasks based on this context
 **Cons:**
 - Requires review/editing
 - May include unnecessary steps
-- API costs (~$0.01-0.02 per task)
+- API costs (~$0.003-0.015 per task)
 - Needs internet connection
 
 ### Best Approach: Hybrid
@@ -431,12 +431,12 @@ Quick workflow:
 ## Summary
 
 The AI Task Breakdown plugin:
-- ✅ Breaks down complex tasks automatically
-- ✅ Creates 2-10 actionable subtasks
-- ✅ Tags with "AI: Suggested"
-- ✅ Saves time and mental energy
-- ✅ Helps overcome procrastination
-- ✅ Improves task planning skills
+- Breaks down complex tasks automatically
+- Creates 2-10 actionable subtasks
+- Tags with "AI: Suggested"
+- Saves time and mental energy
+- Helps overcome procrastination
+- Improves task planning skills
 
 **Perfect for:**
 - Complex projects
@@ -450,5 +450,4 @@ The AI Task Breakdown plugin:
 3. Review the subtasks
 4. Start making progress!
 
-🚀 Turn overwhelming tasks into manageable steps!
-
+Turn overwhelming tasks into manageable steps!

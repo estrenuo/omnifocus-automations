@@ -13,37 +13,32 @@ Both plugins follow the OmniFocus Omni Automation plugin structure with:
 
 ### API Integration
 
-**Endpoint**: `https://api.openai.com/v1/chat/completions`
+**Endpoint**: `https://api.anthropic.com/v1/messages`
 
-**Model**: `gpt-5-2025-08-07` (GPT-5, released August 2025)
+**Model**: `claude-sonnet-4-20250514` (Claude Sonnet 4)
 
 **Request Format**:
 ```json
 {
-  "model": "gpt-5-2025-08-07",
+  "model": "claude-sonnet-4-20250514",
+  "max_tokens": 4096,
+  "system": "You are a productivity expert...",
   "messages": [
-    {
-      "role": "system",
-      "content": "You are a productivity expert..."
-    },
     {
       "role": "user",
       "content": "Analyze these tasks:\n[task data]"
     }
-  ],
-  "response_format": { "type": "json_object" },
-  "temperature": 0.3
+  ]
 }
 ```
 
 **Response Format**:
 ```json
 {
-  "choices": [
+  "content": [
     {
-      "message": {
-        "content": "{\"results\": [{\"index\": 0, \"issue\": \"vague\", \"severity\": \"high\", \"suggestion\": \"...\", \"action\": \"clarify\"}]}"
-      }
+      "type": "text",
+      "text": "{\"analysis\": [{\"index\": 0, \"issue\": \"vague\", \"severity\": \"high\", \"suggestion\": \"...\", \"action\": \"clarify\"}]}"
     }
   ]
 }
@@ -203,12 +198,12 @@ Tags
 **Detection Method**: Searches all tasks for JIRA key in note field
 
 ```javascript
-const existingTask = flattenedTasks.find(task => 
+const existingTask = flattenedTasks.find(task =>
     task.note && task.note.includes(`JIRA: ${issueKey}`)
 );
 ```
 
-**Behavior**: 
+**Behavior**:
 - Existing tasks are skipped (not updated)
 - Only new issues are imported
 - Summary shows count of skipped tasks
@@ -270,9 +265,9 @@ Both plugins use the OmniFocus `Credentials` class which stores data in macOS Ke
 ### Storage Keys
 
 **AI Task Clarifier**:
-- Service: `"openai"`
+- Service: `"anthropic"`
 - User: `"api-key"`
-- Password: `[Your OpenAI API key]`
+- Password: `[Your Anthropic API key]`
 
 **JIRA Import**:
 - Service: `"jira"`
@@ -293,11 +288,11 @@ Both plugins use the OmniFocus `Credentials` class which stores data in macOS Ke
 
 ### Common Error Codes
 
-**OpenAI API**:
+**Claude API (Anthropic)**:
 - `401` - Invalid API key
 - `429` - Rate limit exceeded
-- `500` - OpenAI server error
-- `503` - Service temporarily unavailable
+- `500` - Anthropic server error
+- `529` - API overloaded
 
 **JIRA API**:
 - `401` - Invalid credentials
@@ -315,7 +310,7 @@ Both plugins include try-catch blocks and display user-friendly error messages v
 
 **Factors Affecting Speed**:
 - Number of tasks analyzed (more tasks = longer processing)
-- OpenAI API response time (typically 5-30 seconds)
+- Claude API response time (typically 15-30 seconds)
 - Network latency
 
 **Optimization Tips**:
@@ -379,7 +374,7 @@ To update JIRA when tasks are completed:
 
 ```javascript
 // Check for completed tasks with JIRA keys
-const completedJiraTasks = flattenedTasks.filter(task => 
+const completedJiraTasks = flattenedTasks.filter(task =>
     task.completed && task.note && task.note.includes('JIRA:')
 );
 
@@ -421,10 +416,10 @@ for (const task of completedJiraTasks) {
 
 ## API Rate Limits
 
-### OpenAI
-- Varies by account tier
-- Typical: 3,500 requests/minute (Tier 1)
-- Monitor usage at https://platform.openai.com/usage
+### Anthropic (Claude)
+- Rate limits vary by account tier
+- Default: 60 requests/minute for most tiers
+- Monitor usage at https://console.anthropic.com/
 
 ### JIRA
 - Cloud: 300 requests/minute per IP
@@ -436,10 +431,8 @@ for (const task of completedJiraTasks) {
 Possible improvements:
 1. Bidirectional JIRA sync (update JIRA from OmniFocus)
 2. GitHub issue import
-3. AI-powered task breakdown (create subtasks automatically)
-4. Scheduled automatic imports
-5. Custom AI analysis profiles
-6. Batch processing for large datasets
-7. Export analysis reports
-8. Integration with other project management tools
-
+3. Scheduled automatic imports
+4. Custom AI analysis profiles
+5. Batch processing for large datasets
+6. Export analysis reports
+7. Integration with other project management tools

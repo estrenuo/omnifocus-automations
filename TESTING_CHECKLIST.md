@@ -7,7 +7,7 @@ Use this checklist to verify both plugins are working correctly after installati
 ### Prerequisites
 - [ ] OmniFocus 4 installed (macOS or iOS)
 - [ ] Developer Mode enabled in OmniFocus
-- [ ] OpenAI API key obtained (with GPT-5 access)
+- [ ] Anthropic API key obtained
 - [ ] JIRA API token obtained
 - [ ] Active internet connection
 
@@ -20,7 +20,7 @@ Use this checklist to verify both plugins are working correctly after installati
 
 ### Initial Setup
 - [ ] Run plugin for first time
-- [ ] Prompted for OpenAI API key
+- [ ] Prompted for Anthropic API key
 - [ ] API key entered and accepted
 - [ ] No error messages displayed
 
@@ -34,19 +34,19 @@ Use this checklist to verify both plugins are working correctly after installati
 **Test:**
 - [ ] Select the three test tasks
 - [ ] Run "AI Task Clarifier" from Automation menu
-- [ ] Wait for analysis to complete (10-30 seconds)
+- [ ] Wait for analysis to complete (15-30 seconds)
 
 **Expected Results:**
 - [ ] Analysis completes without errors
 - [ ] Summary shows tasks analyzed
-- [ ] "AI Review" tag created
-- [ ] Vague/broad tasks tagged with "AI Review"
+- [ ] "AI: Needs Improvement" tag created
+- [ ] Vague/broad tasks tagged with "AI: Needs Improvement"
 - [ ] AI suggestions added to task notes
 - [ ] High-severity issues flagged
 - [ ] Good task may not be flagged (or low severity)
 
 **Verify Task Notes:**
-- [ ] Notes contain "--- AI Analysis ---" section
+- [ ] Notes contain AI IMPROVEMENT SUGGESTION section
 - [ ] Issue type identified (vague/broad/etc.)
 - [ ] Severity level shown (low/medium/high)
 - [ ] Specific suggestion provided
@@ -101,14 +101,14 @@ Use this checklist to verify both plugins are working correctly after installati
 - [ ] Run plugin
 
 **Expected Results:**
-- [ ] Warning about 50 task limit
+- [ ] Warning about 20 task limit
 - [ ] Option to continue or cancel
-- [ ] Only first 50 tasks analyzed if continued
+- [ ] Only first 20 tasks analyzed if continued
 
 ### Test Case 6: API Key Management
 **Test:**
 - [ ] Open Keychain Access
-- [ ] Search for "openai"
+- [ ] Search for "anthropic"
 - [ ] Verify entry exists
 - [ ] Delete the entry
 - [ ] Run plugin again
@@ -301,9 +301,8 @@ Use this checklist to verify both plugins are working correctly after installati
 ## Performance Testing
 
 ### AI Task Clarifier
-- [ ] Test with 10 tasks: < 15 seconds
-- [ ] Test with 30 tasks: < 30 seconds
-- [ ] Test with 50 tasks: < 60 seconds
+- [ ] Test with 10 tasks: < 30 seconds
+- [ ] Test with 20 tasks: < 45 seconds
 
 ### JIRA Import
 - [ ] Test with 10 issues: < 10 seconds
@@ -380,4 +379,3 @@ _______________________________________________
 _______________________________________________
 
 **Signature:** _______________
-

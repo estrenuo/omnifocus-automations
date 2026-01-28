@@ -23,11 +23,11 @@ When you run the plugin for the first time:
 1. Click Automation menu → "AI Task Clarifier"
 2. You'll see a form:
    ```
-   Enter your OpenAI API key
+   Enter your Anthropic API key
    (will be stored securely in Keychain)
-   
-   OpenAI API Key: [password field]
-   
+
+   Anthropic API Key: [password field]
+
    [Continue]
    ```
 3. Enter your API key
@@ -41,10 +41,10 @@ When credentials are already stored:
 1. Click Automation menu → "AI Task Clarifier"
 2. You'll see an alert:
    ```
-   OpenAI Credentials Found
-   
+   Anthropic Credentials Found
+
    Stored API key found. What would you like to do?
-   
+
    [Use Stored Key]  [Clear & Re-enter Key]  [Cancel]
    ```
 
@@ -56,7 +56,7 @@ When credentials are already stored:
 
 ### Updating Your API Key
 
-To update your OpenAI API key:
+To update your Anthropic API key:
 
 1. Run the plugin
 2. Click "Clear & Re-enter Key"
@@ -81,12 +81,12 @@ When you run the plugin for the first time:
    ```
    Enter your JIRA credentials
    (will be stored securely)
-   
+
    JIRA Domain: your-company.atlassian.net
    JIRA Email: [text field]
    JIRA API Token: [password field]
    Project Key (optional): Leave empty to import from all projects
-   
+
    [Continue]
    ```
 3. Fill in all fields
@@ -101,13 +101,13 @@ When credentials are already stored:
 2. You'll see an alert:
    ```
    JIRA Credentials Found
-   
+
    Stored credentials found for:
    Domain: company.atlassian.net
    Email: user@company.com
-   
+
    What would you like to do?
-   
+
    [Use Stored Credentials]  [Clear & Re-enter Credentials]  [Cancel]
    ```
 
@@ -140,9 +140,9 @@ To update your JIRA credentials:
 ### What Gets Stored
 
 **AI Task Clarifier:**
-- Service: `openai`
+- Service: `anthropic`
 - User: `api-key`
-- Password: Your OpenAI API key
+- Password: Your Anthropic API key
 
 **JIRA Import:**
 - Service: `jira`
@@ -155,11 +155,11 @@ To update your JIRA credentials:
 ### Where It's Stored
 
 All credentials are stored in **macOS Keychain**, which is:
-- ✅ Encrypted by the operating system
-- ✅ Protected by your Mac login password
-- ✅ Sandboxed (only OmniFocus can access)
-- ✅ Backed up with Time Machine (encrypted)
-- ✅ Synced via iCloud Keychain (if enabled)
+- Encrypted by the operating system
+- Protected by your Mac login password
+- Sandboxed (only OmniFocus can access)
+- Backed up with Time Machine (encrypted)
+- Synced via iCloud Keychain (if enabled)
 
 ### Security
 
@@ -171,9 +171,9 @@ All credentials are stored in **macOS Keychain**, which is:
 
 **Credential redaction in logs:**
 - API keys are never logged in full
-- Only first 10 characters shown: `sk-proj-ab...`
+- Only first 10 characters shown: `sk-ant-ab...`
 - Tokens shown as `[REDACTED]`
-- Authorization headers shown as `Bearer [REDACTED]`
+- Authorization headers shown as `[REDACTED]`
 
 ## Troubleshooting
 
@@ -198,7 +198,7 @@ If the "Clear & Re-enter" option doesn't work:
 
 **Manual method:**
 1. Open Keychain Access app
-2. Search for "openai" or "jira"
+2. Search for "anthropic" or "jira"
 3. Delete the entries manually
 4. Run the plugin again
 
@@ -235,7 +235,7 @@ If you're developing or testing:
 
 ### Multiple Accounts
 
-If you have multiple JIRA instances or OpenAI accounts:
+If you have multiple JIRA instances or Anthropic accounts:
 
 **Option 1: Switch as needed**
 - Clear and re-enter credentials when switching
@@ -257,9 +257,9 @@ Example:
 
 ## Examples
 
-### Example 1: Testing with Different OpenAI Keys
+### Example 1: Testing with Different Anthropic Keys
 
-**Scenario:** You want to test GPT-5 with a different API key.
+**Scenario:** You want to test Claude with a different API key.
 
 1. Run AI Task Clarifier
 2. Click "Clear & Re-enter Key"
@@ -324,20 +324,20 @@ If you're modifying the plugins, you can access credentials programmatically:
 
 ```javascript
 // Read credentials
-const creds = credentials.read("openai");
+const creds = credentials.read("anthropic");
 if (creds) {
     const apiKey = creds.password;
     // Use apiKey
 }
 
 // Write credentials
-credentials.write("openai", "api-key", "sk-proj-...");
+credentials.write("anthropic", "api-key", "sk-ant-...");
 
 // Remove credentials
-credentials.remove("openai");
+credentials.remove("anthropic");
 
 // Check if credentials exist
-const hasCredentials = credentials.read("openai") !== null;
+const hasCredentials = credentials.read("anthropic") !== null;
 ```
 
 ## FAQ
@@ -352,7 +352,7 @@ A: Credentials remain in Keychain and will be available after reinstalling.
 A: You can view them in Keychain Access, but for security reasons, you should regenerate API keys rather than exporting them.
 
 **Q: Do credentials expire?**
-A: The plugins don't expire credentials, but the API providers might. OpenAI keys don't expire by default. JIRA tokens can be set to expire.
+A: The plugins don't expire credentials, but the API providers might. Anthropic keys don't expire by default. JIRA tokens can be set to expire.
 
 **Q: Can I use the same credentials on multiple Macs?**
 A: Yes, if iCloud Keychain is enabled. Otherwise, you'll need to enter credentials on each Mac.
@@ -366,11 +366,10 @@ A: Yes, it's completely safe. The old credentials are securely deleted before ne
 ## Summary
 
 The built-in credential management makes it easy to:
-- ✅ Update expired API keys/tokens
-- ✅ Switch between accounts
-- ✅ Fix incorrect credentials
-- ✅ Test with different configurations
-- ✅ Manage multiple environments
+- Update expired API keys/tokens
+- Switch between accounts
+- Fix incorrect credentials
+- Test with different configurations
+- Manage multiple environments
 
 No need to manually edit Keychain or remember complex commands. Just click "Clear & Re-enter" and you're done!
-
