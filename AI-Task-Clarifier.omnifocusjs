@@ -169,6 +169,7 @@
 
             // Get system language from macOS settings
             const localeIdentifier = Calendar.current.locale ? Calendar.current.locale.identifier : "en_US";
+            const localeFormatted = localeIdentifier.replace("_", "-"); // Convert nl_NL to nl-NL for BCP 47
             const languageCode = localeIdentifier.split("_")[0];
             const languageNames = {
                 "en": "English", "nl": "Dutch", "de": "German", "fr": "French",
@@ -350,7 +351,7 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
                 const analysisNote = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🤖 ${t.title}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📅 ${t.date}: ${new Date().toLocaleDateString(localeIdentifier)}
+📅 ${t.date}: ${new Date().toLocaleDateString(localeFormatted)}
 
 ⚠️  ${t.issueType}: ${issue.issue.toUpperCase()}
 📊 ${t.severity}: ${issue.severity.toUpperCase()}

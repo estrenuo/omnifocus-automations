@@ -131,6 +131,7 @@
 
             // Get system language from macOS settings
             const localeIdentifier = Calendar.current.locale ? Calendar.current.locale.identifier : "en_US";
+            const localeFormatted = localeIdentifier.replace("_", "-"); // Convert nl_NL to nl-NL for BCP 47
             const languageCode = localeIdentifier.split("_")[0];
             const languageNames = {
                 "en": "English", "nl": "Dutch", "de": "German", "fr": "French",
@@ -316,7 +317,7 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
                 const breakdownNote = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🤖 ${t.title}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📅 ${t.date}: ${new Date().toLocaleDateString(localeIdentifier)}
+📅 ${t.date}: ${new Date().toLocaleDateString(localeFormatted)}
 
 ✅ ${t.created} ${subtasks.length} ${t.subtasksBelow}
 🏷️  ${t.taggedWith} "AI: Suggested"
