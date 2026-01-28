@@ -3,39 +3,39 @@
     "targets": ["omnifocus"],
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.ai-task-clarifier",
-    "version": "1.7.0",
-    "description": "Analyzes tasks using OpenAI GPT-5 to identify vague, non-actionable, or problematic tasks and provides improvement suggestions",
+    "version": "2.0.0",
+    "description": "Analyzes tasks using Claude AI to identify vague, non-actionable, or problematic tasks and provides improvement suggestions",
     "label": "AI Task Clarifier",
     "shortLabel": "AI Clarifier",
     "paletteLabel": "Analyze Tasks with AI",
     "image": "wand.and.stars"
 }*/
 (() => {
-    // Credentials for storing OpenAI API key
+    // Credentials for storing Anthropic API key
     const credentials = new Credentials();
-    
+
     const action = new PlugIn.Action(async function(selection, sender) {
         try {
             console.log("=== AI Task Clarifier Debug Log ===");
             console.log("Starting plugin execution...");
 
-            // Get OpenAI API key from credentials
+            // Get Anthropic API key from credentials
             let apiKey = null;
-            const storedCreds = credentials.read("openai");
+            const storedCreds = credentials.read("anthropic");
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
-            
+
             if (!storedCreds || !storedCreds.password) {
                 // Prompt for API key if not stored
                 const form = new Form();
                 const apiKeyField = new Form.Field.Password(
                     "apiKey",
-                    "OpenAI API Key",
+                    "Anthropic API Key",
                     null
                 );
                 form.addField(apiKeyField);
 
                 const formPrompt = await form.show(
-                    "Enter your OpenAI API key (will be stored securely in Keychain)",
+                    "Enter your Anthropic API key (will be stored securely in Keychain)",
                     "Continue"
                 );
 
@@ -47,12 +47,12 @@
 
                 console.log("Storing new API key in Keychain...");
                 // Store the API key
-                credentials.write("openai", "api-key", apiKey);
+                credentials.write("anthropic", "api-key", apiKey);
                 console.log("API key stored successfully");
             } else {
                 // Credentials exist - offer to use or clear them
                 const alert = new Alert(
-                    "OpenAI Credentials Found",
+                    "Anthropic Credentials Found",
                     "Stored API key found. What would you like to do?"
                 );
                 alert.addOption("Use Stored Key");
@@ -68,20 +68,20 @@
                 } else if (choice === 1) {
                     // Clear and re-enter
                     console.log("Clearing stored credentials...");
-                    credentials.remove("openai");
+                    credentials.remove("anthropic");
                     console.log("Credentials cleared");
 
                     // Prompt for new key
                     const form = new Form();
                     const apiKeyField = new Form.Field.Password(
                         "apiKey",
-                        "OpenAI API Key",
+                        "Anthropic API Key",
                         null
                     );
                     form.addField(apiKeyField);
 
                     const formPrompt = await form.show(
-                        "Enter your OpenAI API key (will be stored securely in Keychain)",
+                        "Enter your Anthropic API key (will be stored securely in Keychain)",
                         "Continue"
                     );
 
@@ -92,7 +92,7 @@
                     }
 
                     console.log("Storing new API key in Keychain...");
-                    credentials.write("openai", "api-key", apiKey);
+                    credentials.write("anthropic", "api-key", apiKey);
                     console.log("API key stored successfully");
                 } else {
                     // Cancel
@@ -100,7 +100,7 @@
                     return;
                 }
             }
-            
+
             // Get tasks to analyze
             let tasksToAnalyze = [];
 
@@ -120,7 +120,7 @@
                     "All incomplete tasks"
                 );
                 form.addField(scopeField);
-                
+
                 const formPrompt = await form.show("Task Analysis Scope", "Continue");
                 const scope = formPrompt.values.scope;
                 console.log("User selected scope:", scope);
@@ -139,7 +139,7 @@
                     console.log("Analyzing tasks older than 30 days:", tasksToAnalyze.length);
                 }
             }
-            
+
             if (tasksToAnalyze.length === 0) {
                 console.log("No tasks found matching criteria");
                 new Alert("No Tasks Found", "No tasks match the selected criteria.").show();
@@ -166,7 +166,21 @@
                 tasksToAnalyze = tasksToAnalyze.slice(0, 20);
                 console.log("Limited to 20 tasks");
             }
-            
+
+            // Get system language from macOS settings
+            const localeIdentifier = Calendar.current.locale ? Calendar.current.locale.identifier : "en_US";
+            const languageCode = localeIdentifier.split("_")[0];
+            const languageNames = {
+                "en": "English", "nl": "Dutch", "de": "German", "fr": "French",
+                "es": "Spanish", "it": "Italian", "pt": "Portuguese", "ja": "Japanese",
+                "zh": "Chinese", "ko": "Korean", "ru": "Russian", "ar": "Arabic",
+                "sv": "Swedish", "da": "Danish", "no": "Norwegian", "fi": "Finnish",
+                "pl": "Polish", "cs": "Czech", "hu": "Hungarian", "tr": "Turkish",
+                "he": "Hebrew", "th": "Thai", "vi": "Vietnamese", "id": "Indonesian"
+            };
+            const languageName = languageNames[languageCode] || languageCode;
+            console.log("System locale:", localeIdentifier, "Language:", languageName);
+
             // Prepare task data for AI analysis
             console.log("Preparing task data for AI analysis...");
             const taskData = tasksToAnalyze.map((task, index) => {
@@ -183,14 +197,15 @@
                 };
             });
             console.log("Task data prepared, sample:", JSON.stringify(taskData[0], null, 2));
-            
-            // Call OpenAI API
-            console.log("Preparing OpenAI API request...");
+
+            // Call Claude API
+            console.log("Preparing Claude API request...");
             const request = new URL.FetchRequest();
-            request.url = URL.fromString("https://api.openai.com/v1/chat/completions");
+            request.url = URL.fromString("https://api.anthropic.com/v1/messages");
             request.method = "POST";
             request.headers = {
-                "Authorization": `Bearer ${apiKey}`,
+                "x-api-key": apiKey,
+                "anthropic-version": "2023-06-01",
                 "Content-Type": "application/json"
             };
 
@@ -207,36 +222,40 @@ For each problematic task, provide:
 - Specific, actionable suggestion for improvement
 - Recommended action (clarify/break-down/defer/delete/add-context)
 
-IMPORTANT: Return a JSON object with an "analysis" array. Each item must have: index, issue, severity, suggestion, action.
+IMPORTANT: Write all suggestions in ${languageName}. The "suggestion" field must be in ${languageName}.
+
+CRITICAL: You must respond with ONLY a valid JSON object. No other text before or after.
+Return a JSON object with an "analysis" array. Each item must have: index, issue, severity, suggestion, action.
 Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high", "suggestion": "...", "action": "clarify"}]}`;
 
             const requestBody = {
-                model: "gpt-5-2025-08-07",
+                model: "claude-sonnet-4-20250514",
+                max_tokens: 4096,
+                system: systemPrompt,
                 messages: [
-                    { role: "system", content: systemPrompt },
                     { role: "user", content: `Analyze these tasks:\n${JSON.stringify(taskData, null, 2)}` }
-                ],
-                response_format: { type: "json_object" }
+                ]
             };
 
             request.bodyString = JSON.stringify(requestBody);
 
-            console.log("=== OpenAI API Request ===");
+            console.log("=== Claude API Request ===");
             console.log("URL:", request.url.string);
             console.log("Method:", request.method);
             console.log("API Key (first 20 chars):", apiKey.substring(0, 20) + "...");
             console.log("Headers:", JSON.stringify({
-                "Authorization": "Bearer [REDACTED]",
+                "x-api-key": "[REDACTED]",
+                "anthropic-version": "2023-06-01",
                 "Content-Type": "application/json"
             }, null, 2));
             console.log("Request Body:", JSON.stringify(requestBody, null, 2));
-            
+
             // Show progress
-            const progress = new Alert("Analyzing Tasks", "Sending tasks to AI for analysis...\n\nThis may take 30-60 seconds for GPT-5.");
+            const progress = new Alert("Analyzing Tasks", "Sending tasks to AI for analysis...\n\nThis may take 15-30 seconds for Claude.");
             progress.show(() => {});
 
-            console.log("Sending request to OpenAI...");
-            console.log("Note: GPT-5 can take 30-60 seconds to respond");
+            console.log("Sending request to Claude...");
+            console.log("Note: Claude typically responds in 15-30 seconds");
 
             let response;
             try {
@@ -246,7 +265,7 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
                 throw new Error(`Network request failed: ${fetchError.message || 'Request timed out'}. Try analyzing fewer tasks (5-10) or check your internet connection.`);
             }
 
-            console.log("=== OpenAI API Response ===");
+            console.log("=== Claude API Response ===");
             console.log("Status Code:", response.statusCode);
             console.log("Response Body:", response.bodyString);
 
@@ -259,10 +278,25 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
             const data = JSON.parse(response.bodyString);
             console.log("Parsed response data:", JSON.stringify(data, null, 2));
 
-            const aiResponse = JSON.parse(data.choices[0].message.content);
+            // Claude returns content array with text blocks
+            const textContent = data.content[0].text;
+
+            // Parse JSON from Claude response (with fallback for non-JSON wrapped responses)
+            let aiResponse;
+            try {
+                aiResponse = JSON.parse(textContent);
+            } catch (e) {
+                // Try to extract JSON from the response if it contains extra text
+                const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    aiResponse = JSON.parse(jsonMatch[0]);
+                } else {
+                    throw new Error("Could not parse JSON from Claude response");
+                }
+            }
             console.log("Parsed AI response:", JSON.stringify(aiResponse, null, 2));
-            
-            // Process results - GPT-5 may return different field names
+
+            // Process results - Claude may return different field names
             const issues = aiResponse.results || aiResponse.issues || aiResponse.analysis || [];
             console.log("Issues found:", issues.length);
 
@@ -281,7 +315,7 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
             } else {
                 console.log("Found existing 'AI: Needs Improvement' tag");
             }
-            
+
             // Apply findings to tasks
             console.log("Applying findings to tasks...");
             let updatedCount = 0;
@@ -329,7 +363,7 @@ ${issue.suggestion}
                 updatedCount++;
             });
             console.log(`Updated ${updatedCount} tasks, flagged ${flaggedCount} high-severity tasks`);
-            
+
             // Show summary
             const summary = `Analysis Complete!\n\n` +
                 `Tasks analyzed: ${tasksToAnalyze.length}\n` +
@@ -355,11 +389,11 @@ ${issue.suggestion}
             new Alert("Error", error.message).show();
         }
     });
-    
+
     action.validate = function(selection, sender) {
         return true; // Always available
     };
-    
+
     return action;
 })();
 
