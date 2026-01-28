@@ -143,6 +143,21 @@
             const languageName = languageNames[languageCode] || languageCode;
             console.log("System locale:", localeIdentifier, "Language:", languageName);
 
+            // Localized strings for task notes
+            const translations = {
+                "en": { title: "AI TASK BREAKDOWN", date: "Date", created: "Created", subtasksBelow: "AI-suggested subtasks below", taggedWith: "Tagged with" },
+                "nl": { title: "AI TAAKVERDELING", date: "Datum", created: "Aangemaakt", subtasksBelow: "AI-voorgestelde subtaken hieronder", taggedWith: "Getagd met" },
+                "de": { title: "KI-AUFGABENAUFSCHLÜSSELUNG", date: "Datum", created: "Erstellt", subtasksBelow: "KI-vorgeschlagene Unteraufgaben unten", taggedWith: "Markiert mit" },
+                "fr": { title: "DÉCOMPOSITION DES TÂCHES IA", date: "Date", created: "Créé", subtasksBelow: "Sous-tâches suggérées par l'IA ci-dessous", taggedWith: "Étiqueté avec" },
+                "es": { title: "DESGLOSE DE TAREAS IA", date: "Fecha", created: "Creado", subtasksBelow: "Subtareas sugeridas por IA abajo", taggedWith: "Etiquetado con" },
+                "it": { title: "SUDDIVISIONE ATTIVITÀ IA", date: "Data", created: "Creato", subtasksBelow: "Sottoattività suggerite dall'IA sotto", taggedWith: "Etichettato con" },
+                "pt": { title: "DIVISÃO DE TAREFAS IA", date: "Data", created: "Criado", subtasksBelow: "Subtarefas sugeridas pela IA abaixo", taggedWith: "Marcado com" },
+                "ja": { title: "AIタスク分解", date: "日付", created: "作成", subtasksBelow: "AI提案のサブタスク（下記）", taggedWith: "タグ" },
+                "zh": { title: "AI任务分解", date: "日期", created: "已创建", subtasksBelow: "AI建议的子任务如下", taggedWith: "标签" },
+                "ko": { title: "AI 작업 분해", date: "날짜", created: "생성됨", subtasksBelow: "AI 제안 하위 작업 아래", taggedWith: "태그" }
+            };
+            const t = translations[languageCode] || translations["en"];
+
             // Prepare task data for AI
             console.log("Preparing task data for AI breakdown...");
             const taskData = tasksToBreakdown.map((task, index) => {
@@ -297,14 +312,14 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
                 const subtasks = breakdown.subtasks || [];
                 console.log(`Creating ${subtasks.length} subtasks`);
 
-                // Add note to parent task
+                // Add note to parent task (localized)
                 const breakdownNote = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🤖 AI TASK BREAKDOWN
+🤖 ${t.title}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📅 Date: ${new Date().toLocaleDateString()}
+📅 ${t.date}: ${new Date().toLocaleDateString(localeIdentifier)}
 
-✅ Created ${subtasks.length} AI-suggested subtasks below
-🏷️  Tagged with "AI: Suggested"
+✅ ${t.created} ${subtasks.length} ${t.subtasksBelow}
+🏷️  ${t.taggedWith} "AI: Suggested"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 

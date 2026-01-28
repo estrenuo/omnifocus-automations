@@ -181,6 +181,21 @@
             const languageName = languageNames[languageCode] || languageCode;
             console.log("System locale:", localeIdentifier, "Language:", languageName);
 
+            // Localized strings for task notes
+            const translations = {
+                "en": { title: "AI IMPROVEMENT SUGGESTION", date: "Date", issueType: "Issue Type", severity: "Severity", suggestion: "SUGGESTION", recommendedAction: "Recommended Action" },
+                "nl": { title: "AI VERBETERVOORSTEL", date: "Datum", issueType: "Probleemtype", severity: "Ernst", suggestion: "SUGGESTIE", recommendedAction: "Aanbevolen actie" },
+                "de": { title: "KI-VERBESSERUNGSVORSCHLAG", date: "Datum", issueType: "Problemtyp", severity: "Schweregrad", suggestion: "VORSCHLAG", recommendedAction: "Empfohlene Aktion" },
+                "fr": { title: "SUGGESTION D'AMÉLIORATION IA", date: "Date", issueType: "Type de problème", severity: "Gravité", suggestion: "SUGGESTION", recommendedAction: "Action recommandée" },
+                "es": { title: "SUGERENCIA DE MEJORA IA", date: "Fecha", issueType: "Tipo de problema", severity: "Gravedad", suggestion: "SUGERENCIA", recommendedAction: "Acción recomendada" },
+                "it": { title: "SUGGERIMENTO DI MIGLIORAMENTO IA", date: "Data", issueType: "Tipo di problema", severity: "Gravità", suggestion: "SUGGERIMENTO", recommendedAction: "Azione consigliata" },
+                "pt": { title: "SUGESTÃO DE MELHORIA IA", date: "Data", issueType: "Tipo de problema", severity: "Gravidade", suggestion: "SUGESTÃO", recommendedAction: "Ação recomendada" },
+                "ja": { title: "AI改善提案", date: "日付", issueType: "問題タイプ", severity: "重要度", suggestion: "提案", recommendedAction: "推奨アクション" },
+                "zh": { title: "AI改进建议", date: "日期", issueType: "问题类型", severity: "严重程度", suggestion: "建议", recommendedAction: "建议操作" },
+                "ko": { title: "AI 개선 제안", date: "날짜", issueType: "문제 유형", severity: "심각도", suggestion: "제안", recommendedAction: "권장 조치" }
+            };
+            const t = translations[languageCode] || translations["en"];
+
             // Prepare task data for AI analysis
             console.log("Preparing task data for AI analysis...");
             const taskData = tasksToAnalyze.map((task, index) => {
@@ -331,19 +346,19 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
 
                 console.log(`Updating task: "${task.name}"`);
 
-                // Build a nicely formatted analysis note
+                // Build a nicely formatted analysis note (localized)
                 const analysisNote = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🤖 AI IMPROVEMENT SUGGESTION
+🤖 ${t.title}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📅 Date: ${new Date().toLocaleDateString()}
+📅 ${t.date}: ${new Date().toLocaleDateString(localeIdentifier)}
 
-⚠️  Issue Type: ${issue.issue.toUpperCase()}
-📊 Severity: ${issue.severity.toUpperCase()}
+⚠️  ${t.issueType}: ${issue.issue.toUpperCase()}
+📊 ${t.severity}: ${issue.severity.toUpperCase()}
 
-💡 SUGGESTION:
+💡 ${t.suggestion}:
 ${issue.suggestion}
 
-🎯 Recommended Action: ${issue.action}
+🎯 ${t.recommendedAction}: ${issue.action}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
