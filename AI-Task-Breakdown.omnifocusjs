@@ -3,132 +3,200 @@
     "targets": ["omnifocus"],
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.ai-task-breakdown",
-    "version": "1.0.0",
-    "description": "Uses OpenAI GPT-5 to break down tasks into actionable subtasks with AI-suggested next steps",
+    "version": "2.0.0",
+    "description": "Uses Claude AI to break down tasks into actionable subtasks with AI-suggested next steps",
     "label": "AI Task Breakdown",
     "shortLabel": "AI Breakdown",
     "paletteLabel": "Break Down Task with AI",
     "image": "list.bullet.indent"
 }*/
 (() => {
-    // Credentials for storing OpenAI API key
+    // Credentials for storing Anthropic API key
     const credentials = new Credentials();
-    
+
     const action = new PlugIn.Action(async function(selection, sender) {
         try {
             console.log("=== AI Task Breakdown Debug Log ===");
             console.log("Starting plugin execution...");
-            
-            // Get OpenAI API key from credentials
+
+            // Get system language from macOS settings (needed for all UI)
+            const localeIdentifier = Calendar.current.locale ? Calendar.current.locale.identifier : "en_US";
+            const localeFormatted = localeIdentifier.replace("_", "-"); // Convert nl_NL to nl-NL for BCP 47
+            const languageCode = localeIdentifier.split("_")[0];
+            const languageNames = {
+                "en": "English", "nl": "Dutch", "de": "German", "fr": "French",
+                "es": "Spanish", "it": "Italian", "pt": "Portuguese", "ja": "Japanese",
+                "zh": "Chinese", "ko": "Korean", "ru": "Russian", "ar": "Arabic",
+                "sv": "Swedish", "da": "Danish", "no": "Norwegian", "fi": "Finnish",
+                "pl": "Polish", "cs": "Czech", "hu": "Hungarian", "tr": "Turkish",
+                "he": "Hebrew", "th": "Thai", "vi": "Vietnamese", "id": "Indonesian"
+            };
+            const languageName = languageNames[languageCode] || languageCode;
+            console.log("System locale:", localeIdentifier, "Language:", languageName);
+
+            // Localized UI strings
+            const ui = {
+                "en": {
+                    apiKeyLabel: "Anthropic API Key", apiKeyPrompt: "Enter your Anthropic API key (will be stored securely in Keychain)", continue: "Continue", cancel: "Cancel",
+                    credentialsFound: "Anthropic Credentials Found", credentialsFoundMsg: "Stored API key found. What would you like to do?",
+                    useStoredKey: "Use Stored Key", clearReenter: "Clear & Re-enter Key", apiKeyRequired: "API key is required",
+                    noTasksSelected: "No Tasks Selected", noTasksSelectedMsg: "Please select one or more tasks to break down into subtasks.",
+                    noIncompleteTasks: "No Incomplete Tasks", noIncompleteTasksMsg: "All selected tasks are already completed.",
+                    tooManyTasks: "Too Many Tasks", tooManyTasksMsg: "tasks. Will break down the first 5 tasks only to avoid timeouts.",
+                    breakingDown: "Breaking Down Tasks", breakingDownMsg: "Sending tasks to AI for breakdown...\n\nThis may take 15-30 seconds.",
+                    noBreakdowns: "No Breakdowns", noBreakdownsMsg: "AI couldn't generate subtasks for the selected tasks.",
+                    breakdownComplete: "Breakdown Complete", tasksProcessed: "Tasks processed", subtasksCreated: "Subtasks created",
+                    subtasksAdded: "Subtasks added to parent tasks", taggedWith: "Tagged with", parentTasksUpdated: "Parent tasks updated with breakdown note",
+                    reviewSubtasks: "Review and adjust subtasks as needed!", error: "Error",
+                    // Note labels
+                    title: "AI TASK BREAKDOWN", date: "Date", created: "Created", subtasksBelow: "AI-suggested subtasks below"
+                },
+                "nl": {
+                    apiKeyLabel: "Anthropic API-sleutel", apiKeyPrompt: "Voer je Anthropic API-sleutel in (wordt veilig opgeslagen in Sleutelhanger)", continue: "Doorgaan", cancel: "Annuleren",
+                    credentialsFound: "Anthropic inloggegevens gevonden", credentialsFoundMsg: "Opgeslagen API-sleutel gevonden. Wat wil je doen?",
+                    useStoredKey: "Gebruik opgeslagen sleutel", clearReenter: "Wissen en opnieuw invoeren", apiKeyRequired: "API-sleutel is vereist",
+                    noTasksSelected: "Geen taken geselecteerd", noTasksSelectedMsg: "Selecteer een of meer taken om op te splitsen in subtaken.",
+                    noIncompleteTasks: "Geen onvoltooide taken", noIncompleteTasksMsg: "Alle geselecteerde taken zijn al voltooid.",
+                    tooManyTasks: "Te veel taken", tooManyTasksMsg: "taken. Alleen de eerste 5 taken worden opgesplitst.",
+                    breakingDown: "Taken opsplitsen", breakingDownMsg: "Taken worden naar AI gestuurd voor opsplitsing...\n\nDit kan 15-30 seconden duren.",
+                    noBreakdowns: "Geen opsplitsing", noBreakdownsMsg: "AI kon geen subtaken genereren voor de geselecteerde taken.",
+                    breakdownComplete: "Opsplitsing voltooid", tasksProcessed: "Taken verwerkt", subtasksCreated: "Subtaken aangemaakt",
+                    subtasksAdded: "Subtaken toegevoegd aan hoofdtaken", taggedWith: "Getagd met", parentTasksUpdated: "Hoofdtaken bijgewerkt met opsplitsingsnota",
+                    reviewSubtasks: "Controleer en pas subtaken aan indien nodig!", error: "Fout",
+                    title: "AI TAAKVERDELING", date: "Datum", created: "Aangemaakt", subtasksBelow: "AI-voorgestelde subtaken hieronder"
+                },
+                "de": {
+                    apiKeyLabel: "Anthropic API-Schlüssel", apiKeyPrompt: "Geben Sie Ihren Anthropic API-Schlüssel ein (wird sicher im Schlüsselbund gespeichert)", continue: "Weiter", cancel: "Abbrechen",
+                    credentialsFound: "Anthropic Anmeldedaten gefunden", credentialsFoundMsg: "Gespeicherter API-Schlüssel gefunden. Was möchten Sie tun?",
+                    useStoredKey: "Gespeicherten Schlüssel verwenden", clearReenter: "Löschen und neu eingeben", apiKeyRequired: "API-Schlüssel erforderlich",
+                    noTasksSelected: "Keine Aufgaben ausgewählt", noTasksSelectedMsg: "Bitte wählen Sie eine oder mehrere Aufgaben zum Aufteilen.",
+                    noIncompleteTasks: "Keine unerledigten Aufgaben", noIncompleteTasksMsg: "Alle ausgewählten Aufgaben sind bereits erledigt.",
+                    tooManyTasks: "Zu viele Aufgaben", tooManyTasksMsg: "Aufgaben. Nur die ersten 5 werden aufgeteilt.",
+                    breakingDown: "Aufgaben aufteilen", breakingDownMsg: "Aufgaben werden zur Aufteilung an KI gesendet...\n\nDies kann 15-30 Sekunden dauern.",
+                    noBreakdowns: "Keine Aufteilung", noBreakdownsMsg: "KI konnte keine Unteraufgaben für die ausgewählten Aufgaben erstellen.",
+                    breakdownComplete: "Aufteilung abgeschlossen", tasksProcessed: "Aufgaben verarbeitet", subtasksCreated: "Unteraufgaben erstellt",
+                    subtasksAdded: "Unteraufgaben zu Hauptaufgaben hinzugefügt", taggedWith: "Markiert mit", parentTasksUpdated: "Hauptaufgaben mit Aufteilungsnotiz aktualisiert",
+                    reviewSubtasks: "Überprüfen und Unteraufgaben bei Bedarf anpassen!", error: "Fehler",
+                    title: "KI-AUFGABENAUFSCHLÜSSELUNG", date: "Datum", created: "Erstellt", subtasksBelow: "KI-vorgeschlagene Unteraufgaben unten"
+                },
+                "fr": {
+                    apiKeyLabel: "Clé API Anthropic", apiKeyPrompt: "Entrez votre clé API Anthropic (sera stockée en sécurité dans le trousseau)", continue: "Continuer", cancel: "Annuler",
+                    credentialsFound: "Identifiants Anthropic trouvés", credentialsFoundMsg: "Clé API enregistrée trouvée. Que voulez-vous faire?",
+                    useStoredKey: "Utiliser la clé enregistrée", clearReenter: "Effacer et ressaisir", apiKeyRequired: "Clé API requise",
+                    noTasksSelected: "Aucune tâche sélectionnée", noTasksSelectedMsg: "Veuillez sélectionner une ou plusieurs tâches à décomposer.",
+                    noIncompleteTasks: "Aucune tâche incomplète", noIncompleteTasksMsg: "Toutes les tâches sélectionnées sont déjà terminées.",
+                    tooManyTasks: "Trop de tâches", tooManyTasksMsg: "tâches. Seules les 5 premières seront décomposées.",
+                    breakingDown: "Décomposition des tâches", breakingDownMsg: "Envoi des tâches à l'IA pour décomposition...\n\nCela peut prendre 15-30 secondes.",
+                    noBreakdowns: "Pas de décomposition", noBreakdownsMsg: "L'IA n'a pas pu générer de sous-tâches pour les tâches sélectionnées.",
+                    breakdownComplete: "Décomposition terminée", tasksProcessed: "Tâches traitées", subtasksCreated: "Sous-tâches créées",
+                    subtasksAdded: "Sous-tâches ajoutées aux tâches parentes", taggedWith: "Étiqueté avec", parentTasksUpdated: "Tâches parentes mises à jour avec note de décomposition",
+                    reviewSubtasks: "Vérifiez et ajustez les sous-tâches si nécessaire!", error: "Erreur",
+                    title: "DÉCOMPOSITION DES TÂCHES IA", date: "Date", created: "Créé", subtasksBelow: "Sous-tâches suggérées par l'IA ci-dessous"
+                },
+                "es": {
+                    apiKeyLabel: "Clave API Anthropic", apiKeyPrompt: "Ingresa tu clave API de Anthropic (se guardará de forma segura)", continue: "Continuar", cancel: "Cancelar",
+                    credentialsFound: "Credenciales Anthropic encontradas", credentialsFoundMsg: "Clave API guardada encontrada. ¿Qué deseas hacer?",
+                    useStoredKey: "Usar clave guardada", clearReenter: "Borrar y reingresar", apiKeyRequired: "Se requiere clave API",
+                    noTasksSelected: "No hay tareas seleccionadas", noTasksSelectedMsg: "Selecciona una o más tareas para desglosar en subtareas.",
+                    noIncompleteTasks: "No hay tareas incompletas", noIncompleteTasksMsg: "Todas las tareas seleccionadas ya están completadas.",
+                    tooManyTasks: "Demasiadas tareas", tooManyTasksMsg: "tareas. Solo se desglosarán las primeras 5.",
+                    breakingDown: "Desglosando tareas", breakingDownMsg: "Enviando tareas a la IA para desglose...\n\nEsto puede tomar 15-30 segundos.",
+                    noBreakdowns: "Sin desglose", noBreakdownsMsg: "La IA no pudo generar subtareas para las tareas seleccionadas.",
+                    breakdownComplete: "Desglose completado", tasksProcessed: "Tareas procesadas", subtasksCreated: "Subtareas creadas",
+                    subtasksAdded: "Subtareas añadidas a tareas principales", taggedWith: "Etiquetado con", parentTasksUpdated: "Tareas principales actualizadas con nota de desglose",
+                    reviewSubtasks: "¡Revisa y ajusta las subtareas según sea necesario!", error: "Error",
+                    title: "DESGLOSE DE TAREAS IA", date: "Fecha", created: "Creado", subtasksBelow: "Subtareas sugeridas por IA abajo"
+                }
+            };
+            const t = ui[languageCode] || ui["en"];
+
+            // Get Anthropic API key from credentials
             let apiKey = null;
-            const storedCreds = credentials.read("openai");
+            const storedCreds = credentials.read("anthropic");
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
-            
+
             if (!storedCreds || !storedCreds.password) {
                 // Prompt for API key if not stored
                 const form = new Form();
-                const apiKeyField = new Form.Field.Password(
-                    "apiKey",
-                    "OpenAI API Key",
-                    null
-                );
+                const apiKeyField = new Form.Field.Password("apiKey", t.apiKeyLabel, null);
                 form.addField(apiKeyField);
-                
-                const formPrompt = await form.show(
-                    "Enter your OpenAI API key (will be stored securely in Keychain)",
-                    "Continue"
-                );
-                
+
+                const formPrompt = await form.show(t.apiKeyPrompt, t.continue);
                 apiKey = formPrompt.values.apiKey;
-                
+
                 if (!apiKey) {
-                    throw new Error("API key is required");
+                    throw new Error(t.apiKeyRequired);
                 }
-                
+
                 console.log("Storing new API key in Keychain...");
-                credentials.write("openai", "api-key", apiKey);
+                credentials.write("anthropic", "api-key", apiKey);
                 console.log("API key stored successfully");
             } else {
                 // Credentials exist - offer to use or clear them
-                const alert = new Alert(
-                    "OpenAI Credentials Found",
-                    "Stored API key found. What would you like to do?"
-                );
-                alert.addOption("Use Stored Key");
-                alert.addOption("Clear & Re-enter Key");
-                alert.addOption("Cancel");
-                
+                const alert = new Alert(t.credentialsFound, t.credentialsFoundMsg);
+                alert.addOption(t.useStoredKey);
+                alert.addOption(t.clearReenter);
+                alert.addOption(t.cancel);
+
                 const choice = await alert.show();
-                
+
                 if (choice === 0) {
                     apiKey = storedCreds.password;
                     console.log("Using stored API key");
                 } else if (choice === 1) {
                     console.log("Clearing stored credentials...");
-                    credentials.remove("openai");
+                    credentials.remove("anthropic");
                     console.log("Credentials cleared");
-                    
+
                     const form = new Form();
-                    const apiKeyField = new Form.Field.Password(
-                        "apiKey",
-                        "OpenAI API Key",
-                        null
-                    );
+                    const apiKeyField = new Form.Field.Password("apiKey", t.apiKeyLabel, null);
                     form.addField(apiKeyField);
-                    
-                    const formPrompt = await form.show(
-                        "Enter your OpenAI API key (will be stored securely in Keychain)",
-                        "Continue"
-                    );
-                    
+
+                    const formPrompt = await form.show(t.apiKeyPrompt, t.continue);
                     apiKey = formPrompt.values.apiKey;
-                    
+
                     if (!apiKey) {
-                        throw new Error("API key is required");
+                        throw new Error(t.apiKeyRequired);
                     }
-                    
+
                     console.log("Storing new API key in Keychain...");
-                    credentials.write("openai", "api-key", apiKey);
+                    credentials.write("anthropic", "api-key", apiKey);
                     console.log("API key stored successfully");
                 } else {
                     console.log("User cancelled");
                     return;
                 }
             }
-            
+
             // Get selected tasks
             if (selection.tasks.length === 0) {
-                new Alert("No Tasks Selected", "Please select one or more tasks to break down into subtasks.").show();
+                new Alert(t.noTasksSelected, t.noTasksSelectedMsg).show();
                 return;
             }
-            
+
             const tasksToBreakdown = selection.tasks.filter(task => !task.completed);
             console.log("Tasks selected:", tasksToBreakdown.length);
-            
+
             if (tasksToBreakdown.length === 0) {
-                new Alert("No Incomplete Tasks", "All selected tasks are already completed.").show();
+                new Alert(t.noIncompleteTasks, t.noIncompleteTasksMsg).show();
                 return;
             }
-            
+
             // Limit to 5 tasks to avoid timeouts
             if (tasksToBreakdown.length > 5) {
                 console.log("Too many tasks, limiting to 5");
-                const alert = new Alert(
-                    "Too Many Tasks",
-                    `Selected ${tasksToBreakdown.length} tasks. Will break down the first 5 tasks only to avoid timeouts.`
-                );
-                alert.addOption("Continue");
-                alert.addOption("Cancel");
+                const alert = new Alert(t.tooManyTasks, `${tasksToBreakdown.length} ${t.tooManyTasksMsg}`);
+                alert.addOption(t.continue);
+                alert.addOption(t.cancel);
                 const choice = await alert.show();
                 if (choice === 1) {
                     console.log("User cancelled due to task limit");
                     return;
                 }
-                
                 tasksToBreakdown.splice(5);
                 console.log("Limited to 5 tasks");
             }
-            
+
             // Prepare task data for AI
             console.log("Preparing task data for AI breakdown...");
             const taskData = tasksToBreakdown.map((task, index) => {
@@ -141,17 +209,18 @@
                 };
             });
             console.log("Task data prepared, sample:", JSON.stringify(taskData[0], null, 2));
-            
-            // Call OpenAI API
-            console.log("Preparing OpenAI API request...");
+
+            // Call Claude API
+            console.log("Preparing Claude API request...");
             const request = new URL.FetchRequest();
-            request.url = URL.fromString("https://api.openai.com/v1/chat/completions");
+            request.url = URL.fromString("https://api.anthropic.com/v1/messages");
             request.method = "POST";
             request.headers = {
-                "Authorization": `Bearer ${apiKey}`,
+                "x-api-key": apiKey,
+                "anthropic-version": "2023-06-01",
                 "Content-Type": "application/json"
             };
-            
+
             const systemPrompt = `You are a productivity expert helping break down tasks into actionable subtasks.
 
 For each task, create the MINIMUM number of essential subtasks needed (typically 2-5, maximum 10 for very complex tasks).
@@ -171,37 +240,41 @@ Format:
 - No periods, no "I will", no "You should"
 - Start with verb when possible
 
-IMPORTANT: Return a JSON object with a "breakdowns" array. Each item must have: index, subtasks (array of strings).
+IMPORTANT: Write all subtask names in ${languageName}. Every subtask in the "subtasks" array must be in ${languageName}.
+
+CRITICAL: You must respond with ONLY a valid JSON object. No other text before or after.
+Return a JSON object with a "breakdowns" array. Each item must have: index, subtasks (array of strings).
 Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "Book appointment", "Add to calendar"]}]}`;
-            
+
             const requestBody = {
-                model: "gpt-5-2025-08-07",
+                model: "claude-sonnet-4-20250514",
+                max_tokens: 4096,
+                system: systemPrompt,
                 messages: [
-                    { role: "system", content: systemPrompt },
                     { role: "user", content: `Break down these tasks into actionable subtasks:\n${JSON.stringify(taskData, null, 2)}` }
-                ],
-                response_format: { type: "json_object" }
+                ]
             };
-            
+
             request.bodyString = JSON.stringify(requestBody);
-            
-            console.log("=== OpenAI API Request ===");
+
+            console.log("=== Claude API Request ===");
             console.log("URL:", request.url.string);
             console.log("Method:", request.method);
             console.log("API Key (first 20 chars):", apiKey.substring(0, 20) + "...");
             console.log("Headers:", JSON.stringify({
-                "Authorization": "Bearer [REDACTED]",
+                "x-api-key": "[REDACTED]",
+                "anthropic-version": "2023-06-01",
                 "Content-Type": "application/json"
             }, null, 2));
             console.log("Request Body:", JSON.stringify(requestBody, null, 2));
-            
+
             // Show progress
-            const progress = new Alert("Breaking Down Tasks", "Sending tasks to AI for breakdown...\n\nThis may take 30-60 seconds for GPT-5.");
+            const progress = new Alert(t.breakingDown, t.breakingDownMsg);
             progress.show(() => {});
-            
-            console.log("Sending request to OpenAI...");
-            console.log("Note: GPT-5 can take 30-60 seconds to respond");
-            
+
+            console.log("Sending request to Claude...");
+            console.log("Note: Claude typically responds in 15-30 seconds");
+
             let response;
             try {
                 response = await request.fetch();
@@ -209,33 +282,48 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
                 console.error("Fetch error:", fetchError);
                 throw new Error(`Network request failed: ${fetchError.message || 'Request timed out'}. Try breaking down fewer tasks (1-3) or check your internet connection.`);
             }
-            
-            console.log("=== OpenAI API Response ===");
+
+            console.log("=== Claude API Response ===");
             console.log("Status Code:", response.statusCode);
             console.log("Response Body:", response.bodyString);
-            
+
             if (response.statusCode !== 200) {
                 console.error("API Error - Status:", response.statusCode);
                 console.error("API Error - Body:", response.bodyString);
                 throw new Error(`API Error: ${response.statusCode} - ${response.bodyString}`);
             }
-            
+
             const data = JSON.parse(response.bodyString);
             console.log("Parsed response data:", JSON.stringify(data, null, 2));
-            
-            const aiResponse = JSON.parse(data.choices[0].message.content);
+
+            // Claude returns content array with text blocks
+            const textContent = data.content[0].text;
+
+            // Parse JSON from Claude response (with fallback for non-JSON wrapped responses)
+            let aiResponse;
+            try {
+                aiResponse = JSON.parse(textContent);
+            } catch (e) {
+                // Try to extract JSON from the response if it contains extra text
+                const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    aiResponse = JSON.parse(jsonMatch[0]);
+                } else {
+                    throw new Error("Could not parse JSON from Claude response");
+                }
+            }
             console.log("Parsed AI response:", JSON.stringify(aiResponse, null, 2));
-            
+
             // Process results
             const breakdowns = aiResponse.breakdowns || aiResponse.results || [];
             console.log("Breakdowns found:", breakdowns.length);
-            
+
             if (breakdowns.length === 0) {
                 console.log("No breakdowns found");
-                new Alert("No Breakdowns", "AI couldn't generate subtasks for the selected tasks.").show();
+                new Alert(t.noBreakdowns, t.noBreakdownsMsg).show();
                 return;
             }
-            
+
             // Create or get "AI: Suggested" tag
             console.log("Creating/finding 'AI: Suggested' tag...");
             let suggestedTag = tags.byName("AI: Suggested");
@@ -245,11 +333,11 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
             } else {
                 console.log("Found existing 'AI: Suggested' tag");
             }
-            
+
             // Apply breakdowns to tasks
             console.log("Creating subtasks...");
             let totalSubtasks = 0;
-            
+
             breakdowns.forEach((breakdown, idx) => {
                 console.log(`Processing breakdown ${idx + 1}/${breakdowns.length}:`, JSON.stringify(breakdown));
                 const task = tasksToBreakdown[breakdown.index];
@@ -257,25 +345,25 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
                     console.warn(`Task not found at index ${breakdown.index}`);
                     return;
                 }
-                
+
                 console.log(`Creating subtasks for: "${task.name}"`);
-                
+
                 const subtasks = breakdown.subtasks || [];
                 console.log(`Creating ${subtasks.length} subtasks`);
-                
-                // Add note to parent task
-                const breakdownNote = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🤖 AI TASK BREAKDOWN
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📅 Date: ${new Date().toLocaleDateString()}
 
-✅ Created ${subtasks.length} AI-suggested subtasks below
-🏷️  Tagged with "AI: Suggested"
+                // Add note to parent task (localized)
+                const breakdownNote = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🤖 ${t.title}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 ${t.date}: ${new Date().toLocaleDateString(localeFormatted)}
+
+✅ ${t.created} ${subtasks.length} ${t.subtasksBelow}
+🏷️  ${t.taggedWith} "AI: Suggested"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
-                
+
                 task.note = (task.note || "") + breakdownNote;
-                
+
                 // Create subtasks
                 subtasks.forEach((subtaskName, subIdx) => {
                     console.log(`Creating subtask ${subIdx + 1}/${subtasks.length}: "${subtaskName}"`);
@@ -283,41 +371,41 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
                     subtask.addTag(suggestedTag);
                     totalSubtasks++;
                 });
-                
+
                 console.log(`Created ${subtasks.length} subtasks for "${task.name}"`);
             });
-            
+
             console.log(`Total subtasks created: ${totalSubtasks}`);
-            
+
             // Show summary
-            const summary = `Breakdown Complete!\n\n` +
-                `Tasks processed: ${breakdowns.length}\n` +
-                `Subtasks created: ${totalSubtasks}\n\n` +
-                `✅ Subtasks added to parent tasks\n` +
-                `🏷️  Tagged with "AI: Suggested"\n` +
-                `📝 Parent tasks updated with breakdown note\n\n` +
-                `Review and adjust subtasks as needed!`;
-            
+            const summary = `${t.breakdownComplete}!\n\n` +
+                `${t.tasksProcessed}: ${breakdowns.length}\n` +
+                `${t.subtasksCreated}: ${totalSubtasks}\n\n` +
+                `✅ ${t.subtasksAdded}\n` +
+                `🏷️  ${t.taggedWith} "AI: Suggested"\n` +
+                `📝 ${t.parentTasksUpdated}\n\n` +
+                `${t.reviewSubtasks}`;
+
             console.log("=== Breakdown Summary ===");
             console.log(summary);
             console.log("=== End Debug Log ===");
-            
+
             new Alert("AI Task Breakdown", summary).show();
-            
+
         } catch (error) {
             console.error("=== ERROR ===");
             console.error("Error message:", error.message);
             console.error("Error stack:", error.stack);
             console.error("=== End Debug Log ===");
-            new Alert("Error", error.message).show();
+            new Alert(t?.error || "Error", error.message).show();
         }
     });
-    
+
     action.validate = function(selection, sender) {
         // Only enable if tasks are selected
         return selection.tasks.length > 0;
     };
-    
+
     return action;
 })();
 

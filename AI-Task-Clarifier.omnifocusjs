@@ -3,107 +3,178 @@
     "targets": ["omnifocus"],
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.ai-task-clarifier",
-    "version": "1.7.0",
-    "description": "Analyzes tasks using OpenAI GPT-5 to identify vague, non-actionable, or problematic tasks and provides improvement suggestions",
+    "version": "2.0.0",
+    "description": "Analyzes tasks using Claude AI to identify vague, non-actionable, or problematic tasks and provides improvement suggestions",
     "label": "AI Task Clarifier",
     "shortLabel": "AI Clarifier",
     "paletteLabel": "Analyze Tasks with AI",
     "image": "wand.and.stars"
 }*/
 (() => {
-    // Credentials for storing OpenAI API key
+    // Credentials for storing Anthropic API key
     const credentials = new Credentials();
-    
+
     const action = new PlugIn.Action(async function(selection, sender) {
         try {
             console.log("=== AI Task Clarifier Debug Log ===");
             console.log("Starting plugin execution...");
 
-            // Get OpenAI API key from credentials
+            // Get system language from macOS settings (needed for all UI)
+            const localeIdentifier = Calendar.current.locale ? Calendar.current.locale.identifier : "en_US";
+            const localeFormatted = localeIdentifier.replace("_", "-"); // Convert nl_NL to nl-NL for BCP 47
+            const languageCode = localeIdentifier.split("_")[0];
+            const languageNames = {
+                "en": "English", "nl": "Dutch", "de": "German", "fr": "French",
+                "es": "Spanish", "it": "Italian", "pt": "Portuguese", "ja": "Japanese",
+                "zh": "Chinese", "ko": "Korean", "ru": "Russian", "ar": "Arabic",
+                "sv": "Swedish", "da": "Danish", "no": "Norwegian", "fi": "Finnish",
+                "pl": "Polish", "cs": "Czech", "hu": "Hungarian", "tr": "Turkish",
+                "he": "Hebrew", "th": "Thai", "vi": "Vietnamese", "id": "Indonesian"
+            };
+            const languageName = languageNames[languageCode] || languageCode;
+            console.log("System locale:", localeIdentifier, "Language:", languageName);
+
+            // Localized UI strings
+            const ui = {
+                "en": {
+                    apiKeyLabel: "Anthropic API Key", apiKeyPrompt: "Enter your Anthropic API key (will be stored securely in Keychain)", continue: "Continue", cancel: "Cancel",
+                    credentialsFound: "Anthropic Credentials Found", credentialsFoundMsg: "Stored API key found. What would you like to do?",
+                    useStoredKey: "Use Stored Key", clearReenter: "Clear & Re-enter Key", apiKeyRequired: "API key is required",
+                    analyzeWhich: "Analyze which tasks?", selectedOnly: "Selected tasks only", allIncomplete: "All incomplete tasks", olderThan30: "Tasks older than 30 days",
+                    taskScope: "Task Analysis Scope", noTasksSelected: "No tasks selected. Please select tasks or choose a different scope.",
+                    noTasksFound: "No Tasks Found", noTasksFoundMsg: "No tasks match the selected criteria.",
+                    tooManyTasks: "Too Many Tasks", tooManyTasksMsg: "tasks. Will analyze the first 20 tasks only to avoid timeouts.",
+                    analyzing: "Analyzing Tasks", analyzingMsg: "Sending tasks to AI for analysis...\n\nThis may take 15-30 seconds.",
+                    analysisComplete: "Analysis Complete", noIssuesFound: "No significant issues found! Your tasks look good.",
+                    tasksAnalyzed: "Tasks analyzed", issuesFound: "Issues found", tasksUpdated: "Tasks updated", highSeverityFlagged: "High-severity flagged",
+                    taggedWith: "Tagged with", suggestionsAdded: "Suggestions added to task notes", highSeverityTasksFlagged: "High-severity tasks flagged",
+                    filterByTag: "Filter by tag to review improvements!", error: "Error",
+                    // Note labels
+                    title: "AI IMPROVEMENT SUGGESTION", date: "Date", issueType: "Issue Type", severity: "Severity", suggestion: "SUGGESTION", recommendedAction: "Recommended Action"
+                },
+                "nl": {
+                    apiKeyLabel: "Anthropic API-sleutel", apiKeyPrompt: "Voer je Anthropic API-sleutel in (wordt veilig opgeslagen in Sleutelhanger)", continue: "Doorgaan", cancel: "Annuleren",
+                    credentialsFound: "Anthropic inloggegevens gevonden", credentialsFoundMsg: "Opgeslagen API-sleutel gevonden. Wat wil je doen?",
+                    useStoredKey: "Gebruik opgeslagen sleutel", clearReenter: "Wissen en opnieuw invoeren", apiKeyRequired: "API-sleutel is vereist",
+                    analyzeWhich: "Welke taken analyseren?", selectedOnly: "Alleen geselecteerde taken", allIncomplete: "Alle onvoltooide taken", olderThan30: "Taken ouder dan 30 dagen",
+                    taskScope: "Analysebereik", noTasksSelected: "Geen taken geselecteerd. Selecteer taken of kies een ander bereik.",
+                    noTasksFound: "Geen taken gevonden", noTasksFoundMsg: "Geen taken voldoen aan de criteria.",
+                    tooManyTasks: "Te veel taken", tooManyTasksMsg: "taken. Alleen de eerste 20 taken worden geanalyseerd.",
+                    analyzing: "Taken analyseren", analyzingMsg: "Taken worden naar AI gestuurd voor analyse...\n\nDit kan 15-30 seconden duren.",
+                    analysisComplete: "Analyse voltooid", noIssuesFound: "Geen problemen gevonden! Je taken zien er goed uit.",
+                    tasksAnalyzed: "Taken geanalyseerd", issuesFound: "Problemen gevonden", tasksUpdated: "Taken bijgewerkt", highSeverityFlagged: "Hoge prioriteit gemarkeerd",
+                    taggedWith: "Getagd met", suggestionsAdded: "Suggesties toegevoegd aan taaknota's", highSeverityTasksFlagged: "Taken met hoge prioriteit gemarkeerd",
+                    filterByTag: "Filter op tag om verbeteringen te bekijken!", error: "Fout",
+                    title: "AI VERBETERVOORSTEL", date: "Datum", issueType: "Probleemtype", severity: "Ernst", suggestion: "SUGGESTIE", recommendedAction: "Aanbevolen actie"
+                },
+                "de": {
+                    apiKeyLabel: "Anthropic API-Schlüssel", apiKeyPrompt: "Geben Sie Ihren Anthropic API-Schlüssel ein (wird sicher im Schlüsselbund gespeichert)", continue: "Weiter", cancel: "Abbrechen",
+                    credentialsFound: "Anthropic Anmeldedaten gefunden", credentialsFoundMsg: "Gespeicherter API-Schlüssel gefunden. Was möchten Sie tun?",
+                    useStoredKey: "Gespeicherten Schlüssel verwenden", clearReenter: "Löschen und neu eingeben", apiKeyRequired: "API-Schlüssel erforderlich",
+                    analyzeWhich: "Welche Aufgaben analysieren?", selectedOnly: "Nur ausgewählte Aufgaben", allIncomplete: "Alle unerledigten Aufgaben", olderThan30: "Aufgaben älter als 30 Tage",
+                    taskScope: "Analysebereich", noTasksSelected: "Keine Aufgaben ausgewählt. Bitte wählen Sie Aufgaben oder einen anderen Bereich.",
+                    noTasksFound: "Keine Aufgaben gefunden", noTasksFoundMsg: "Keine Aufgaben entsprechen den Kriterien.",
+                    tooManyTasks: "Zu viele Aufgaben", tooManyTasksMsg: "Aufgaben. Nur die ersten 20 werden analysiert.",
+                    analyzing: "Aufgaben analysieren", analyzingMsg: "Aufgaben werden zur Analyse an KI gesendet...\n\nDies kann 15-30 Sekunden dauern.",
+                    analysisComplete: "Analyse abgeschlossen", noIssuesFound: "Keine Probleme gefunden! Ihre Aufgaben sehen gut aus.",
+                    tasksAnalyzed: "Aufgaben analysiert", issuesFound: "Probleme gefunden", tasksUpdated: "Aufgaben aktualisiert", highSeverityFlagged: "Hohe Priorität markiert",
+                    taggedWith: "Markiert mit", suggestionsAdded: "Vorschläge zu Aufgabennotizen hinzugefügt", highSeverityTasksFlagged: "Aufgaben mit hoher Priorität markiert",
+                    filterByTag: "Nach Tag filtern um Verbesserungen zu sehen!", error: "Fehler",
+                    title: "KI-VERBESSERUNGSVORSCHLAG", date: "Datum", issueType: "Problemtyp", severity: "Schweregrad", suggestion: "VORSCHLAG", recommendedAction: "Empfohlene Aktion"
+                },
+                "fr": {
+                    apiKeyLabel: "Clé API Anthropic", apiKeyPrompt: "Entrez votre clé API Anthropic (sera stockée en sécurité dans le trousseau)", continue: "Continuer", cancel: "Annuler",
+                    credentialsFound: "Identifiants Anthropic trouvés", credentialsFoundMsg: "Clé API enregistrée trouvée. Que voulez-vous faire?",
+                    useStoredKey: "Utiliser la clé enregistrée", clearReenter: "Effacer et ressaisir", apiKeyRequired: "Clé API requise",
+                    analyzeWhich: "Quelles tâches analyser?", selectedOnly: "Tâches sélectionnées uniquement", allIncomplete: "Toutes les tâches incomplètes", olderThan30: "Tâches de plus de 30 jours",
+                    taskScope: "Portée de l'analyse", noTasksSelected: "Aucune tâche sélectionnée. Veuillez sélectionner des tâches ou choisir une autre portée.",
+                    noTasksFound: "Aucune tâche trouvée", noTasksFoundMsg: "Aucune tâche ne correspond aux critères.",
+                    tooManyTasks: "Trop de tâches", tooManyTasksMsg: "tâches. Seules les 20 premières seront analysées.",
+                    analyzing: "Analyse des tâches", analyzingMsg: "Envoi des tâches à l'IA pour analyse...\n\nCela peut prendre 15-30 secondes.",
+                    analysisComplete: "Analyse terminée", noIssuesFound: "Aucun problème trouvé! Vos tâches sont bien définies.",
+                    tasksAnalyzed: "Tâches analysées", issuesFound: "Problèmes trouvés", tasksUpdated: "Tâches mises à jour", highSeverityFlagged: "Haute priorité signalée",
+                    taggedWith: "Étiqueté avec", suggestionsAdded: "Suggestions ajoutées aux notes", highSeverityTasksFlagged: "Tâches haute priorité signalées",
+                    filterByTag: "Filtrez par tag pour voir les améliorations!", error: "Erreur",
+                    title: "SUGGESTION D'AMÉLIORATION IA", date: "Date", issueType: "Type de problème", severity: "Gravité", suggestion: "SUGGESTION", recommendedAction: "Action recommandée"
+                },
+                "es": {
+                    apiKeyLabel: "Clave API Anthropic", apiKeyPrompt: "Ingresa tu clave API de Anthropic (se guardará de forma segura)", continue: "Continuar", cancel: "Cancelar",
+                    credentialsFound: "Credenciales Anthropic encontradas", credentialsFoundMsg: "Clave API guardada encontrada. ¿Qué deseas hacer?",
+                    useStoredKey: "Usar clave guardada", clearReenter: "Borrar y reingresar", apiKeyRequired: "Se requiere clave API",
+                    analyzeWhich: "¿Qué tareas analizar?", selectedOnly: "Solo tareas seleccionadas", allIncomplete: "Todas las tareas incompletas", olderThan30: "Tareas de más de 30 días",
+                    taskScope: "Alcance del análisis", noTasksSelected: "No hay tareas seleccionadas. Selecciona tareas o elige otro alcance.",
+                    noTasksFound: "No se encontraron tareas", noTasksFoundMsg: "Ninguna tarea coincide con los criterios.",
+                    tooManyTasks: "Demasiadas tareas", tooManyTasksMsg: "tareas. Solo se analizarán las primeras 20.",
+                    analyzing: "Analizando tareas", analyzingMsg: "Enviando tareas a la IA para análisis...\n\nEsto puede tomar 15-30 segundos.",
+                    analysisComplete: "Análisis completado", noIssuesFound: "¡No se encontraron problemas! Tus tareas se ven bien.",
+                    tasksAnalyzed: "Tareas analizadas", issuesFound: "Problemas encontrados", tasksUpdated: "Tareas actualizadas", highSeverityFlagged: "Alta prioridad marcada",
+                    taggedWith: "Etiquetado con", suggestionsAdded: "Sugerencias añadidas a las notas", highSeverityTasksFlagged: "Tareas de alta prioridad marcadas",
+                    filterByTag: "¡Filtra por etiqueta para ver mejoras!", error: "Error",
+                    title: "SUGERENCIA DE MEJORA IA", date: "Fecha", issueType: "Tipo de problema", severity: "Gravedad", suggestion: "SUGERENCIA", recommendedAction: "Acción recomendada"
+                }
+            };
+            const t = ui[languageCode] || ui["en"];
+
+            // Get Anthropic API key from credentials
             let apiKey = null;
-            const storedCreds = credentials.read("openai");
+            const storedCreds = credentials.read("anthropic");
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
-            
+
             if (!storedCreds || !storedCreds.password) {
                 // Prompt for API key if not stored
                 const form = new Form();
-                const apiKeyField = new Form.Field.Password(
-                    "apiKey",
-                    "OpenAI API Key",
-                    null
-                );
+                const apiKeyField = new Form.Field.Password("apiKey", t.apiKeyLabel, null);
                 form.addField(apiKeyField);
 
-                const formPrompt = await form.show(
-                    "Enter your OpenAI API key (will be stored securely in Keychain)",
-                    "Continue"
-                );
-
+                const formPrompt = await form.show(t.apiKeyPrompt, t.continue);
                 apiKey = formPrompt.values.apiKey;
 
                 if (!apiKey) {
-                    throw new Error("API key is required");
+                    throw new Error(t.apiKeyRequired);
                 }
 
                 console.log("Storing new API key in Keychain...");
-                // Store the API key
-                credentials.write("openai", "api-key", apiKey);
+                credentials.write("anthropic", "api-key", apiKey);
                 console.log("API key stored successfully");
             } else {
                 // Credentials exist - offer to use or clear them
-                const alert = new Alert(
-                    "OpenAI Credentials Found",
-                    "Stored API key found. What would you like to do?"
-                );
-                alert.addOption("Use Stored Key");
-                alert.addOption("Clear & Re-enter Key");
-                alert.addOption("Cancel");
+                const alert = new Alert(t.credentialsFound, t.credentialsFoundMsg);
+                alert.addOption(t.useStoredKey);
+                alert.addOption(t.clearReenter);
+                alert.addOption(t.cancel);
 
                 const choice = await alert.show();
 
                 if (choice === 0) {
-                    // Use stored key
                     apiKey = storedCreds.password;
                     console.log("Using stored API key");
                 } else if (choice === 1) {
-                    // Clear and re-enter
                     console.log("Clearing stored credentials...");
-                    credentials.remove("openai");
+                    credentials.remove("anthropic");
                     console.log("Credentials cleared");
 
-                    // Prompt for new key
                     const form = new Form();
-                    const apiKeyField = new Form.Field.Password(
-                        "apiKey",
-                        "OpenAI API Key",
-                        null
-                    );
+                    const apiKeyField = new Form.Field.Password("apiKey", t.apiKeyLabel, null);
                     form.addField(apiKeyField);
 
-                    const formPrompt = await form.show(
-                        "Enter your OpenAI API key (will be stored securely in Keychain)",
-                        "Continue"
-                    );
-
+                    const formPrompt = await form.show(t.apiKeyPrompt, t.continue);
                     apiKey = formPrompt.values.apiKey;
 
                     if (!apiKey) {
-                        throw new Error("API key is required");
+                        throw new Error(t.apiKeyRequired);
                     }
 
                     console.log("Storing new API key in Keychain...");
-                    credentials.write("openai", "api-key", apiKey);
+                    credentials.write("anthropic", "api-key", apiKey);
                     console.log("API key stored successfully");
                 } else {
-                    // Cancel
                     console.log("User cancelled");
                     return;
                 }
             }
-            
+
             // Get tasks to analyze
             let tasksToAnalyze = [];
-
             console.log("Selection check - tasks selected:", selection.tasks.length);
 
             if (selection.tasks.length > 0) {
@@ -113,25 +184,22 @@
                 // Analyze all incomplete tasks if none selected
                 const form = new Form();
                 const scopeField = new Form.Field.Option(
-                    "scope",
-                    "Analyze which tasks?",
-                    ["Selected tasks only", "All incomplete tasks", "Tasks older than 30 days"],
-                    null,
-                    "All incomplete tasks"
+                    "scope", t.analyzeWhich,
+                    [t.selectedOnly, t.allIncomplete, t.olderThan30],
+                    null, t.allIncomplete
                 );
                 form.addField(scopeField);
-                
-                const formPrompt = await form.show("Task Analysis Scope", "Continue");
+
+                const formPrompt = await form.show(t.taskScope, t.continue);
                 const scope = formPrompt.values.scope;
                 console.log("User selected scope:", scope);
 
-                if (scope === "Selected tasks only") {
-                    throw new Error("No tasks selected. Please select tasks or choose a different scope.");
-                } else if (scope === "All incomplete tasks") {
+                if (scope === t.selectedOnly) {
+                    throw new Error(t.noTasksSelected);
+                } else if (scope === t.allIncomplete) {
                     tasksToAnalyze = flattenedTasks.filter(task => !task.completed && !task.dropped);
                     console.log("Analyzing all incomplete tasks:", tasksToAnalyze.length);
                 } else {
-                    // Tasks older than 30 days
                     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
                     tasksToAnalyze = flattenedTasks.filter(task => {
                         return !task.completed && !task.dropped && task.added && task.added < thirtyDaysAgo;
@@ -139,10 +207,10 @@
                     console.log("Analyzing tasks older than 30 days:", tasksToAnalyze.length);
                 }
             }
-            
+
             if (tasksToAnalyze.length === 0) {
                 console.log("No tasks found matching criteria");
-                new Alert("No Tasks Found", "No tasks match the selected criteria.").show();
+                new Alert(t.noTasksFound, t.noTasksFoundMsg).show();
                 return;
             }
 
@@ -151,22 +219,18 @@
             // Limit to 20 tasks to avoid timeout issues
             if (tasksToAnalyze.length > 20) {
                 console.log("Too many tasks, limiting to 20");
-                const alert = new Alert(
-                    "Too Many Tasks",
-                    `Found ${tasksToAnalyze.length} tasks. Will analyze the first 20 tasks only to avoid timeouts.`
-                );
-                alert.addOption("Continue");
-                alert.addOption("Cancel");
+                const alert = new Alert(t.tooManyTasks, `${tasksToAnalyze.length} ${t.tooManyTasksMsg}`);
+                alert.addOption(t.continue);
+                alert.addOption(t.cancel);
                 const choice = await alert.show();
                 if (choice === 1) {
                     console.log("User cancelled due to task limit");
                     return;
                 }
-
                 tasksToAnalyze = tasksToAnalyze.slice(0, 20);
                 console.log("Limited to 20 tasks");
             }
-            
+
             // Prepare task data for AI analysis
             console.log("Preparing task data for AI analysis...");
             const taskData = tasksToAnalyze.map((task, index) => {
@@ -183,14 +247,15 @@
                 };
             });
             console.log("Task data prepared, sample:", JSON.stringify(taskData[0], null, 2));
-            
-            // Call OpenAI API
-            console.log("Preparing OpenAI API request...");
+
+            // Call Claude API
+            console.log("Preparing Claude API request...");
             const request = new URL.FetchRequest();
-            request.url = URL.fromString("https://api.openai.com/v1/chat/completions");
+            request.url = URL.fromString("https://api.anthropic.com/v1/messages");
             request.method = "POST";
             request.headers = {
-                "Authorization": `Bearer ${apiKey}`,
+                "x-api-key": apiKey,
+                "anthropic-version": "2023-06-01",
                 "Content-Type": "application/json"
             };
 
@@ -207,36 +272,40 @@ For each problematic task, provide:
 - Specific, actionable suggestion for improvement
 - Recommended action (clarify/break-down/defer/delete/add-context)
 
-IMPORTANT: Return a JSON object with an "analysis" array. Each item must have: index, issue, severity, suggestion, action.
+IMPORTANT: Write all suggestions in ${languageName}. The "suggestion" field must be in ${languageName}.
+
+CRITICAL: You must respond with ONLY a valid JSON object. No other text before or after.
+Return a JSON object with an "analysis" array. Each item must have: index, issue, severity, suggestion, action.
 Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high", "suggestion": "...", "action": "clarify"}]}`;
 
             const requestBody = {
-                model: "gpt-5-2025-08-07",
+                model: "claude-sonnet-4-20250514",
+                max_tokens: 4096,
+                system: systemPrompt,
                 messages: [
-                    { role: "system", content: systemPrompt },
                     { role: "user", content: `Analyze these tasks:\n${JSON.stringify(taskData, null, 2)}` }
-                ],
-                response_format: { type: "json_object" }
+                ]
             };
 
             request.bodyString = JSON.stringify(requestBody);
 
-            console.log("=== OpenAI API Request ===");
+            console.log("=== Claude API Request ===");
             console.log("URL:", request.url.string);
             console.log("Method:", request.method);
             console.log("API Key (first 20 chars):", apiKey.substring(0, 20) + "...");
             console.log("Headers:", JSON.stringify({
-                "Authorization": "Bearer [REDACTED]",
+                "x-api-key": "[REDACTED]",
+                "anthropic-version": "2023-06-01",
                 "Content-Type": "application/json"
             }, null, 2));
             console.log("Request Body:", JSON.stringify(requestBody, null, 2));
-            
+
             // Show progress
-            const progress = new Alert("Analyzing Tasks", "Sending tasks to AI for analysis...\n\nThis may take 30-60 seconds for GPT-5.");
+            const progress = new Alert(t.analyzing, t.analyzingMsg);
             progress.show(() => {});
 
-            console.log("Sending request to OpenAI...");
-            console.log("Note: GPT-5 can take 30-60 seconds to respond");
+            console.log("Sending request to Claude...");
+            console.log("Note: Claude typically responds in 15-30 seconds");
 
             let response;
             try {
@@ -246,7 +315,7 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
                 throw new Error(`Network request failed: ${fetchError.message || 'Request timed out'}. Try analyzing fewer tasks (5-10) or check your internet connection.`);
             }
 
-            console.log("=== OpenAI API Response ===");
+            console.log("=== Claude API Response ===");
             console.log("Status Code:", response.statusCode);
             console.log("Response Body:", response.bodyString);
 
@@ -259,16 +328,31 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
             const data = JSON.parse(response.bodyString);
             console.log("Parsed response data:", JSON.stringify(data, null, 2));
 
-            const aiResponse = JSON.parse(data.choices[0].message.content);
+            // Claude returns content array with text blocks
+            const textContent = data.content[0].text;
+
+            // Parse JSON from Claude response (with fallback for non-JSON wrapped responses)
+            let aiResponse;
+            try {
+                aiResponse = JSON.parse(textContent);
+            } catch (e) {
+                // Try to extract JSON from the response if it contains extra text
+                const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    aiResponse = JSON.parse(jsonMatch[0]);
+                } else {
+                    throw new Error("Could not parse JSON from Claude response");
+                }
+            }
             console.log("Parsed AI response:", JSON.stringify(aiResponse, null, 2));
-            
-            // Process results - GPT-5 may return different field names
+
+            // Process results - Claude may return different field names
             const issues = aiResponse.results || aiResponse.issues || aiResponse.analysis || [];
             console.log("Issues found:", issues.length);
 
             if (issues.length === 0) {
                 console.log("No issues found, analysis complete");
-                new Alert("Analysis Complete", "No significant issues found! Your tasks look good.").show();
+                new Alert(t.analysisComplete, t.noIssuesFound).show();
                 return;
             }
 
@@ -281,7 +365,7 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
             } else {
                 console.log("Found existing 'AI: Needs Improvement' tag");
             }
-            
+
             // Apply findings to tasks
             console.log("Applying findings to tasks...");
             let updatedCount = 0;
@@ -297,19 +381,19 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
 
                 console.log(`Updating task: "${task.name}"`);
 
-                // Build a nicely formatted analysis note
+                // Build a nicely formatted analysis note (localized)
                 const analysisNote = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🤖 AI IMPROVEMENT SUGGESTION
+🤖 ${t.title}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📅 Date: ${new Date().toLocaleDateString()}
+📅 ${t.date}: ${new Date().toLocaleDateString(localeFormatted)}
 
-⚠️  Issue Type: ${issue.issue.toUpperCase()}
-📊 Severity: ${issue.severity.toUpperCase()}
+⚠️  ${t.issueType}: ${issue.issue.toUpperCase()}
+📊 ${t.severity}: ${issue.severity.toUpperCase()}
 
-💡 SUGGESTION:
+💡 ${t.suggestion}:
 ${issue.suggestion}
 
-🎯 Recommended Action: ${issue.action}
+🎯 ${t.recommendedAction}: ${issue.action}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
@@ -329,17 +413,17 @@ ${issue.suggestion}
                 updatedCount++;
             });
             console.log(`Updated ${updatedCount} tasks, flagged ${flaggedCount} high-severity tasks`);
-            
+
             // Show summary
-            const summary = `Analysis Complete!\n\n` +
-                `Tasks analyzed: ${tasksToAnalyze.length}\n` +
-                `Issues found: ${issues.length}\n` +
-                `Tasks updated: ${updatedCount}\n` +
-                `High-severity flagged: ${flaggedCount}\n\n` +
-                `✅ Tagged with "AI: Needs Improvement"\n` +
-                `📝 Suggestions added to task notes\n` +
-                `🚩 High-severity tasks flagged\n\n` +
-                `Filter by tag to review improvements!`;
+            const summary = `${t.analysisComplete}!\n\n` +
+                `${t.tasksAnalyzed}: ${tasksToAnalyze.length}\n` +
+                `${t.issuesFound}: ${issues.length}\n` +
+                `${t.tasksUpdated}: ${updatedCount}\n` +
+                `${t.highSeverityFlagged}: ${flaggedCount}\n\n` +
+                `✅ ${t.taggedWith} "AI: Needs Improvement"\n` +
+                `📝 ${t.suggestionsAdded}\n` +
+                `🚩 ${t.highSeverityTasksFlagged}\n\n` +
+                `${t.filterByTag}`;
 
             console.log("=== Analysis Summary ===");
             console.log(summary);
@@ -352,14 +436,14 @@ ${issue.suggestion}
             console.error("Error message:", error.message);
             console.error("Error stack:", error.stack);
             console.error("=== End Debug Log ===");
-            new Alert("Error", error.message).show();
+            new Alert(t?.error || "Error", error.message).show();
         }
     });
-    
+
     action.validate = function(selection, sender) {
         return true; // Always available
     };
-    
+
     return action;
 })();
 
