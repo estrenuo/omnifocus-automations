@@ -1,0 +1,96 @@
+/*{
+    "type": "action",
+    "targets": ["omnifocus"],
+    "author": "OmniFocus Automation",
+    "identifier": "com.omnifocus.headless-settings",
+    "version": "1.0.0",
+    "description": "Configure headless mode for all automation plugins (run without dialogs)",
+    "label": "Headless Mode Settings",
+    "shortLabel": "Headless Settings",
+    "paletteLabel": "Configure Headless Mode",
+    "image": "gearshape"
+}*/
+(() => {
+    const action = new PlugIn.Action(async function(selection, sender) {
+        try {
+            console.log("=== Headless Settings Debug Log ===");
+
+            // Plugin preference identifiers
+            const pluginIds = [
+                "com.omnifocus.ai-task-clarifier",
+                "com.omnifocus.ai-task-breakdown",
+                "com.omnifocus.jira-import"
+            ];
+
+            // Read current state from the clarifier (representative)
+            const clarifierPrefs = new Preferences("com.omnifocus.ai-task-clarifier");
+            const currentHeadless = clarifierPrefs.readBoolean("headlessMode") || false;
+            const currentScope = clarifierPrefs.readString("defaultScope") || "all";
+
+            console.log("Current headless mode:", currentHeadless);
+            console.log("Current default scope:", currentScope);
+
+            // Build settings form
+            const form = new Form();
+
+            const headlessField = new Form.Field.Checkbox(
+                "headlessMode",
+                "Enable headless mode (skip all dialogs)",
+                currentHeadless
+            );
+
+            const scopeField = new Form.Field.Option(
+                "defaultScope",
+                "Default task scope (AI Clarifier)",
+                ["all", "selected", "stale"],
+                ["All incomplete tasks", "Selected tasks only", "Tasks older than 30 days"],
+                currentScope === "stale" ? 2 : currentScope === "selected" ? 1 : 0
+            );
+
+            form.addField(headlessField);
+            form.addField(scopeField);
+
+            const result = await form.show("Configure headless mode for all plugins.\n\nWhen enabled, plugins run without any dialogs.\nCredentials must be stored in Keychain first (run each plugin once interactively).", "Save");
+
+            const newHeadless = result.values.headlessMode;
+            const newScope = result.values.defaultScope;
+
+            console.log("New headless mode:", newHeadless);
+            console.log("New default scope:", newScope);
+
+            // Apply to all plugins
+            for (const pluginId of pluginIds) {
+                const prefs = new Preferences(pluginId);
+                prefs.write("headlessMode", newHeadless);
+                console.log(`Set headlessMode=${newHeadless} for ${pluginId}`);
+            }
+
+            // Scope only applies to clarifier
+            clarifierPrefs.write("defaultScope", newScope);
+            console.log(`Set defaultScope=${newScope} for clarifier`);
+
+            // Show confirmation
+            const statusText = newHeadless ? "ON" : "OFF";
+            const scopeLabels = { "all": "All incomplete tasks", "selected": "Selected tasks only", "stale": "Tasks older than 30 days" };
+            const summary = `Headless mode: ${statusText}\n` +
+                `Default scope (Clarifier): ${scopeLabels[newScope]}\n\n` +
+                `Settings applied to all plugins.\n` +
+                (newHeadless ? "Make sure credentials are stored in Keychain by running each plugin once interactively before using headless mode." : "Plugins will show dialogs as usual.");
+
+            console.log("=== Settings saved ===");
+            console.log(summary);
+
+            new Alert("Headless Mode Settings", summary).show();
+
+        } catch (error) {
+            console.error("Error:", error.message);
+            new Alert("Error", error.message).show();
+        }
+    });
+
+    action.validate = function(selection, sender) {
+        return true;
+    };
+
+    return action;
+})();

@@ -19,13 +19,19 @@
             console.log("=== JIRA Import Debug Log ===");
             console.log("Starting plugin execution...");
 
+            // Headless mode: skip all dialogs, use stored credentials and defaults
+            const prefs = new Preferences("com.omnifocus.jira-import");
+            const headless = prefs.readBoolean("headlessMode");
+            console.log("Headless mode:", headless);
+
             // Get JIRA credentials
             let jiraConfig = null;
             const storedCreds = credentials.read("jira");
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
             
             if (!storedCreds) {
-                // Prompt for JIRA configuration
+                // No stored credentials - always prompt (even in headless mode, credentials must be entered at least once)
+                console.log("No credentials found, prompting user (required for first run)...");
                 const form = new Form();
 
                 const domainField = new Form.Field.String(
@@ -107,8 +113,27 @@
                 credentials.write("jira-settings", "config", JSON.stringify(settings));
                 console.log("Credentials stored successfully");
 
+            } else if (headless) {
+                // Headless mode with stored credentials - use silently
+                console.log("Headless: loading stored credentials...");
+                const settingsData = credentials.read("jira-settings");
+                const settings = settingsData ? JSON.parse(settingsData.password) : {};
+
+                jiraConfig = {
+                    domain: settings.domain,
+                    email: storedCreds.user,
+                    apiToken: storedCreds.password,
+                    projectKey: settings.projectKey || ""
+                };
+
+                console.log("Headless: loaded config:", {
+                    domain: jiraConfig.domain,
+                    email: jiraConfig.email,
+                    apiToken: "[REDACTED]",
+                    projectKey: jiraConfig.projectKey || "(none)"
+                });
             } else {
-                // Credentials exist - offer to use or clear them
+                // Interactive mode - offer to use or clear them
                 const settingsData = credentials.read("jira-settings");
                 const settings = settingsData ? JSON.parse(settingsData.password) : {};
 
@@ -285,8 +310,10 @@
             console.log("Request Body:", JSON.stringify(requestBody, null, 2));
             
             // Show progress
-            const progress = new Alert("Importing JIRA Issues", "Fetching issues from JIRA...");
-            progress.show(() => {});
+            if (!headless) {
+                const progress = new Alert("Importing JIRA Issues", "Fetching issues from JIRA...");
+                progress.show(() => {});
+            }
 
             console.log("Sending request to JIRA...");
             const response = await request.fetch();
@@ -309,7 +336,9 @@
             
             if (issues.length === 0) {
                 console.log("No issues found");
-                new Alert("No Issues Found", "No open JIRA issues found matching the criteria.").show();
+                if (!headless) {
+                    new Alert("No Issues Found", "No open JIRA issues found matching the criteria.").show();
+                }
                 return;
             }
 
@@ -442,14 +471,18 @@
             console.log(summary);
             console.log("=== End Debug Log ===");
 
-            new Alert("JIRA Import", summary).show();
+            if (!headless) {
+                new Alert("JIRA Import", summary).show();
+            }
 
         } catch (error) {
             console.error("=== ERROR ===");
             console.error("Error message:", error.message);
             console.error("Error stack:", error.stack);
             console.error("=== End Debug Log ===");
-            new Alert("Error", error.message).show();
+            if (!headless) {
+                new Alert("Error", error.message).show();
+            }
         }
     });
     

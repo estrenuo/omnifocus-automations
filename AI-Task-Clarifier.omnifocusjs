@@ -19,6 +19,12 @@
             console.log("=== AI Task Clarifier Debug Log ===");
             console.log("Starting plugin execution...");
 
+            // Headless mode: skip all dialogs, use stored credentials and defaults
+            const prefs = new Preferences("com.omnifocus.ai-task-clarifier");
+            const headless = prefs.readBoolean("headlessMode");
+            const defaultScope = prefs.readString("defaultScope") || "all"; // "all" | "selected" | "stale"
+            console.log("Headless mode:", headless, "Default scope:", defaultScope);
+
             // Get system language from macOS settings (needed for all UI)
             const localeIdentifier = Calendar.current.locale ? Calendar.current.locale.identifier : "en_US";
             const localeFormatted = localeIdentifier.replace("_", "-"); // Convert nl_NL to nl-NL for BCP 47
@@ -121,7 +127,8 @@
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
 
             if (!storedCreds || !storedCreds.password) {
-                // Prompt for API key if not stored
+                // No stored credentials - always prompt (even in headless mode, credentials must be entered at least once)
+                console.log("No credentials found, prompting user (required for first run)...");
                 const form = new Form();
                 const apiKeyField = new Form.Field.Password("apiKey", t.apiKeyLabel, null);
                 form.addField(apiKeyField);
@@ -136,8 +143,12 @@
                 console.log("Storing new API key in Keychain...");
                 credentials.write("anthropic", "api-key", apiKey);
                 console.log("API key stored successfully");
+            } else if (headless) {
+                // Headless mode with stored credentials - use silently
+                apiKey = storedCreds.password;
+                console.log("Headless: using stored API key");
             } else {
-                // Credentials exist - offer to use or clear them
+                // Interactive mode - offer to use or clear them
                 const alert = new Alert(t.credentialsFound, t.credentialsFoundMsg);
                 alert.addOption(t.useStoredKey);
                 alert.addOption(t.clearReenter);
@@ -180,8 +191,23 @@
             if (selection.tasks.length > 0) {
                 tasksToAnalyze = selection.tasks.filter(task => !task.completed);
                 console.log("Using selected tasks, filtered to incomplete:", tasksToAnalyze.length);
+            } else if (headless) {
+                // Headless mode - use defaultScope preference
+                console.log("Headless: using default scope:", defaultScope);
+                if (defaultScope === "selected") {
+                    throw new Error(t.noTasksSelected);
+                } else if (defaultScope === "stale") {
+                    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+                    tasksToAnalyze = flattenedTasks.filter(task => {
+                        return !task.completed && !task.dropped && task.added && task.added < thirtyDaysAgo;
+                    });
+                    console.log("Headless: analyzing tasks older than 30 days:", tasksToAnalyze.length);
+                } else {
+                    tasksToAnalyze = flattenedTasks.filter(task => !task.completed && !task.dropped);
+                    console.log("Headless: analyzing all incomplete tasks:", tasksToAnalyze.length);
+                }
             } else {
-                // Analyze all incomplete tasks if none selected
+                // Interactive mode - show scope selection form
                 const form = new Form();
                 const scopeField = new Form.Field.Option(
                     "scope", t.analyzeWhich,
@@ -210,7 +236,9 @@
 
             if (tasksToAnalyze.length === 0) {
                 console.log("No tasks found matching criteria");
-                new Alert(t.noTasksFound, t.noTasksFoundMsg).show();
+                if (!headless) {
+                    new Alert(t.noTasksFound, t.noTasksFoundMsg).show();
+                }
                 return;
             }
 
@@ -219,13 +247,17 @@
             // Limit to 20 tasks to avoid timeout issues
             if (tasksToAnalyze.length > 20) {
                 console.log("Too many tasks, limiting to 20");
-                const alert = new Alert(t.tooManyTasks, `${tasksToAnalyze.length} ${t.tooManyTasksMsg}`);
-                alert.addOption(t.continue);
-                alert.addOption(t.cancel);
-                const choice = await alert.show();
-                if (choice === 1) {
-                    console.log("User cancelled due to task limit");
-                    return;
+                if (!headless) {
+                    const alert = new Alert(t.tooManyTasks, `${tasksToAnalyze.length} ${t.tooManyTasksMsg}`);
+                    alert.addOption(t.continue);
+                    alert.addOption(t.cancel);
+                    const choice = await alert.show();
+                    if (choice === 1) {
+                        console.log("User cancelled due to task limit");
+                        return;
+                    }
+                } else {
+                    console.log("Headless: auto-continuing with first 20 tasks");
                 }
                 tasksToAnalyze = tasksToAnalyze.slice(0, 20);
                 console.log("Limited to 20 tasks");
@@ -301,8 +333,10 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
             console.log("Request Body:", JSON.stringify(requestBody, null, 2));
 
             // Show progress
-            const progress = new Alert(t.analyzing, t.analyzingMsg);
-            progress.show(() => {});
+            if (!headless) {
+                const progress = new Alert(t.analyzing, t.analyzingMsg);
+                progress.show(() => {});
+            }
 
             console.log("Sending request to Claude...");
             console.log("Note: Claude typically responds in 15-30 seconds");
@@ -352,7 +386,9 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
 
             if (issues.length === 0) {
                 console.log("No issues found, analysis complete");
-                new Alert(t.analysisComplete, t.noIssuesFound).show();
+                if (!headless) {
+                    new Alert(t.analysisComplete, t.noIssuesFound).show();
+                }
                 return;
             }
 
@@ -429,14 +465,18 @@ ${issue.suggestion}
             console.log(summary);
             console.log("=== End Debug Log ===");
 
-            new Alert("AI Task Clarifier", summary).show();
+            if (!headless) {
+                new Alert("AI Task Clarifier", summary).show();
+            }
 
         } catch (error) {
             console.error("=== ERROR ===");
             console.error("Error message:", error.message);
             console.error("Error stack:", error.stack);
             console.error("=== End Debug Log ===");
-            new Alert(t?.error || "Error", error.message).show();
+            if (!headless) {
+                new Alert(t?.error || "Error", error.message).show();
+            }
         }
     });
 
