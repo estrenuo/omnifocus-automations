@@ -19,6 +19,11 @@
             console.log("=== AI Task Breakdown Debug Log ===");
             console.log("Starting plugin execution...");
 
+            // Headless mode: skip all dialogs, use stored credentials and defaults
+            const prefs = new Preferences("com.omnifocus.ai-task-breakdown");
+            const headless = prefs.readBoolean("headlessMode");
+            console.log("Headless mode:", headless);
+
             // Get system language from macOS settings (needed for all UI)
             const localeIdentifier = Calendar.current.locale ? Calendar.current.locale.identifier : "en_US";
             const localeFormatted = localeIdentifier.replace("_", "-"); // Convert nl_NL to nl-NL for BCP 47
@@ -116,7 +121,8 @@
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
 
             if (!storedCreds || !storedCreds.password) {
-                // Prompt for API key if not stored
+                // No stored credentials - always prompt (even in headless mode, credentials must be entered at least once)
+                console.log("No credentials found, prompting user (required for first run)...");
                 const form = new Form();
                 const apiKeyField = new Form.Field.Password("apiKey", t.apiKeyLabel, null);
                 form.addField(apiKeyField);
@@ -131,8 +137,12 @@
                 console.log("Storing new API key in Keychain...");
                 credentials.write("anthropic", "api-key", apiKey);
                 console.log("API key stored successfully");
+            } else if (headless) {
+                // Headless mode with stored credentials - use silently
+                apiKey = storedCreds.password;
+                console.log("Headless: using stored API key");
             } else {
-                // Credentials exist - offer to use or clear them
+                // Interactive mode - offer to use or clear them
                 const alert = new Alert(t.credentialsFound, t.credentialsFoundMsg);
                 alert.addOption(t.useStoredKey);
                 alert.addOption(t.clearReenter);
@@ -170,7 +180,10 @@
 
             // Get selected tasks
             if (selection.tasks.length === 0) {
-                new Alert(t.noTasksSelected, t.noTasksSelectedMsg).show();
+                console.log("No tasks selected");
+                if (!headless) {
+                    new Alert(t.noTasksSelected, t.noTasksSelectedMsg).show();
+                }
                 return;
             }
 
@@ -178,20 +191,27 @@
             console.log("Tasks selected:", tasksToBreakdown.length);
 
             if (tasksToBreakdown.length === 0) {
-                new Alert(t.noIncompleteTasks, t.noIncompleteTasksMsg).show();
+                console.log("No incomplete tasks found");
+                if (!headless) {
+                    new Alert(t.noIncompleteTasks, t.noIncompleteTasksMsg).show();
+                }
                 return;
             }
 
             // Limit to 5 tasks to avoid timeouts
             if (tasksToBreakdown.length > 5) {
                 console.log("Too many tasks, limiting to 5");
-                const alert = new Alert(t.tooManyTasks, `${tasksToBreakdown.length} ${t.tooManyTasksMsg}`);
-                alert.addOption(t.continue);
-                alert.addOption(t.cancel);
-                const choice = await alert.show();
-                if (choice === 1) {
-                    console.log("User cancelled due to task limit");
-                    return;
+                if (!headless) {
+                    const alert = new Alert(t.tooManyTasks, `${tasksToBreakdown.length} ${t.tooManyTasksMsg}`);
+                    alert.addOption(t.continue);
+                    alert.addOption(t.cancel);
+                    const choice = await alert.show();
+                    if (choice === 1) {
+                        console.log("User cancelled due to task limit");
+                        return;
+                    }
+                } else {
+                    console.log("Headless: auto-continuing with first 5 tasks");
                 }
                 tasksToBreakdown.splice(5);
                 console.log("Limited to 5 tasks");
@@ -269,8 +289,10 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
             console.log("Request Body:", JSON.stringify(requestBody, null, 2));
 
             // Show progress
-            const progress = new Alert(t.breakingDown, t.breakingDownMsg);
-            progress.show(() => {});
+            if (!headless) {
+                const progress = new Alert(t.breakingDown, t.breakingDownMsg);
+                progress.show(() => {});
+            }
 
             console.log("Sending request to Claude...");
             console.log("Note: Claude typically responds in 15-30 seconds");
@@ -320,7 +342,9 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
 
             if (breakdowns.length === 0) {
                 console.log("No breakdowns found");
-                new Alert(t.noBreakdowns, t.noBreakdownsMsg).show();
+                if (!headless) {
+                    new Alert(t.noBreakdowns, t.noBreakdownsMsg).show();
+                }
                 return;
             }
 
@@ -390,14 +414,18 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
             console.log(summary);
             console.log("=== End Debug Log ===");
 
-            new Alert("AI Task Breakdown", summary).show();
+            if (!headless) {
+                new Alert("AI Task Breakdown", summary).show();
+            }
 
         } catch (error) {
             console.error("=== ERROR ===");
             console.error("Error message:", error.message);
             console.error("Error stack:", error.stack);
             console.error("=== End Debug Log ===");
-            new Alert(t?.error || "Error", error.message).show();
+            if (!headless) {
+                new Alert(t?.error || "Error", error.message).show();
+            }
         }
     });
 
