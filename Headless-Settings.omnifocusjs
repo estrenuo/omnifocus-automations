@@ -44,7 +44,7 @@
                 "Default task scope (AI Clarifier)",
                 ["all", "selected", "stale"],
                 ["All incomplete tasks", "Selected tasks only", "Tasks older than 30 days"],
-                currentScope === "stale" ? 2 : currentScope === "selected" ? 1 : 0
+                currentScope
             );
 
             form.addField(headlessField);
