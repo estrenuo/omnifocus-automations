@@ -3,8 +3,8 @@
     "targets": ["omnifocus"],
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.ai-task-clarifier",
-    "version": "1.8.0",
-    "description": "Analyzes tasks and projects using OpenAI GPT-5 to identify vague, non-actionable, or problematic items and provides improvement suggestions",
+    "version": "1.9.0",
+    "description": "Analyzes tasks and projects using AI to identify vague, non-actionable, or problematic items and provides improvement suggestions",
     "label": "AI Task Clarifier",
     "shortLabel": "AI Clarifier",
     "paletteLabel": "Analyze Tasks with AI",
@@ -13,35 +13,167 @@
 (() => {
     const credentials = new Credentials();
 
+    const AI_PROVIDERS = {
+        chatgpt: {
+            label: "ChatGPT (OpenAI)",
+            credentialService: "openai",
+            buildRequest(apiKey, systemPrompt, userMessage) {
+                const request = new URL.FetchRequest();
+                request.url = URL.fromString("https://api.openai.com/v1/chat/completions");
+                request.method = "POST";
+                request.headers = {
+                    "Authorization": `Bearer ${apiKey}`,
+                    "Content-Type": "application/json"
+                };
+                request.bodyString = JSON.stringify({
+                    model: "gpt-5-2025-08-07",
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: userMessage }
+                    ],
+                    response_format: { type: "json_object" }
+                });
+                return request;
+            },
+            parseResponse(responseBody) {
+                const data = JSON.parse(responseBody);
+                return JSON.parse(data.choices[0].message.content);
+            }
+        },
+        claude: {
+            label: "Claude (Anthropic)",
+            credentialService: "anthropic",
+            buildRequest(apiKey, systemPrompt, userMessage) {
+                const request = new URL.FetchRequest();
+                request.url = URL.fromString("https://api.anthropic.com/v1/messages");
+                request.method = "POST";
+                request.headers = {
+                    "x-api-key": apiKey,
+                    "anthropic-version": "2023-06-01",
+                    "Content-Type": "application/json"
+                };
+                request.bodyString = JSON.stringify({
+                    model: "claude-sonnet-4-20250514",
+                    max_tokens: 4096,
+                    system: systemPrompt + "\n\nIMPORTANT: Respond with only a valid JSON object, no other text.",
+                    messages: [
+                        { role: "user", content: userMessage }
+                    ]
+                });
+                return request;
+            },
+            parseResponse(responseBody) {
+                const data = JSON.parse(responseBody);
+                const text = data.content[0].text;
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    const match = text.match(/\{[\s\S]*\}/);
+                    if (match) {
+                        return JSON.parse(match[0]);
+                    }
+                    throw new Error("Failed to parse AI response as JSON");
+                }
+            }
+        }
+    };
+
+    async function callAI(providerKey, apiKey, systemPrompt, userMessage) {
+        const provider = AI_PROVIDERS[providerKey];
+        console.log(`Calling ${provider.label} API...`);
+
+        const request = provider.buildRequest(apiKey, systemPrompt, userMessage);
+
+        console.log("=== AI API Request ===");
+        console.log("URL:", request.url.string);
+        console.log("Method:", request.method);
+        console.log("API Key (first 20 chars):", apiKey.substring(0, 20) + "...");
+
+        let response;
+        try {
+            response = await request.fetch();
+        } catch (fetchError) {
+            console.error("Fetch error:", fetchError);
+            throw new Error(`Network request failed: ${fetchError.message || 'Request timed out'}. Check your internet connection.`);
+        }
+
+        console.log("=== AI API Response ===");
+        console.log("Status Code:", response.statusCode);
+        console.log("Response Body:", response.bodyString);
+
+        if (response.statusCode !== 200) {
+            console.error("API Error - Status:", response.statusCode);
+            console.error("API Error - Body:", response.bodyString);
+            throw new Error(`API Error: ${response.statusCode} - ${response.bodyString}`);
+        }
+
+        const parsed = provider.parseResponse(response.bodyString);
+        console.log("Parsed AI response:", JSON.stringify(parsed, null, 2));
+        return parsed;
+    }
+
     const action = new PlugIn.Action(async function(selection, sender) {
         try {
             console.log("=== AI Task Clarifier Debug Log ===");
             console.log("Starting plugin execution...");
 
-            // Get OpenAI API key from credentials
+            // Headless mode: skip all dialogs, use stored credentials and defaults
+            const prefs = new Preferences("com.omnifocus.ai-task-clarifier");
+            const headless = prefs.readBoolean("headlessMode");
+            const defaultScope = prefs.readString("defaultScope") || "all";
+            console.log("Headless mode:", headless, "Default scope:", defaultScope);
+
+            // --- Provider selection ---
+            let providerKey = prefs.readString("aiProvider");
+            let provider = providerKey ? AI_PROVIDERS[providerKey] : null;
+
+            if (!provider) {
+                if (headless) {
+                    providerKey = "chatgpt";
+                    provider = AI_PROVIDERS[providerKey];
+                    console.log("Headless: defaulting to ChatGPT");
+                } else {
+                    const providerForm = new Form();
+                    providerForm.addField(new Form.Field.Option(
+                        "aiProvider",
+                        "AI Provider",
+                        ["chatgpt", "claude"],
+                        ["ChatGPT (OpenAI)", "Claude (Anthropic)"],
+                        "chatgpt"
+                    ));
+                    const providerResult = await providerForm.show("Choose your AI provider", "Continue");
+                    providerKey = providerResult.values.aiProvider;
+                    provider = AI_PROVIDERS[providerKey];
+                    prefs.write("aiProvider", providerKey);
+                    console.log("User selected provider:", providerKey);
+                }
+            }
+
+            // --- Credential flow ---
             let apiKey = null;
-            const storedCreds = credentials.read("openai");
+            const storedCreds = credentials.read(provider.credentialService);
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
 
             if (!storedCreds || !storedCreds.password) {
                 console.log("No credentials found, prompting user (required for first run)...");
                 const form = new Form();
-                form.addField(new Form.Field.Password("apiKey", "OpenAI API Key", null));
-
-                const formPrompt = await form.show("Enter your OpenAI API key (will be stored securely in Keychain)", "Continue");
+                form.addField(new Form.Field.Password("apiKey", `${provider.label} API Key`, null));
+                const formPrompt = await form.show(`Enter your ${provider.label} API key (will be stored securely in Keychain)`, "Continue");
                 apiKey = formPrompt.values.apiKey;
-
                 if (!apiKey) {
                     throw new Error("API key is required");
                 }
-
                 console.log("Storing new API key in Keychain...");
-                credentials.write("openai", "api-key", apiKey);
+                credentials.write(provider.credentialService, "api-key", apiKey);
                 console.log("API key stored successfully");
+            } else if (headless) {
+                apiKey = storedCreds.password;
+                console.log("Headless: using stored API key");
             } else {
-                const alert = new Alert("OpenAI Credentials Found", "Stored API key found. What would you like to do?");
+                const alert = new Alert(`${provider.label} Credentials Found`, "Stored API key found. What would you like to do?");
                 alert.addOption("Use Stored Key");
                 alert.addOption("Clear & Re-enter Key");
+                alert.addOption("Switch AI Provider");
                 alert.addOption("Cancel");
 
                 const choice = await alert.show();
@@ -51,21 +183,39 @@
                     console.log("Using stored API key");
                 } else if (choice === 1) {
                     console.log("Clearing stored credentials...");
-                    credentials.remove("openai");
-
+                    credentials.remove(provider.credentialService);
                     const form = new Form();
-                    form.addField(new Form.Field.Password("apiKey", "OpenAI API Key", null));
-
-                    const formPrompt = await form.show("Enter your OpenAI API key (will be stored securely in Keychain)", "Continue");
+                    form.addField(new Form.Field.Password("apiKey", `${provider.label} API Key`, null));
+                    const formPrompt = await form.show(`Enter your ${provider.label} API key (will be stored securely in Keychain)`, "Continue");
                     apiKey = formPrompt.values.apiKey;
-
                     if (!apiKey) {
                         throw new Error("API key is required");
                     }
-
                     console.log("Storing new API key in Keychain...");
-                    credentials.write("openai", "api-key", apiKey);
+                    credentials.write(provider.credentialService, "api-key", apiKey);
                     console.log("API key stored successfully");
+                } else if (choice === 2) {
+                    const otherKey = providerKey === "chatgpt" ? "claude" : "chatgpt";
+                    providerKey = otherKey;
+                    provider = AI_PROVIDERS[providerKey];
+                    prefs.write("aiProvider", providerKey);
+                    console.log("Switched to provider:", providerKey);
+
+                    const switchedCreds = credentials.read(provider.credentialService);
+                    if (switchedCreds && switchedCreds.password) {
+                        apiKey = switchedCreds.password;
+                        console.log("Using stored key for", provider.label);
+                    } else {
+                        const form = new Form();
+                        form.addField(new Form.Field.Password("apiKey", `${provider.label} API Key`, null));
+                        const formPrompt = await form.show(`Enter your ${provider.label} API key (will be stored securely in Keychain)`, "Continue");
+                        apiKey = formPrompt.values.apiKey;
+                        if (!apiKey) {
+                            throw new Error("API key is required");
+                        }
+                        credentials.write(provider.credentialService, "api-key", apiKey);
+                        console.log("Stored new key for", provider.label);
+                    }
                 } else {
                     console.log("User cancelled");
                     return;
@@ -94,38 +244,56 @@
             // If selection yielded no items, fall back to scope selection
             if (analyzeItems.length === 0) {
                 let scopeTasks = [];
-                const form = new Form();
-                const scopeField = new Form.Field.Option(
-                    "scope",
-                    "Analyze which tasks?",
-                    ["Selected tasks/projects", "All incomplete tasks", "Tasks older than 30 days"],
-                    null,
-                    "All incomplete tasks"
-                );
-                form.addField(scopeField);
-
-                const formPrompt = await form.show("Task Analysis Scope", "Continue");
-                const scope = formPrompt.values.scope;
-                console.log("User selected scope:", scope);
-
-                if (scope === "Selected tasks/projects") {
-                    throw new Error("No tasks selected. Please select tasks/projects or choose a different scope.");
-                } else if (scope === "All incomplete tasks") {
-                    scopeTasks = flattenedTasks.filter(task => !task.completed && !task.dropped);
-                    console.log("Analyzing all incomplete tasks:", scopeTasks.length);
+                if (headless) {
+                    console.log("Headless: using default scope:", defaultScope);
+                    if (defaultScope === "selected") {
+                        throw new Error("No tasks selected. Please select tasks/projects or choose a different scope.");
+                    } else if (defaultScope === "stale") {
+                        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+                        scopeTasks = flattenedTasks.filter(task => {
+                            return !task.completed && !task.dropped && task.added && task.added < thirtyDaysAgo;
+                        });
+                        console.log("Headless: analyzing tasks older than 30 days:", scopeTasks.length);
+                    } else {
+                        scopeTasks = flattenedTasks.filter(task => !task.completed && !task.dropped);
+                        console.log("Headless: analyzing all incomplete tasks:", scopeTasks.length);
+                    }
                 } else {
-                    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-                    scopeTasks = flattenedTasks.filter(task => {
-                        return !task.completed && !task.dropped && task.added && task.added < thirtyDaysAgo;
-                    });
-                    console.log("Analyzing tasks older than 30 days:", scopeTasks.length);
+                    const form = new Form();
+                    const scopeField = new Form.Field.Option(
+                        "scope",
+                        "Analyze which tasks?",
+                        ["Selected tasks/projects", "All incomplete tasks", "Tasks older than 30 days"],
+                        null,
+                        "All incomplete tasks"
+                    );
+                    form.addField(scopeField);
+
+                    const formPrompt = await form.show("Task Analysis Scope", "Continue");
+                    const scope = formPrompt.values.scope;
+                    console.log("User selected scope:", scope);
+
+                    if (scope === "Selected tasks/projects") {
+                        throw new Error("No tasks selected. Please select tasks/projects or choose a different scope.");
+                    } else if (scope === "All incomplete tasks") {
+                        scopeTasks = flattenedTasks.filter(task => !task.completed && !task.dropped);
+                        console.log("Analyzing all incomplete tasks:", scopeTasks.length);
+                    } else {
+                        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+                        scopeTasks = flattenedTasks.filter(task => {
+                            return !task.completed && !task.dropped && task.added && task.added < thirtyDaysAgo;
+                        });
+                        console.log("Analyzing tasks older than 30 days:", scopeTasks.length);
+                    }
                 }
                 analyzeItems = scopeTasks.map(task => ({item: task, type: 'task'}));
             }
 
             if (analyzeItems.length === 0) {
                 console.log("No items found matching criteria");
-                new Alert("No Tasks Found", "No tasks match the selected criteria.").show();
+                if (!headless) {
+                    new Alert("No Tasks Found", "No tasks match the selected criteria.").show();
+                }
                 return;
             }
 
@@ -134,13 +302,17 @@
             // Limit to 20 items to avoid timeout issues
             if (analyzeItems.length > 20) {
                 console.log("Too many items, limiting to 20");
-                const alert = new Alert("Too Many Tasks", `Found ${analyzeItems.length} items. Will analyze the first 20 only to avoid timeouts.`);
-                alert.addOption("Continue");
-                alert.addOption("Cancel");
-                const choice = await alert.show();
-                if (choice === 1) {
-                    console.log("User cancelled due to item limit");
-                    return;
+                if (!headless) {
+                    const alert = new Alert("Too Many Tasks", `Found ${analyzeItems.length} items. Will analyze the first 20 only to avoid timeouts.`);
+                    alert.addOption("Continue");
+                    alert.addOption("Cancel");
+                    const choice = await alert.show();
+                    if (choice === 1) {
+                        console.log("User cancelled due to item limit");
+                        return;
+                    }
+                } else {
+                    console.log("Headless: auto-continuing with first 20 items");
                 }
                 analyzeItems = analyzeItems.slice(0, 20);
                 console.log("Limited to 20 items");
@@ -177,16 +349,7 @@
             });
             console.log("Task data prepared, sample:", JSON.stringify(taskData[0], null, 2));
 
-            // Call OpenAI API
-            console.log("Preparing OpenAI API request...");
-            const request = new URL.FetchRequest();
-            request.url = URL.fromString("https://api.openai.com/v1/chat/completions");
-            request.method = "POST";
-            request.headers = {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json"
-            };
-
+            // Call AI API
             const systemPrompt = `You are a productivity expert analyzing OmniFocus tasks and projects. Identify items that are:
 1. Vague or non-actionable (e.g., "Think about project" instead of "Draft project proposal outline")
 2. Too broad (should be broken into subtasks)
@@ -205,52 +368,17 @@ For each problematic item, provide:
 IMPORTANT: Return a JSON object with an "analysis" array. Each item must have: index, issue, severity, suggestion, action.
 Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high", "suggestion": "...", "action": "clarify"}]}`;
 
-            const requestBody = {
-                model: "gpt-5-2025-08-07",
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: `Analyze these tasks:\n${JSON.stringify(taskData, null, 2)}` }
-                ],
-                response_format: { type: "json_object" }
-            };
-
-            request.bodyString = JSON.stringify(requestBody);
-
-            console.log("=== OpenAI API Request ===");
-            console.log("URL:", request.url.string);
-            console.log("Method:", request.method);
-            console.log("API Key (first 20 chars):", apiKey.substring(0, 20) + "...");
-            console.log("Request Body:", JSON.stringify(requestBody, null, 2));
+            const userMessage = `Analyze these tasks:\n${JSON.stringify(taskData, null, 2)}`;
 
             // Show progress
-            const progress = new Alert("Analyzing Tasks", "Sending tasks to OpenAI for analysis...\n\nThis may take 15-30 seconds.");
-            progress.show(() => {});
-
-            console.log("Sending request to OpenAI...");
-
-            let response;
-            try {
-                response = await request.fetch();
-            } catch (fetchError) {
-                console.error("Fetch error:", fetchError);
-                throw new Error(`Network request failed: ${fetchError.message || 'Request timed out'}. Try analyzing fewer tasks (5-10) or check your internet connection.`);
+            if (!headless) {
+                const progress = new Alert("Analyzing Tasks", `Sending tasks to ${provider.label} for analysis...\n\nThis may take 15-30 seconds.`);
+                progress.show(() => {});
             }
 
-            console.log("=== OpenAI API Response ===");
-            console.log("Status Code:", response.statusCode);
-            console.log("Response Body:", response.bodyString);
+            console.log(`Sending request to ${provider.label}...`);
 
-            if (response.statusCode !== 200) {
-                console.error("API Error - Status:", response.statusCode);
-                console.error("API Error - Body:", response.bodyString);
-                throw new Error(`API Error: ${response.statusCode} - ${response.bodyString}`);
-            }
-
-            const data = JSON.parse(response.bodyString);
-            console.log("Parsed response data:", JSON.stringify(data, null, 2));
-
-            const aiResponse = JSON.parse(data.choices[0].message.content);
-            console.log("Parsed AI response:", JSON.stringify(aiResponse, null, 2));
+            const aiResponse = await callAI(providerKey, apiKey, systemPrompt, userMessage);
 
             // Process results
             const issues = aiResponse.results || aiResponse.issues || aiResponse.analysis || [];
@@ -258,7 +386,9 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
 
             if (issues.length === 0) {
                 console.log("No issues found, analysis complete");
-                new Alert("Analysis Complete", "No significant issues found! Your tasks look good.").show();
+                if (!headless) {
+                    new Alert("Analysis Complete", "No significant issues found! Your tasks look good.").show();
+                }
                 return;
             }
 
@@ -344,14 +474,18 @@ ${issue.suggestion}
             console.log(summary);
             console.log("=== End Debug Log ===");
 
-            new Alert("AI Task Clarifier", summary).show();
+            if (!headless) {
+                new Alert("AI Task Clarifier", summary).show();
+            }
 
         } catch (error) {
             console.error("=== ERROR ===");
             console.error("Error message:", error.message);
             console.error("Error stack:", error.stack);
             console.error("=== End Debug Log ===");
-            new Alert("Error", error.message).show();
+            if (!headless) {
+                new Alert("Error", error.message).show();
+            }
         }
     });
 
