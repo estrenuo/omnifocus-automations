@@ -2,12 +2,20 @@
 
 ## Plugin Architecture
 
-Both plugins follow the OmniFocus Omni Automation plugin structure with:
+All plugins follow the OmniFocus Omni Automation plugin structure with:
 - Metadata header (JSON comment block)
 - Self-executing anonymous function returning a `PlugIn.Action`
 - Async/await for API calls
 - Secure credential storage using `Credentials` class
 - Error handling and user feedback via `Alert` and `Form` classes
+
+### Project & Task Selection
+
+The AI plugins (Clarifier and Breakdown) support both task and project selection:
+- `selection.tasks` and `selection.projects` are checked for selected items
+- Items are tracked as `{item, type: 'task'|'project'}` internally
+- Projects are sent to the AI with `type: "project"` for context-aware analysis
+- When selected projects have no tasks, the plugin falls back to scope selection
 
 ## AI Task Clarifier - Technical Details
 
@@ -49,10 +57,11 @@ Both plugins follow the OmniFocus Omni Automation plugin structure with:
 }
 ```
 
-### Task Analysis Logic
+### Task & Project Analysis Logic
 
 **Task Data Sent to AI**:
 ```javascript
+// For tasks:
 {
   index: 0,
   name: "Task name",
@@ -63,7 +72,22 @@ Both plugins follow the OmniFocus Omni Automation plugin structure with:
   flagged: false,
   tags: "tag1, tag2"
 }
+
+// For projects (type field added):
+{
+  index: 0,
+  name: "Project name",
+  note: "First 200 chars of note",
+  age_days: 0,
+  has_due_date: false,
+  has_defer_date: false,
+  flagged: false,
+  tags: "",
+  type: "project"
+}
 ```
+
+The system prompt instructs the AI to handle projects differently: analyzing project names for clarity, specificity, and whether they represent a clear outcome.
 
 **Issue Types Detected**:
 - `vague` - Non-actionable or unclear tasks
@@ -84,12 +108,18 @@ Both plugins follow the OmniFocus Omni Automation plugin structure with:
 - `delete` - Remove if no longer relevant
 - `add-context` - Add more information to note
 
-### Task Modifications
+### Task & Project Modifications
 
-1. **Tag Addition**: Creates/applies "AI Review" tag
+1. **Tag Addition**: Creates/applies "AI: Needs Improvement" tag
+   - For tasks: `task.addTag(improvementTag)`
+   - For projects: `project.task.addTag(improvementTag)`
 2. **Note Appending**: Adds analysis section to existing note
+   - For tasks: `task.note`
+   - For projects: `project.note`
 3. **Flagging**: High-severity issues are automatically flagged
-4. **Preservation**: Original task data is never deleted
+   - For tasks: `task.flagged = true`
+   - For projects: `project.task.flagged = true`
+4. **Preservation**: Original task/project data is never deleted
 
 ### Limitations
 
@@ -97,6 +127,33 @@ Both plugins follow the OmniFocus Omni Automation plugin structure with:
 - Note preview limited to 200 characters (for API efficiency)
 - Requires active internet connection
 - API costs apply per analysis
+
+## AI Task Breakdown - Technical Details
+
+### Selection & Item Creation
+
+The Breakdown plugin supports both tasks and projects:
+
+```javascript
+const breakdownItems = []; // [{item, type: 'task'|'project'}, ...]
+for (const task of selection.tasks) {
+    if (!task.completed) breakdownItems.push({item: task, type: 'task'});
+}
+for (const project of selection.projects) {
+    breakdownItems.push({item: project, type: 'project'});
+}
+```
+
+**Item creation differs by type:**
+- **Tasks**: Creates subtasks as children — `new Task(name, task.ending)`
+- **Projects**: Creates top-level tasks in the project — `new Task(name, project.ending)`
+
+**Validation**: `selection.tasks.length > 0 || selection.projects.length > 0`
+
+### Limits
+- Maximum 5 items per run (to avoid timeouts)
+- Creates 2-10 subtasks/tasks per item depending on complexity
+- Note preview limited to 200 characters sent to AI
 
 ## JIRA Import - Technical Details
 
@@ -436,10 +493,9 @@ for (const task of completedJiraTasks) {
 Possible improvements:
 1. Bidirectional JIRA sync (update JIRA from OmniFocus)
 2. GitHub issue import
-3. AI-powered task breakdown (create subtasks automatically)
-4. Scheduled automatic imports
-5. Custom AI analysis profiles
-6. Batch processing for large datasets
-7. Export analysis reports
-8. Integration with other project management tools
+3. Scheduled automatic imports
+4. Custom AI analysis profiles
+5. Batch processing for large datasets
+6. Export analysis reports
+7. Integration with other project management tools
 

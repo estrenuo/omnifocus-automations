@@ -13,8 +13,9 @@ Use this checklist to verify both plugins are working correctly after installati
 
 ### Plugin Installation
 - [ ] `AI-Task-Clarifier.omnifocusjs` installed
+- [ ] `AI-Task-Breakdown.omnifocusjs` installed
 - [ ] `JIRA-Import.omnifocusjs` installed
-- [ ] Both plugins visible in Automation menu
+- [ ] All plugins visible in Automation menu
 
 ## AI Task Clarifier Testing
 
@@ -39,14 +40,14 @@ Use this checklist to verify both plugins are working correctly after installati
 **Expected Results:**
 - [ ] Analysis completes without errors
 - [ ] Summary shows tasks analyzed
-- [ ] "AI Review" tag created
-- [ ] Vague/broad tasks tagged with "AI Review"
+- [ ] "AI: Needs Improvement" tag created
+- [ ] Vague/broad tasks tagged with "AI: Needs Improvement"
 - [ ] AI suggestions added to task notes
 - [ ] High-severity issues flagged
 - [ ] Good task may not be flagged (or low severity)
 
 **Verify Task Notes:**
-- [ ] Notes contain "--- AI Analysis ---" section
+- [ ] Notes contain "AI IMPROVEMENT SUGGESTION" section
 - [ ] Issue type identified (vague/broad/etc.)
 - [ ] Severity level shown (low/medium/high)
 - [ ] Specific suggestion provided
@@ -118,6 +119,36 @@ Use this checklist to verify both plugins are working correctly after installati
 - [ ] Credentials stored securely
 - [ ] Re-prompting works correctly
 
+### Test Case 7: Analyze Selected Projects
+**Setup:**
+1. Create test projects:
+   - "Stuff" (vague project name)
+   - "Redesign company website with new brand guidelines" (good project name)
+
+**Test:**
+- [ ] Select both projects
+- [ ] Run "AI Task Clarifier" from Automation menu
+- [ ] Wait for analysis to complete
+
+**Expected Results:**
+- [ ] Projects analyzed alongside tasks
+- [ ] Vague project tagged with "AI: Needs Improvement" (via `project.task.addTag()`)
+- [ ] Suggestions added to project notes
+- [ ] Good project may not be flagged
+- [ ] Projects sent to AI with `type: "project"` for context-aware analysis
+
+### Test Case 8: Project with No Tasks Falls Back to Scope Selection
+**Setup:**
+1. Create or select a project with no tasks
+
+**Test:**
+- [ ] Select the empty project
+- [ ] Run "AI Task Clarifier"
+
+**Expected Results:**
+- [ ] Falls back to scope selection dialog
+- [ ] Can choose "All incomplete tasks" or "Tasks older than 30 days"
+
 ### Error Handling Tests
 **Test Invalid API Key:**
 - [ ] Delete stored key from Keychain
@@ -128,6 +159,75 @@ Use this checklist to verify both plugins are working correctly after installati
 - [ ] Disconnect internet
 - [ ] Run plugin
 - [ ] Verify appropriate error message
+
+## AI Task Breakdown Testing
+
+### Initial Setup
+- [ ] Run plugin for first time
+- [ ] Prompted for OpenAI API key
+- [ ] API key entered and accepted
+- [ ] No error messages displayed
+
+### Test Case 1: Break Down Selected Task
+**Setup:**
+1. Create a task: "Plan team offsite"
+
+**Test:**
+- [ ] Select the task
+- [ ] Run "AI Task Breakdown" from Automation menu
+- [ ] Wait for breakdown (30-60 seconds)
+
+**Expected Results:**
+- [ ] Subtasks created as children of parent task
+- [ ] 2-10 subtasks created depending on complexity
+- [ ] All subtasks tagged "AI: Suggested"
+- [ ] Parent task note updated with breakdown info
+- [ ] Summary shows tasks processed and subtasks created
+
+### Test Case 2: Break Down Selected Project
+**Setup:**
+1. Create a project: "Launch new website"
+
+**Test:**
+- [ ] Select the project
+- [ ] Run "AI Task Breakdown" from Automation menu
+- [ ] Wait for breakdown
+
+**Expected Results:**
+- [ ] Top-level tasks created inside the project (not subtasks of a task)
+- [ ] 2-10 tasks created depending on complexity
+- [ ] All tasks tagged "AI: Suggested"
+- [ ] Project note updated with breakdown info
+
+### Test Case 3: Mixed Selection (Tasks and Projects)
+**Test:**
+- [ ] Select 1 task and 1 project
+- [ ] Run "AI Task Breakdown"
+
+**Expected Results:**
+- [ ] Task gets subtasks, project gets top-level tasks
+- [ ] Both processed correctly
+- [ ] Summary shows correct counts
+
+### Test Case 4: No Selection
+**Test:**
+- [ ] Don't select any tasks or projects
+- [ ] Run plugin
+
+**Expected Results:**
+- [ ] Error message about no selection
+- [ ] Plugin exits gracefully
+
+### Test Case 5: Too Many Items
+**Setup:**
+1. Select 6+ tasks/projects
+
+**Test:**
+- [ ] Run plugin
+
+**Expected Results:**
+- [ ] Warning about 5 item limit
+- [ ] Only first 5 items processed
 
 ## JIRA Import Testing
 
@@ -276,12 +376,14 @@ Use this checklist to verify both plugins are working correctly after installati
 **Test:**
 1. [ ] Import JIRA issues
 2. [ ] Run AI Task Clarifier on imported tasks
-3. [ ] Verify both work together
+3. [ ] Run AI Task Breakdown on a complex imported task
+4. [ ] Verify all plugins work together
 
 **Expected Results:**
 - [ ] JIRA tasks imported successfully
 - [ ] AI analysis works on JIRA tasks
-- [ ] Both sets of tags/notes coexist
+- [ ] AI breakdown creates subtasks for JIRA tasks
+- [ ] All sets of tags/notes coexist ("JIRA", "AI: Needs Improvement", "AI: Suggested")
 - [ ] No conflicts or errors
 
 ### Test Case 2: Multiple Runs
@@ -310,6 +412,11 @@ Use this checklist to verify both plugins are working correctly after installati
 - [ ] Test with 50 issues: < 30 seconds
 - [ ] Test with 100 issues: < 60 seconds
 
+### AI Task Breakdown
+- [ ] Test with 1 task: < 30 seconds
+- [ ] Test with 3 tasks: < 60 seconds
+- [ ] Test with 5 tasks: < 90 seconds
+
 ## Edge Cases
 
 ### AI Task Clarifier
@@ -319,6 +426,15 @@ Use this checklist to verify both plugins are working correctly after installati
 - [ ] Task with very long note (10,000+ chars)
 - [ ] Task with special characters in name
 - [ ] Task with emoji in name
+- [ ] Project with no tasks (should fall back to scope selection)
+- [ ] Project with very long name
+- [ ] Mixed selection of tasks and projects
+
+### AI Task Breakdown
+- [ ] Task with no note (AI uses name only)
+- [ ] Task with very long name
+- [ ] Project with existing tasks (new tasks added alongside)
+- [ ] Already-broken-down task (has subtasks)
 
 ### JIRA Import
 - [ ] Issue with no description
@@ -360,6 +476,11 @@ Use this checklist to verify both plugins are working correctly after installati
 **macOS/iOS Version:** _______________
 
 ### AI Task Clarifier
+- [ ] All tests passed
+- [ ] Issues found: _______________
+- [ ] Notes: _______________
+
+### AI Task Breakdown
 - [ ] All tests passed
 - [ ] Issues found: _______________
 - [ ] Notes: _______________

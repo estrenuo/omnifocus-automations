@@ -74,13 +74,32 @@ Recommended Action: clarify
 - Ask for actionable suggestions
 - Ensure consistent response structure
 
+### 6. Project Selection Support ✅
+
+**New in v1.7.0:** The Clarifier now works on both tasks and projects.
+
+**How it works:**
+- Select tasks, projects, or both — all are analyzed
+- Projects are sent to the AI with `type: "project"` for context-aware analysis
+- AI analyzes project names for clarity, specificity, and whether they represent a clear outcome
+- Results applied via `project.task.addTag()` and `project.note`
+- When selected projects have no tasks, falls back to scope selection
+
+**Example Project Analysis:**
+```
+Project: "Website stuff"
+→ Tagged: AI: Needs Improvement
+→ Note: Rename to "Redesign company website with new brand guidelines"
+  - More specific outcome and clear deliverable
+```
+
 ## How to Use
 
 ### Basic Workflow
 
-1. **Select Tasks** (3-10 recommended)
+1. **Select Tasks or Projects** (3-10 recommended)
    ```
-   - Select tasks you want to analyze
+   - Select tasks and/or projects you want to analyze
    - Or don't select any to analyze all/old tasks
    ```
 
@@ -185,10 +204,10 @@ Tags: (remove "AI: Needs Improvement" when done)
 
 ```bash
 # When starting a new project
-1. Select all tasks in project
+1. Select the project itself AND its tasks
 2. Run AI Task Clarifier
-3. Review suggestions
-4. Improve task clarity before starting work
+3. Review suggestions for both project name and task clarity
+4. Improve project and task names before starting work
 ```
 
 ### Workflow 3: Batch Processing

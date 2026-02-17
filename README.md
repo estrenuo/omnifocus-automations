@@ -185,6 +185,19 @@ The plugins will automatically appear in OmniFocus!
 - High-severity issues flagged
 - Suggestions added to task/project notes
 
+### AI Task Breakdown
+
+**Break Down Selected Tasks or Projects:**
+1. Select tasks or projects in OmniFocus
+2. Automation menu → "AI Task Breakdown"
+3. Review created subtasks/tasks
+
+**How it works:**
+- Select a **task** → AI creates subtasks within it
+- Select a **project** → AI creates top-level tasks in the project
+- Creates 2-10 items depending on complexity
+- All created items tagged "AI: Suggested"
+
 ### JIRA Import
 
 **Import Issues:**
@@ -381,16 +394,58 @@ Task: "Website stuff"
 
 **After:**
 ```
-Task: "Website stuff" [FLAGGED] [Tagged: AI Review]
+Task: "Website stuff" [FLAGGED] [Tagged: AI: Needs Improvement]
 Note:
-  --- AI Analysis (1/26/2025) ---
-  Issue: vague
-  Severity: high
-  Suggestion: Specify what needs to be done. Consider:
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  AI IMPROVEMENT SUGGESTION
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Date: 2/17/2026
+
+  Issue Type: VAGUE
+  Severity: HIGH
+
+  SUGGESTION:
+  Specify what needs to be done. Consider:
     - "Update website homepage copy"
     - "Fix website mobile navigation bug"
     - "Review website analytics report"
+
   Recommended Action: clarify
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**Project analysis example:**
+```
+Project: "Improve website"
+Note:
+  AI suggests renaming to "Redesign company website with new brand guidelines"
+  - More specific outcome
+  - Clear deliverable
+```
+
+### AI Task Breakdown Output
+
+**Task breakdown:**
+```
+Task: "Plan vacation"
+AI creates 5 subtasks:
+  - Choose destination and dates [AI: Suggested]
+  - Book flights and accommodation [AI: Suggested]
+  - Check passport/visa requirements [AI: Suggested]
+  - Create itinerary and book activities [AI: Suggested]
+  - Arrange pet care and pack [AI: Suggested]
+```
+
+**Project breakdown:**
+```
+Project: "Launch new website"
+AI creates 6 tasks in the project:
+  - Complete final QA testing on staging [AI: Suggested]
+  - Get stakeholder approval for launch [AI: Suggested]
+  - Prepare deployment and rollback plan [AI: Suggested]
+  - Deploy to production and verify [AI: Suggested]
+  - Update DNS and SSL certificates [AI: Suggested]
+  - Monitor for 24hrs and send announcement [AI: Suggested]
 ```
 
 ### JIRA Import Result
@@ -457,7 +512,6 @@ Built with:
 Future enhancements:
 - [ ] Bidirectional JIRA sync (update JIRA from OmniFocus)
 - [ ] GitHub issue import
-- [ ] AI-powered task breakdown (auto-create subtasks)
 - [ ] Scheduled automatic imports
 - [ ] Custom AI analysis profiles
 - [ ] Export analysis reports
@@ -465,5 +519,5 @@ Future enhancements:
 
 ---
 
-**Version 1.0** | January 2025 | Made with ❤️ for OmniFocus users
+**Version 1.7.0** | February 2026 | Made with love for OmniFocus users
 

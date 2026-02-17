@@ -5,14 +5,22 @@ This repository contains two powerful OmniFocus automation plugins that integrat
 ## Plugins Included
 
 ### 1. AI Task Clarifier (`AI-Task-Clarifier.omnifocusjs`)
-Uses OpenAI GPT-5 to analyze your tasks and identify issues like:
+Uses OpenAI GPT-5 to analyze your tasks and projects and identify issues like:
 - Vague or non-actionable tasks
 - Tasks that are too broad (need breaking down)
 - Missing critical context
 - Stale tasks (old with no progress)
 - Ambiguous or unclear tasks
+- Project names that lack clarity or a specific outcome
 
-### 2. JIRA Import (`JIRA-Import.omnifocusjs`)
+### 2. AI Task Breakdown (`AI-Task-Breakdown.omnifocusjs`)
+Uses OpenAI GPT-5 to break down complex items into actionable steps:
+- Select a task to generate subtasks within it
+- Select a project to generate top-level tasks for it
+- Creates 2-10 items depending on complexity
+- Tags created items with "AI: Suggested"
+
+### 3. JIRA Import (`JIRA-Import.omnifocusjs`)
 Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping:
 - Creates tasks from all unresolved JIRA issues
 - Maps JIRA fields to OmniFocus properties
@@ -81,8 +89,9 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 
 1. Open the Automation menu (gear icon)
 2. You should see:
-   - "AI Task Clarifier" (or "AI Clarifier")
-   - "Import JIRA Issues" (or "JIRA Import")
+   - "AI Task Clarifier"
+   - "AI Task Breakdown"
+   - "Import JIRA Issues"
 
 ## Usage
 
@@ -102,25 +111,27 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
    - "Clear & Re-enter Key" - Update your API key
    - "Cancel" - Exit without running
 
-**Analyzing Tasks:**
+**Analyzing Tasks and Projects:**
 
-**Option A: Analyze Selected Tasks**
-1. Select one or more tasks in OmniFocus
+**Option A: Analyze Selected Tasks or Projects**
+1. Select one or more tasks or projects in OmniFocus
 2. Click Automation menu → "AI Task Clarifier"
 3. Wait for analysis (usually 10-30 seconds)
+4. Projects are analyzed for name clarity, specificity, and whether they represent a clear outcome
 
 **Option B: Analyze All Tasks**
-1. Don't select any tasks
+1. Don't select any tasks (or select a project with no tasks to trigger scope selection)
 2. Click Automation menu → "AI Task Clarifier"
 3. Choose analysis scope:
+   - "Selected tasks/projects" - Analyzes current selection
    - "All incomplete tasks" - Analyzes all open tasks
    - "Tasks older than 30 days" - Focuses on stale tasks
 4. Wait for analysis
 
 **Understanding Results:**
-- Tasks with issues are tagged "AI Review"
+- Tasks/projects with issues are tagged "AI: Needs Improvement"
 - High-severity issues are automatically flagged
-- AI suggestions are added to task notes with:
+- AI suggestions are added to task/project notes with:
   - Issue type (vague/broad/stale/ambiguous/missing-context)
   - Severity level (low/medium/high)
   - Specific improvement suggestion
@@ -128,12 +139,39 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 
 **Example AI Analysis in Task Note:**
 ```
---- AI Analysis (1/26/2025) ---
-Issue: vague
-Severity: high
-Suggestion: Change "Think about website" to "Draft 3 key features for website redesign"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AI IMPROVEMENT SUGGESTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Date: 2/17/2026
+
+Issue Type: VAGUE
+Severity: HIGH
+
+SUGGESTION:
+Change "Think about website" to "Draft 3 key features for website redesign"
+
 Recommended Action: clarify
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+### AI Task Breakdown
+
+**First Run:**
+1. Click Automation menu → "AI Task Breakdown"
+2. You'll be prompted to enter your OpenAI API key (shared with AI Task Clarifier)
+3. Enter your key and click "Continue"
+
+**Breaking Down Tasks or Projects:**
+1. Select tasks or projects in OmniFocus (1-5 items)
+2. Click Automation menu → "AI Task Breakdown"
+3. Wait for breakdown (30-60 seconds)
+
+**How it works:**
+- Select a **task** → AI creates subtasks within it
+- Select a **project** → AI creates top-level tasks in the project
+- Creates 2-10 items depending on complexity
+- All created items tagged "AI: Suggested"
+- Parent task/project gets a breakdown note
 
 ### JIRA Import
 
@@ -406,6 +444,11 @@ For issues or questions:
 5. JIRA API docs: https://developer.atlassian.com/cloud/jira/platform/rest/v3/
 
 ## Version History
+
+### Version 1.7.0 (February 2026)
+- Project selection support for AI plugins
+- AI Task Breakdown plugin for breaking down tasks and projects
+- AI Task Clarifier analyzes both tasks and projects
 
 ### Version 1.0 (January 2025)
 - Initial release
