@@ -3,16 +3,114 @@
     "targets": ["omnifocus"],
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.ai-task-breakdown",
-    "version": "1.0.0",
-    "description": "Uses OpenAI GPT-5 to break down tasks into actionable subtasks with AI-suggested next steps",
+    "version": "1.1.0",
+    "description": "Uses AI to break down tasks into actionable subtasks with AI-suggested next steps",
     "label": "AI Task Breakdown",
     "shortLabel": "AI Breakdown",
     "paletteLabel": "Break Down Task with AI",
     "image": "list.bullet.indent"
 }*/
 (() => {
-    // Credentials for storing OpenAI API key
     const credentials = new Credentials();
+
+    const AI_PROVIDERS = {
+        chatgpt: {
+            label: "ChatGPT (OpenAI)",
+            credentialService: "openai",
+            buildRequest(apiKey, systemPrompt, userMessage) {
+                const request = new URL.FetchRequest();
+                request.url = URL.fromString("https://api.openai.com/v1/chat/completions");
+                request.method = "POST";
+                request.headers = {
+                    "Authorization": `Bearer ${apiKey}`,
+                    "Content-Type": "application/json"
+                };
+                request.bodyString = JSON.stringify({
+                    model: "gpt-5-2025-08-07",
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: userMessage }
+                    ],
+                    response_format: { type: "json_object" }
+                });
+                return request;
+            },
+            parseResponse(responseBody) {
+                const data = JSON.parse(responseBody);
+                return JSON.parse(data.choices[0].message.content);
+            }
+        },
+        claude: {
+            label: "Claude (Anthropic)",
+            credentialService: "anthropic",
+            buildRequest(apiKey, systemPrompt, userMessage) {
+                const request = new URL.FetchRequest();
+                request.url = URL.fromString("https://api.anthropic.com/v1/messages");
+                request.method = "POST";
+                request.headers = {
+                    "x-api-key": apiKey,
+                    "anthropic-version": "2023-06-01",
+                    "Content-Type": "application/json"
+                };
+                request.bodyString = JSON.stringify({
+                    model: "claude-sonnet-4-20250514",
+                    max_tokens: 4096,
+                    system: systemPrompt + "\n\nIMPORTANT: Respond with only a valid JSON object, no other text.",
+                    messages: [
+                        { role: "user", content: userMessage }
+                    ]
+                });
+                return request;
+            },
+            parseResponse(responseBody) {
+                const data = JSON.parse(responseBody);
+                const text = data.content[0].text;
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    const match = text.match(/\{[\s\S]*\}/);
+                    if (match) {
+                        return JSON.parse(match[0]);
+                    }
+                    throw new Error("Failed to parse AI response as JSON");
+                }
+            }
+        }
+    };
+
+    async function callAI(providerKey, apiKey, systemPrompt, userMessage) {
+        const provider = AI_PROVIDERS[providerKey];
+        console.log(`Calling ${provider.label} API...`);
+
+        const request = provider.buildRequest(apiKey, systemPrompt, userMessage);
+
+        console.log("=== AI API Request ===");
+        console.log("URL:", request.url.string);
+        console.log("Method:", request.method);
+        console.log("API Key (first 20 chars):", apiKey.substring(0, 20) + "...");
+
+        let response;
+        try {
+            response = await request.fetch();
+        } catch (fetchError) {
+            console.error("Fetch error:", fetchError);
+            throw new Error(`Network request failed: ${fetchError.message || 'Request timed out'}. Check your internet connection.`);
+        }
+
+        console.log("=== AI API Response ===");
+        console.log("Status Code:", response.statusCode);
+        console.log("Response Body:", response.bodyString);
+
+        if (response.statusCode !== 200) {
+            console.error("API Error - Status:", response.statusCode);
+            console.error("API Error - Body:", response.bodyString);
+            throw new Error(`API Error: ${response.statusCode} - ${response.bodyString}`);
+        }
+
+        const parsed = provider.parseResponse(response.bodyString);
+        console.log("Parsed AI response:", JSON.stringify(parsed, null, 2));
+        return parsed;
+    }
 
     const action = new PlugIn.Action(async function(selection, sender) {
         try {
@@ -24,48 +122,67 @@
             const headless = prefs.readBoolean("headlessMode");
             console.log("Headless mode:", headless);
 
-            // Get OpenAI API key from credentials
+            // --- Provider selection ---
+            let providerKey = prefs.readString("aiProvider");
+            let provider = providerKey ? AI_PROVIDERS[providerKey] : null;
+
+            if (!provider) {
+                if (headless) {
+                    providerKey = "chatgpt";
+                    provider = AI_PROVIDERS[providerKey];
+                    console.log("Headless: defaulting to ChatGPT");
+                } else {
+                    const providerForm = new Form();
+                    providerForm.addField(new Form.Field.Option(
+                        "aiProvider",
+                        "AI Provider",
+                        ["chatgpt", "claude"],
+                        ["ChatGPT (OpenAI)", "Claude (Anthropic)"],
+                        "chatgpt"
+                    ));
+                    const providerResult = await providerForm.show("Choose your AI provider", "Continue");
+                    providerKey = providerResult.values.aiProvider;
+                    provider = AI_PROVIDERS[providerKey];
+                    prefs.write("aiProvider", providerKey);
+                    console.log("User selected provider:", providerKey);
+                }
+            }
+
+            // --- Credential flow ---
             let apiKey = null;
-            const storedCreds = credentials.read("openai");
+            const storedCreds = credentials.read(provider.credentialService);
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
 
             if (!storedCreds || !storedCreds.password) {
-                // No stored credentials - always prompt (even in headless mode, credentials must be entered at least once)
                 console.log("No credentials found, prompting user (required for first run)...");
                 const form = new Form();
-                const apiKeyField = new Form.Field.Password(
+                form.addField(new Form.Field.Password(
                     "apiKey",
-                    "OpenAI API Key",
+                    `${provider.label} API Key`,
                     null
-                );
-                form.addField(apiKeyField);
-
+                ));
                 const formPrompt = await form.show(
-                    "Enter your OpenAI API key (will be stored securely in Keychain)",
+                    `Enter your ${provider.label} API key (will be stored securely in Keychain)`,
                     "Continue"
                 );
-
                 apiKey = formPrompt.values.apiKey;
-
                 if (!apiKey) {
                     throw new Error("API key is required");
                 }
-
                 console.log("Storing new API key in Keychain...");
-                credentials.write("openai", "api-key", apiKey);
+                credentials.write(provider.credentialService, "api-key", apiKey);
                 console.log("API key stored successfully");
             } else if (headless) {
-                // Headless mode with stored credentials - use silently
                 apiKey = storedCreds.password;
                 console.log("Headless: using stored API key");
             } else {
-                // Interactive mode - offer to use or clear them
                 const alert = new Alert(
-                    "OpenAI Credentials Found",
+                    `${provider.label} Credentials Found`,
                     "Stored API key found. What would you like to do?"
                 );
                 alert.addOption("Use Stored Key");
                 alert.addOption("Clear & Re-enter Key");
+                alert.addOption("Switch AI Provider");
                 alert.addOption("Cancel");
 
                 const choice = await alert.show();
@@ -75,31 +192,54 @@
                     console.log("Using stored API key");
                 } else if (choice === 1) {
                     console.log("Clearing stored credentials...");
-                    credentials.remove("openai");
-                    console.log("Credentials cleared");
-
+                    credentials.remove(provider.credentialService);
                     const form = new Form();
-                    const apiKeyField = new Form.Field.Password(
+                    form.addField(new Form.Field.Password(
                         "apiKey",
-                        "OpenAI API Key",
+                        `${provider.label} API Key`,
                         null
-                    );
-                    form.addField(apiKeyField);
-
+                    ));
                     const formPrompt = await form.show(
-                        "Enter your OpenAI API key (will be stored securely in Keychain)",
+                        `Enter your ${provider.label} API key (will be stored securely in Keychain)`,
                         "Continue"
                     );
-
                     apiKey = formPrompt.values.apiKey;
-
                     if (!apiKey) {
                         throw new Error("API key is required");
                     }
-
                     console.log("Storing new API key in Keychain...");
-                    credentials.write("openai", "api-key", apiKey);
+                    credentials.write(provider.credentialService, "api-key", apiKey);
                     console.log("API key stored successfully");
+                } else if (choice === 2) {
+                    // Switch provider
+                    const otherKey = providerKey === "chatgpt" ? "claude" : "chatgpt";
+                    providerKey = otherKey;
+                    provider = AI_PROVIDERS[providerKey];
+                    prefs.write("aiProvider", providerKey);
+                    console.log("Switched to provider:", providerKey);
+
+                    const switchedCreds = credentials.read(provider.credentialService);
+                    if (switchedCreds && switchedCreds.password) {
+                        apiKey = switchedCreds.password;
+                        console.log("Using stored key for", provider.label);
+                    } else {
+                        const form = new Form();
+                        form.addField(new Form.Field.Password(
+                            "apiKey",
+                            `${provider.label} API Key`,
+                            null
+                        ));
+                        const formPrompt = await form.show(
+                            `Enter your ${provider.label} API key (will be stored securely in Keychain)`,
+                            "Continue"
+                        );
+                        apiKey = formPrompt.values.apiKey;
+                        if (!apiKey) {
+                            throw new Error("API key is required");
+                        }
+                        credentials.write(provider.credentialService, "api-key", apiKey);
+                        console.log("Stored new key for", provider.label);
+                    }
                 } else {
                     console.log("User cancelled");
                     return;
@@ -162,16 +302,7 @@
             });
             console.log("Task data prepared, sample:", JSON.stringify(taskData[0], null, 2));
 
-            // Call OpenAI API
-            console.log("Preparing OpenAI API request...");
-            const request = new URL.FetchRequest();
-            request.url = URL.fromString("https://api.openai.com/v1/chat/completions");
-            request.method = "POST";
-            request.headers = {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json"
-            };
-
+            // Call AI API
             const systemPrompt = `You are a productivity expert helping break down tasks into actionable subtasks.
 
 For each task, create the MINIMUM number of essential subtasks needed (typically 2-5, maximum 10 for very complex tasks).
@@ -194,59 +325,17 @@ Format:
 IMPORTANT: Return a JSON object with a "breakdowns" array. Each item must have: index, subtasks (array of strings).
 Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "Book appointment", "Add to calendar"]}]}`;
 
-            const requestBody = {
-                model: "gpt-5-2025-08-07",
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: `Break down these tasks into actionable subtasks:\n${JSON.stringify(taskData, null, 2)}` }
-                ],
-                response_format: { type: "json_object" }
-            };
-
-            request.bodyString = JSON.stringify(requestBody);
-
-            console.log("=== OpenAI API Request ===");
-            console.log("URL:", request.url.string);
-            console.log("Method:", request.method);
-            console.log("API Key (first 20 chars):", apiKey.substring(0, 20) + "...");
-            console.log("Headers:", JSON.stringify({
-                "Authorization": "Bearer [REDACTED]",
-                "Content-Type": "application/json"
-            }, null, 2));
-            console.log("Request Body:", JSON.stringify(requestBody, null, 2));
+            const userMessage = `Break down these tasks into actionable subtasks:\n${JSON.stringify(taskData, null, 2)}`;
 
             // Show progress
             if (!headless) {
-                const progress = new Alert("Breaking Down Tasks", "Sending tasks to AI for breakdown...\n\nThis may take 30-60 seconds for GPT-5.");
+                const progress = new Alert("Breaking Down Tasks", `Sending tasks to ${provider.label} for breakdown...\n\nThis may take 30-60 seconds.`);
                 progress.show(() => {});
             }
 
-            console.log("Sending request to OpenAI...");
-            console.log("Note: GPT-5 can take 30-60 seconds to respond");
+            console.log(`Sending request to ${provider.label}...`);
 
-            let response;
-            try {
-                response = await request.fetch();
-            } catch (fetchError) {
-                console.error("Fetch error:", fetchError);
-                throw new Error(`Network request failed: ${fetchError.message || 'Request timed out'}. Try breaking down fewer tasks (1-3) or check your internet connection.`);
-            }
-
-            console.log("=== OpenAI API Response ===");
-            console.log("Status Code:", response.statusCode);
-            console.log("Response Body:", response.bodyString);
-
-            if (response.statusCode !== 200) {
-                console.error("API Error - Status:", response.statusCode);
-                console.error("API Error - Body:", response.bodyString);
-                throw new Error(`API Error: ${response.statusCode} - ${response.bodyString}`);
-            }
-
-            const data = JSON.parse(response.bodyString);
-            console.log("Parsed response data:", JSON.stringify(data, null, 2));
-
-            const aiResponse = JSON.parse(data.choices[0].message.content);
-            console.log("Parsed AI response:", JSON.stringify(aiResponse, null, 2));
+            const aiResponse = await callAI(providerKey, apiKey, systemPrompt, userMessage);
 
             // Process results
             const breakdowns = aiResponse.breakdowns || aiResponse.results || [];

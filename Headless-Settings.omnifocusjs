@@ -3,7 +3,7 @@
     "targets": ["omnifocus"],
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.headless-settings",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Configure headless mode for all automation plugins (run without dialogs)",
     "label": "Headless Mode Settings",
     "shortLabel": "Headless Settings",
@@ -22,13 +22,20 @@
                 "com.omnifocus.jira-import"
             ];
 
+            const aiPluginIds = [
+                "com.omnifocus.ai-task-clarifier",
+                "com.omnifocus.ai-task-breakdown"
+            ];
+
             // Read current state from the clarifier (representative)
             const clarifierPrefs = new Preferences("com.omnifocus.ai-task-clarifier");
             const currentHeadless = clarifierPrefs.readBoolean("headlessMode") || false;
             const currentScope = clarifierPrefs.readString("defaultScope") || "all";
+            const currentProvider = clarifierPrefs.readString("aiProvider") || "chatgpt";
 
             console.log("Current headless mode:", currentHeadless);
             console.log("Current default scope:", currentScope);
+            console.log("Current AI provider:", currentProvider);
 
             // Build settings form
             const form = new Form();
@@ -47,18 +54,29 @@
                 currentScope
             );
 
+            const providerField = new Form.Field.Option(
+                "aiProvider",
+                "AI Provider",
+                ["chatgpt", "claude"],
+                ["ChatGPT (OpenAI)", "Claude (Anthropic)"],
+                currentProvider
+            );
+
             form.addField(headlessField);
             form.addField(scopeField);
+            form.addField(providerField);
 
             const result = await form.show("Configure headless mode for all plugins.\n\nWhen enabled, plugins run without any dialogs.\nCredentials must be stored in Keychain first (run each plugin once interactively).", "Save");
 
             const newHeadless = result.values.headlessMode;
             const newScope = result.values.defaultScope;
+            const newProvider = result.values.aiProvider;
 
             console.log("New headless mode:", newHeadless);
             console.log("New default scope:", newScope);
+            console.log("New AI provider:", newProvider);
 
-            // Apply to all plugins
+            // Apply headless mode to all plugins
             for (const pluginId of pluginIds) {
                 const prefs = new Preferences(pluginId);
                 prefs.write("headlessMode", newHeadless);
@@ -69,11 +87,20 @@
             clarifierPrefs.write("defaultScope", newScope);
             console.log(`Set defaultScope=${newScope} for clarifier`);
 
+            // AI provider applies to AI plugins only (not JIRA)
+            for (const pluginId of aiPluginIds) {
+                const prefs = new Preferences(pluginId);
+                prefs.write("aiProvider", newProvider);
+                console.log(`Set aiProvider=${newProvider} for ${pluginId}`);
+            }
+
             // Show confirmation
             const statusText = newHeadless ? "ON" : "OFF";
             const scopeLabels = { "all": "All incomplete tasks", "selected": "Selected tasks only", "stale": "Tasks older than 30 days" };
+            const providerLabels = { "chatgpt": "ChatGPT (OpenAI)", "claude": "Claude (Anthropic)" };
             const summary = `Headless mode: ${statusText}\n` +
-                `Default scope (Clarifier): ${scopeLabels[newScope]}\n\n` +
+                `Default scope (Clarifier): ${scopeLabels[newScope]}\n` +
+                `AI Provider: ${providerLabels[newProvider]}\n\n` +
                 `Settings applied to all plugins.\n` +
                 (newHeadless ? "Make sure credentials are stored in Keychain by running each plugin once interactively before using headless mode." : "Plugins will show dialogs as usual.");
 
