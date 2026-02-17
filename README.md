@@ -11,10 +11,10 @@ Two powerful OmniFocus plugins that integrate AI and JIRA to supercharge your ta
 ## 📦 What's Included
 
 ### 1. AI Task Clarifier (`AI-Task-Clarifier.omnifocusjs`)
-Analyzes your tasks using OpenAI GPT-5 to identify and fix problems.
+Analyzes your tasks and projects using OpenAI GPT-5 to identify and fix problems.
 
 ### 2. AI Task Breakdown (`AI-Task-Breakdown.omnifocusjs`)
-Breaks down complex tasks into actionable subtasks using OpenAI GPT-5.
+Breaks down tasks into subtasks and projects into tasks using OpenAI GPT-5.
 
 ### 3. JIRA Import (`JIRA-Import.omnifocusjs`)
 Imports all open JIRA issues as OmniFocus tasks with full field mapping.
@@ -24,15 +24,18 @@ Imports all open JIRA issues as OmniFocus tasks with full field mapping.
 ### AI Task Clarifier
 
 **Features:**
-- ✅ Identifies vague or non-actionable tasks
-- ✅ Detects tasks that need breaking down
-- ✅ Flags stale tasks (old with no progress)
-- ✅ Finds missing context or ambiguous tasks
-- ✅ Provides specific improvement suggestions
-- ✅ Auto-tags problematic tasks for review
-- ✅ Flags high-severity issues
-- ✅ Built-in credential management (easy to update API key)
-- ✅ Comprehensive debug logging for troubleshooting
+- Works on both individual tasks and entire projects
+- Analyzes project names for clarity, specificity, and whether they represent a clear outcome
+- Identifies vague or non-actionable tasks
+- Detects tasks that need breaking down
+- Flags stale tasks (old with no progress)
+- Finds missing context or ambiguous tasks
+- Provides specific improvement suggestions
+- Auto-tags problematic tasks/projects for review
+- Flags high-severity issues
+- Falls back to scope selection when selected projects have no tasks
+- Built-in credential management (easy to update API key)
+- Comprehensive debug logging for troubleshooting
 
 **Example Output:**
 ```
@@ -43,33 +46,38 @@ Note includes formatted suggestion with issue type, severity, and actionable adv
 ### AI Task Breakdown
 
 **Features:**
-- ✅ Creates MINIMUM necessary subtasks (typically 2-5)
-- ✅ Succinct bullet-point style (no full sentences)
-- ✅ AI determines optimal number of steps
-- ✅ Up to 10 subtasks for very complex tasks
-- ✅ Tags subtasks with "AI: Suggested"
-- ✅ Adds breakdown note to parent task
-- ✅ Built-in credential management
-- ✅ Comprehensive debug logging
+- Works on both individual tasks and entire projects
+- Select a project to generate tasks for it; select a task to generate subtasks
+- Creates MINIMUM necessary items (typically 2-5)
+- Succinct bullet-point style (no full sentences)
+- AI determines optimal number of steps
+- Up to 10 items for very complex tasks/projects
+- Tags created items with "AI: Suggested"
+- Adds breakdown note to parent task or project
+- Built-in credential management
+- Comprehensive debug logging
 
-**Example:**
+**Example (task):**
 ```
 Task: "Go get a haircut"
 
 AI creates 3 subtasks:
-  ☐ Find and book appointment at barbershop [AI: Suggested]
-  ☐ Add to calendar with travel time [AI: Suggested]
-  ☐ Get haircut [AI: Suggested]
+  - Find and book appointment at barbershop [AI: Suggested]
+  - Add to calendar with travel time [AI: Suggested]
+  - Get haircut [AI: Suggested]
+```
 
-Task: "Launch new website"
+**Example (project):**
+```
+Project: "Launch new website"
 
-AI creates 6 subtasks:
-  ☐ Complete final QA testing on staging [AI: Suggested]
-  ☐ Get stakeholder approval for launch [AI: Suggested]
-  ☐ Prepare deployment and rollback plan [AI: Suggested]
-  ☐ Deploy to production and verify [AI: Suggested]
-  ☐ Update DNS and SSL certificates [AI: Suggested]
-  ☐ Monitor for 24hrs and send announcement [AI: Suggested]
+AI creates 6 tasks in the project:
+  - Complete final QA testing on staging [AI: Suggested]
+  - Get stakeholder approval for launch [AI: Suggested]
+  - Prepare deployment and rollback plan [AI: Suggested]
+  - Deploy to production and verify [AI: Suggested]
+  - Update DNS and SSL certificates [AI: Suggested]
+  - Monitor for 24hrs and send announcement [AI: Suggested]
 ```
 
 ### JIRA Import
@@ -161,21 +169,21 @@ The plugins will automatically appear in OmniFocus!
 
 ### AI Task Clarifier
 
-**Analyze Selected Tasks:**
-1. Select tasks in OmniFocus
+**Analyze Selected Tasks or Projects:**
+1. Select tasks or projects in OmniFocus
 2. Automation menu → "AI Task Clarifier"
 3. Review results
 
 **Analyze All Tasks:**
-1. Don't select anything
+1. Don't select anything (or select an empty/deferred project)
 2. Automation menu → "AI Task Clarifier"
 3. Choose scope (all tasks, or tasks older than 30 days)
 4. Review results
 
 **Results:**
-- Problematic tasks tagged "AI Review"
+- Problematic tasks/projects tagged "AI: Needs Improvement"
 - High-severity issues flagged
-- Suggestions added to task notes
+- Suggestions added to task/project notes
 
 ### JIRA Import
 

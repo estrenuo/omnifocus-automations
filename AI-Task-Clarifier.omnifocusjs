@@ -13,7 +13,7 @@
 (() => {
     // Credentials for storing OpenAI API key
     const credentials = new Credentials();
-    
+
     const action = new PlugIn.Action(async function(selection, sender) {
         try {
             console.log("=== AI Task Clarifier Debug Log ===");
@@ -23,7 +23,7 @@
             let apiKey = null;
             const storedCreds = credentials.read("openai");
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
-            
+
             if (!storedCreds || !storedCreds.password) {
                 // Prompt for API key if not stored
                 const form = new Form();
@@ -46,7 +46,6 @@
                 }
 
                 console.log("Storing new API key in Keychain...");
-                // Store the API key
                 credentials.write("openai", "api-key", apiKey);
                 console.log("API key stored successfully");
             } else {
@@ -100,76 +99,102 @@
                     return;
                 }
             }
-            
-            // Get tasks to analyze
-            let tasksToAnalyze = [];
 
-            console.log("Selection check - tasks selected:", selection.tasks.length);
+            // Get items to analyze (tasks and/or projects)
+            let analyzeItems = []; // [{item, type: 'task'|'project'}, ...]
+            console.log("Selection check - tasks selected:", selection.tasks.length, "projects selected:", selection.projects.length);
 
-            if (selection.tasks.length > 0) {
-                tasksToAnalyze = selection.tasks.filter(task => !task.completed);
-                console.log("Using selected tasks, filtered to incomplete:", tasksToAnalyze.length);
-            } else {
-                // Analyze all incomplete tasks if none selected
+            // First, try to collect items from the selection
+            if (selection.tasks.length > 0 || selection.projects.length > 0) {
+                const seen = new Set();
+                for (const task of selection.tasks) {
+                    if (!seen.has(task.id.primaryKey) && !task.completed) {
+                        seen.add(task.id.primaryKey);
+                        analyzeItems.push({item: task, type: 'task'});
+                    }
+                }
+                for (const project of selection.projects) {
+                    analyzeItems.push({item: project, type: 'project'});
+                }
+                console.log("Items from selection:", analyzeItems.length, "(tasks:", analyzeItems.filter(e => e.type === 'task').length, "projects:", analyzeItems.filter(e => e.type === 'project').length + ")");
+            }
+
+            // If selection yielded no items, fall back to scope selection
+            if (analyzeItems.length === 0) {
+                let scopeTasks = [];
                 const form = new Form();
                 const scopeField = new Form.Field.Option(
                     "scope",
                     "Analyze which tasks?",
-                    ["Selected tasks only", "All incomplete tasks", "Tasks older than 30 days"],
+                    ["Selected tasks/projects", "All incomplete tasks", "Tasks older than 30 days"],
                     null,
                     "All incomplete tasks"
                 );
                 form.addField(scopeField);
-                
+
                 const formPrompt = await form.show("Task Analysis Scope", "Continue");
                 const scope = formPrompt.values.scope;
                 console.log("User selected scope:", scope);
 
-                if (scope === "Selected tasks only") {
-                    throw new Error("No tasks selected. Please select tasks or choose a different scope.");
+                if (scope === "Selected tasks/projects") {
+                    throw new Error("No tasks selected. Please select tasks/projects or choose a different scope.");
                 } else if (scope === "All incomplete tasks") {
-                    tasksToAnalyze = flattenedTasks.filter(task => !task.completed && !task.dropped);
-                    console.log("Analyzing all incomplete tasks:", tasksToAnalyze.length);
+                    scopeTasks = flattenedTasks.filter(task => !task.completed && !task.dropped);
+                    console.log("Analyzing all incomplete tasks:", scopeTasks.length);
                 } else {
-                    // Tasks older than 30 days
                     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-                    tasksToAnalyze = flattenedTasks.filter(task => {
+                    scopeTasks = flattenedTasks.filter(task => {
                         return !task.completed && !task.dropped && task.added && task.added < thirtyDaysAgo;
                     });
-                    console.log("Analyzing tasks older than 30 days:", tasksToAnalyze.length);
+                    console.log("Analyzing tasks older than 30 days:", scopeTasks.length);
                 }
+                analyzeItems = scopeTasks.map(task => ({item: task, type: 'task'}));
             }
-            
-            if (tasksToAnalyze.length === 0) {
-                console.log("No tasks found matching criteria");
+
+            if (analyzeItems.length === 0) {
+                console.log("No items found matching criteria");
                 new Alert("No Tasks Found", "No tasks match the selected criteria.").show();
                 return;
             }
 
-            console.log("Total tasks to analyze:", tasksToAnalyze.length);
+            console.log("Total items to analyze:", analyzeItems.length);
 
-            // Limit to 20 tasks to avoid timeout issues
-            if (tasksToAnalyze.length > 20) {
-                console.log("Too many tasks, limiting to 20");
+            // Limit to 20 items to avoid timeout issues
+            if (analyzeItems.length > 20) {
+                console.log("Too many items, limiting to 20");
                 const alert = new Alert(
                     "Too Many Tasks",
-                    `Found ${tasksToAnalyze.length} tasks. Will analyze the first 20 tasks only to avoid timeouts.`
+                    `Found ${analyzeItems.length} tasks. Will analyze the first 20 tasks only to avoid timeouts.`
                 );
                 alert.addOption("Continue");
                 alert.addOption("Cancel");
                 const choice = await alert.show();
                 if (choice === 1) {
-                    console.log("User cancelled due to task limit");
+                    console.log("User cancelled due to item limit");
                     return;
                 }
 
-                tasksToAnalyze = tasksToAnalyze.slice(0, 20);
-                console.log("Limited to 20 tasks");
+                analyzeItems = analyzeItems.slice(0, 20);
+                console.log("Limited to 20 items");
             }
-            
-            // Prepare task data for AI analysis
-            console.log("Preparing task data for AI analysis...");
-            const taskData = tasksToAnalyze.map((task, index) => {
+
+            // Prepare data for AI analysis
+            console.log("Preparing data for AI analysis...");
+            const taskData = analyzeItems.map((entry, index) => {
+                if (entry.type === 'project') {
+                    return {
+                        index: index,
+                        name: entry.item.name,
+                        note: entry.item.note ? entry.item.note.substring(0, 200) : "",
+                        age_days: 0,
+                        has_due_date: !!entry.item.dueDate,
+                        has_defer_date: !!entry.item.deferDate,
+                        flagged: false,
+                        tags: "",
+                        type: "project"
+                    };
+                }
+                const task = entry.item;
                 const age = task.added ? Math.floor((Date.now() - task.added.getTime()) / (1000 * 60 * 60 * 24)) : 0;
                 return {
                     index: index,
@@ -183,7 +208,7 @@
                 };
             });
             console.log("Task data prepared, sample:", JSON.stringify(taskData[0], null, 2));
-            
+
             // Call OpenAI API
             console.log("Preparing OpenAI API request...");
             const request = new URL.FetchRequest();
@@ -194,14 +219,16 @@
                 "Content-Type": "application/json"
             };
 
-            const systemPrompt = `You are a productivity expert analyzing OmniFocus tasks. Identify tasks that are:
+            const systemPrompt = `You are a productivity expert analyzing OmniFocus tasks and projects. Identify items that are:
 1. Vague or non-actionable (e.g., "Think about project" instead of "Draft project proposal outline")
 2. Too broad (should be broken into subtasks)
 3. Missing critical context
 4. Stale (old tasks with no progress)
 5. Ambiguous or unclear
 
-For each problematic task, provide:
+Items with type "project" are project containers -- analyze their names and notes for clarity, specificity, and whether they represent a clear outcome.
+
+For each problematic item, provide:
 - Issue type (vague/broad/stale/ambiguous/missing-context)
 - Severity (low/medium/high)
 - Specific, actionable suggestion for improvement
@@ -230,7 +257,7 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
                 "Content-Type": "application/json"
             }, null, 2));
             console.log("Request Body:", JSON.stringify(requestBody, null, 2));
-            
+
             // Show progress
             const progress = new Alert("Analyzing Tasks", "Sending tasks to AI for analysis...\n\nThis may take 30-60 seconds for GPT-5.");
             progress.show(() => {});
@@ -261,7 +288,7 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
 
             const aiResponse = JSON.parse(data.choices[0].message.content);
             console.log("Parsed AI response:", JSON.stringify(aiResponse, null, 2));
-            
+
             // Process results - GPT-5 may return different field names
             const issues = aiResponse.results || aiResponse.issues || aiResponse.analysis || [];
             console.log("Issues found:", issues.length);
@@ -281,21 +308,21 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
             } else {
                 console.log("Found existing 'AI: Needs Improvement' tag");
             }
-            
-            // Apply findings to tasks
-            console.log("Applying findings to tasks...");
+
+            // Apply findings to tasks and projects
+            console.log("Applying findings...");
             let updatedCount = 0;
             let flaggedCount = 0;
 
             issues.forEach((issue, idx) => {
                 console.log(`Processing issue ${idx + 1}/${issues.length}:`, JSON.stringify(issue));
-                const task = tasksToAnalyze[issue.index];
-                if (!task) {
-                    console.warn(`Task not found at index ${issue.index}`);
+                const entry = analyzeItems[issue.index];
+                if (!entry) {
+                    console.warn(`Item not found at index ${issue.index}`);
                     return;
                 }
 
-                console.log(`Updating task: "${task.name}"`);
+                console.log(`Updating ${entry.type}: "${entry.item.name}"`);
 
                 // Build a nicely formatted analysis note
                 const analysisNote = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -313,26 +340,36 @@ ${issue.suggestion}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
-                task.note = (task.note || "") + analysisNote;
-
-                // Add improvement tag
-                task.addTag(improvementTag);
-                console.log(`Added 'AI: Needs Improvement' tag to task`);
-
-                // Flag high severity issues
-                if (issue.severity === "high") {
-                    task.flagged = true;
-                    flaggedCount++;
-                    console.log(`Flagged task due to high severity`);
+                if (entry.type === 'project') {
+                    const project = entry.item;
+                    project.note = (project.note || "") + analysisNote;
+                    if (project.task) {
+                        project.task.addTag(improvementTag);
+                        if (issue.severity === "high") {
+                            project.task.flagged = true;
+                            flaggedCount++;
+                            console.log(`Flagged project due to high severity`);
+                        }
+                    }
+                } else {
+                    const task = entry.item;
+                    task.note = (task.note || "") + analysisNote;
+                    task.addTag(improvementTag);
+                    console.log(`Added 'AI: Needs Improvement' tag`);
+                    if (issue.severity === "high") {
+                        task.flagged = true;
+                        flaggedCount++;
+                        console.log(`Flagged task due to high severity`);
+                    }
                 }
 
                 updatedCount++;
             });
-            console.log(`Updated ${updatedCount} tasks, flagged ${flaggedCount} high-severity tasks`);
-            
+            console.log(`Updated ${updatedCount} items, flagged ${flaggedCount} high-severity`);
+
             // Show summary
             const summary = `Analysis Complete!\n\n` +
-                `Tasks analyzed: ${tasksToAnalyze.length}\n` +
+                `Tasks analyzed: ${analyzeItems.length}\n` +
                 `Issues found: ${issues.length}\n` +
                 `Tasks updated: ${updatedCount}\n` +
                 `High-severity flagged: ${flaggedCount}\n\n` +
@@ -355,11 +392,10 @@ ${issue.suggestion}
             new Alert("Error", error.message).show();
         }
     });
-    
+
     action.validate = function(selection, sender) {
         return true; // Always available
     };
-    
+
     return action;
 })();
-
