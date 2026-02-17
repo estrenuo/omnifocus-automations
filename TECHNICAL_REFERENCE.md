@@ -13,9 +13,15 @@ Both plugins follow the OmniFocus Omni Automation plugin structure with:
 
 ### API Integration
 
+The AI plugins support two providers via the `AI_PROVIDERS` configuration:
+
+#### ChatGPT (OpenAI)
+
 **Endpoint**: `https://api.openai.com/v1/chat/completions`
 
 **Model**: `gpt-5-2025-08-07` (GPT-5, released August 2025)
+
+**Authentication**: `Authorization: Bearer ${apiKey}`
 
 **Request Format**:
 ```json
@@ -31,8 +37,7 @@ Both plugins follow the OmniFocus Omni Automation plugin structure with:
       "content": "Analyze these tasks:\n[task data]"
     }
   ],
-  "response_format": { "type": "json_object" },
-  "temperature": 0.3
+  "response_format": { "type": "json_object" }
 }
 ```
 
@@ -42,12 +47,63 @@ Both plugins follow the OmniFocus Omni Automation plugin structure with:
   "choices": [
     {
       "message": {
-        "content": "{\"results\": [{\"index\": 0, \"issue\": \"vague\", \"severity\": \"high\", \"suggestion\": \"...\", \"action\": \"clarify\"}]}"
+        "content": "{\"analysis\": [{\"index\": 0, \"issue\": \"vague\", \"severity\": \"high\", \"suggestion\": \"...\", \"action\": \"clarify\"}]}"
       }
     }
   ]
 }
 ```
+
+**Response Parsing**: `JSON.parse(data.choices[0].message.content)`
+
+#### Claude (Anthropic)
+
+**Endpoint**: `https://api.anthropic.com/v1/messages`
+
+**Model**: `claude-sonnet-4-20250514`
+
+**Authentication**: `x-api-key: ${apiKey}` + `anthropic-version: 2023-06-01`
+
+**Request Format**:
+```json
+{
+  "model": "claude-sonnet-4-20250514",
+  "max_tokens": 4096,
+  "system": "You are a productivity expert...\n\nIMPORTANT: Respond with only a valid JSON object, no other text.",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Analyze these tasks:\n[task data]"
+    }
+  ]
+}
+```
+
+**Response Format**:
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"analysis\": [{\"index\": 0, \"issue\": \"vague\", \"severity\": \"high\", \"suggestion\": \"...\", \"action\": \"clarify\"}]}"
+    }
+  ]
+}
+```
+
+**Response Parsing**: `JSON.parse(data.content[0].text)` with regex fallback (`/{[\s\S]*}/`) if direct parse fails
+
+#### Provider Comparison
+
+| | ChatGPT (OpenAI) | Claude (Anthropic) |
+|---|---|---|
+| URL | `api.openai.com/v1/chat/completions` | `api.anthropic.com/v1/messages` |
+| Auth Header | `Authorization: Bearer ${key}` | `x-api-key: ${key}` |
+| Model | `gpt-5-2025-08-07` | `claude-sonnet-4-20250514` |
+| System Prompt | In messages array as `role: "system"` | Top-level `system` field |
+| JSON Mode | `response_format: {type: "json_object"}` | Instruction in system prompt + fallback parsing |
+| Extra Fields | `response_format` | `max_tokens: 4096` |
+| Credential Service | `openai` | `anthropic` |
 
 ### Task Analysis Logic
 
@@ -86,7 +142,7 @@ Both plugins follow the OmniFocus Omni Automation plugin structure with:
 
 ### Task Modifications
 
-1. **Tag Addition**: Creates/applies "AI Review" tag
+1. **Tag Addition**: Creates/applies "AI: Needs Improvement" tag
 2. **Note Appending**: Adds analysis section to existing note
 3. **Flagging**: High-severity issues are automatically flagged
 4. **Preservation**: Original task data is never deleted
@@ -269,10 +325,20 @@ Both plugins use the OmniFocus `Credentials` class which stores data in macOS Ke
 
 ### Storage Keys
 
-**AI Task Clarifier**:
+**AI Plugins (ChatGPT provider)**:
 - Service: `"openai"`
 - User: `"api-key"`
 - Password: `[Your OpenAI API key]`
+
+**AI Plugins (Claude provider)**:
+- Service: `"anthropic"`
+- User: `"api-key"`
+- Password: `[Your Anthropic API key]`
+
+**AI Provider Preference** (stored in OmniFocus Preferences, not Keychain):
+- Plugin ID: `"com.omnifocus.ai-task-clarifier"` or `"com.omnifocus.ai-task-breakdown"`
+- Key: `"aiProvider"`
+- Value: `"chatgpt"` or `"claude"`
 
 **JIRA Import**:
 - Service: `"jira"`
@@ -298,6 +364,12 @@ Both plugins use the OmniFocus `Credentials` class which stores data in macOS Ke
 - `429` - Rate limit exceeded
 - `500` - OpenAI server error
 - `503` - Service temporarily unavailable
+
+**Anthropic API**:
+- `401` - Invalid API key
+- `429` - Rate limit exceeded
+- `500` - Anthropic server error
+- `529` - API overloaded
 
 **JIRA API**:
 - `401` - Invalid credentials
@@ -426,6 +498,10 @@ for (const task of completedJiraTasks) {
 - Typical: 3,500 requests/minute (Tier 1)
 - Monitor usage at https://platform.openai.com/usage
 
+### Anthropic
+- Varies by account tier
+- Monitor usage at https://console.anthropic.com/
+
 ### JIRA
 - Cloud: 300 requests/minute per IP
 - Rarely hit with normal plugin usage
@@ -436,7 +512,7 @@ for (const task of completedJiraTasks) {
 Possible improvements:
 1. Bidirectional JIRA sync (update JIRA from OmniFocus)
 2. GitHub issue import
-3. AI-powered task breakdown (create subtasks automatically)
+3. Additional AI providers (Google Gemini, etc.)
 4. Scheduled automatic imports
 5. Custom AI analysis profiles
 6. Batch processing for large datasets

@@ -247,7 +247,7 @@ Tags: (remove "AI: Needs Improvement" when done)
 - Gradually increase to 10-20 tasks
 
 ### 2. Be Patient
-- GPT-5 takes 20-60 seconds
+- AI analysis takes 20-60 seconds (both ChatGPT and Claude)
 - Don't cancel prematurely
 - Check console for progress
 
@@ -353,11 +353,14 @@ Create smart perspectives:
 
 ### Want different types of analysis
 
+**Available now:**
+- Switch between ChatGPT and Claude via "Switch AI Provider" option
+
 **Future enhancements could include:**
 - Custom analysis profiles
 - Focus on specific issue types
 - Adjustable severity thresholds
-- Different AI models (GPT-4o for speed)
+- Additional AI providers
 
 ## Metrics & Tracking
 

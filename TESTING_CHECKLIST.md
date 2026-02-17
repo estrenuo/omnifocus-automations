@@ -7,20 +7,23 @@ Use this checklist to verify both plugins are working correctly after installati
 ### Prerequisites
 - [ ] OmniFocus 4 installed (macOS or iOS)
 - [ ] Developer Mode enabled in OmniFocus
-- [ ] OpenAI API key obtained (with GPT-5 access)
+- [ ] OpenAI API key obtained (with GPT-5 access) **and/or** Anthropic API key obtained
 - [ ] JIRA API token obtained
 - [ ] Active internet connection
 
 ### Plugin Installation
 - [ ] `AI-Task-Clarifier.omnifocusjs` installed
+- [ ] `AI-Task-Breakdown.omnifocusjs` installed
+- [ ] `Headless-Settings.omnifocusjs` installed
 - [ ] `JIRA-Import.omnifocusjs` installed
-- [ ] Both plugins visible in Automation menu
+- [ ] All plugins visible in Automation menu
 
 ## AI Task Clarifier Testing
 
 ### Initial Setup
 - [ ] Run plugin for first time
-- [ ] Prompted for OpenAI API key
+- [ ] Prompted to choose AI provider (ChatGPT or Claude)
+- [ ] Prompted for API key (provider-specific label shown)
 - [ ] API key entered and accepted
 - [ ] No error messages displayed
 
@@ -39,14 +42,14 @@ Use this checklist to verify both plugins are working correctly after installati
 **Expected Results:**
 - [ ] Analysis completes without errors
 - [ ] Summary shows tasks analyzed
-- [ ] "AI Review" tag created
-- [ ] Vague/broad tasks tagged with "AI Review"
+- [ ] "AI: Needs Improvement" tag created
+- [ ] Vague/broad tasks tagged with "AI: Needs Improvement"
 - [ ] AI suggestions added to task notes
 - [ ] High-severity issues flagged
 - [ ] Good task may not be flagged (or low severity)
 
 **Verify Task Notes:**
-- [ ] Notes contain "--- AI Analysis ---" section
+- [ ] Notes contain "AI IMPROVEMENT SUGGESTION" section
 - [ ] Issue type identified (vague/broad/etc.)
 - [ ] Severity level shown (low/medium/high)
 - [ ] Specific suggestion provided
@@ -108,7 +111,7 @@ Use this checklist to verify both plugins are working correctly after installati
 ### Test Case 6: API Key Management
 **Test:**
 - [ ] Open Keychain Access
-- [ ] Search for "openai"
+- [ ] Search for "openai" or "anthropic" (depending on provider)
 - [ ] Verify entry exists
 - [ ] Delete the entry
 - [ ] Run plugin again
@@ -117,6 +120,32 @@ Use this checklist to verify both plugins are working correctly after installati
 **Expected Results:**
 - [ ] Credentials stored securely
 - [ ] Re-prompting works correctly
+
+### Test Case 7: Provider Selection
+**Test:**
+- [ ] Run plugin with stored credentials
+- [ ] Click "Switch AI Provider"
+- [ ] Verify provider toggles (ChatGPT → Claude or vice versa)
+- [ ] If no credentials for new provider: prompted for API key
+- [ ] If credentials exist: used automatically
+- [ ] Verify analysis completes with new provider
+
+**Expected Results:**
+- [ ] Provider preference saved
+- [ ] Subsequent runs use new provider
+- [ ] Progress alert shows correct provider name
+
+### Test Case 8: Headless Mode with Provider
+**Test:**
+- [ ] Open Headless Settings
+- [ ] Set AI Provider to Claude
+- [ ] Enable headless mode
+- [ ] Run AI Clarifier (headless should use Claude silently)
+
+**Expected Results:**
+- [ ] Provider preference read correctly in headless mode
+- [ ] No dialogs shown
+- [ ] API call goes to correct provider
 
 ### Error Handling Tests
 **Test Invalid API Key:**

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AI Task Breakdown plugin uses OpenAI GPT-5 to automatically break down complex tasks into actionable subtasks. It's perfect for tasks that feel overwhelming or unclear about where to start.
+The AI Task Breakdown plugin uses AI (ChatGPT or Claude) to automatically break down complex tasks into actionable subtasks. It's perfect for tasks that feel overwhelming or unclear about where to start. You can choose your preferred AI provider on first run or switch at any time.
 
 ## How It Works
 
@@ -52,8 +52,8 @@ Automation menu → AI Task Breakdown
 
 **Step 3: Wait for AI**
 ```
-Progress message shows: "Breaking Down Tasks..."
-Wait 30-60 seconds for GPT-5
+Progress message shows: "Sending tasks to [provider] for breakdown..."
+Wait 30-60 seconds
 ```
 
 **Step 4: Review Results**
@@ -332,6 +332,7 @@ AI will create more specific subtasks based on this context
 - Comprehensive (rarely misses steps)
 - Reduces mental load
 - Helps overcome procrastination
+- Choice of AI provider (ChatGPT or Claude)
 
 **Cons:**
 - Requires review/editing
@@ -421,6 +422,7 @@ Quick workflow:
 ## Future Enhancements
 
 **Possible improvements:**
+- Additional AI providers (Google Gemini, etc.)
 - Custom breakdown styles (detailed vs brief)
 - Time estimates for each subtask
 - Dependency detection
@@ -434,6 +436,7 @@ The AI Task Breakdown plugin:
 - ✅ Breaks down complex tasks automatically
 - ✅ Creates 2-10 actionable subtasks
 - ✅ Tags with "AI: Suggested"
+- ✅ Choose between ChatGPT and Claude
 - ✅ Saves time and mental energy
 - ✅ Helps overcome procrastination
 - ✅ Improves task planning skills

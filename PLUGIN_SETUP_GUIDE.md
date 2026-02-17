@@ -1,18 +1,25 @@
 # OmniFocus Automation Plugins - Setup Guide
 
-This repository contains two powerful OmniFocus automation plugins that integrate with external services.
+This repository contains powerful OmniFocus automation plugins that integrate with external services.
 
 ## Plugins Included
 
 ### 1. AI Task Clarifier (`AI-Task-Clarifier.omnifocusjs`)
-Uses OpenAI GPT-5 to analyze your tasks and identify issues like:
+Uses AI (ChatGPT or Claude) to analyze your tasks and identify issues like:
 - Vague or non-actionable tasks
 - Tasks that are too broad (need breaking down)
 - Missing critical context
 - Stale tasks (old with no progress)
 - Ambiguous or unclear tasks
 
-### 2. JIRA Import (`JIRA-Import.omnifocusjs`)
+### 2. AI Task Breakdown (`AI-Task-Breakdown.omnifocusjs`)
+Uses AI (ChatGPT or Claude) to break down complex tasks into actionable subtasks:
+- Creates minimum necessary subtasks (typically 2-5)
+- Brief action phrases, not full sentences
+- Tags subtasks with "AI: Suggested"
+- Adds breakdown note to parent task
+
+### 3. JIRA Import (`JIRA-Import.omnifocusjs`)
 Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping:
 - Creates tasks from all unresolved JIRA issues
 - Maps JIRA fields to OmniFocus properties
@@ -22,12 +29,18 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 
 ## Prerequisites
 
-### For AI Task Clarifier
-1. **OpenAI API Key**
+### For AI Plugins (Clarifier & Breakdown)
+1. **OpenAI API Key** (if using ChatGPT)
    - Sign up at https://platform.openai.com/
    - Navigate to API Keys section
    - Create a new API key
    - **Important**: You need access to GPT-5 (released August 2025)
+   - Keep your API key secure - it will be stored in your macOS Keychain
+
+2. **Anthropic API Key** (if using Claude)
+   - Sign up at https://console.anthropic.com/
+   - Navigate to API Keys section
+   - Create a new API key
    - Keep your API key secure - it will be stored in your macOS Keychain
 
 ### For JIRA Import
@@ -86,20 +99,21 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 
 ## Usage
 
-### AI Task Clarifier
+### AI Task Clarifier / AI Task Breakdown
 
 **First Run:**
-1. Click Automation menu → "AI Task Clarifier"
-2. You'll be prompted to enter your OpenAI API key
-3. Enter your key and click "Continue"
+1. Click Automation menu → "AI Task Clarifier" (or "AI Task Breakdown")
+2. Choose your AI provider: ChatGPT (OpenAI) or Claude (Anthropic)
+3. Enter your API key and click "Continue"
 4. The key will be securely stored in your macOS Keychain
 
 **Subsequent Runs:**
 1. Click Automation menu → "AI Task Clarifier"
-2. You'll see a prompt: "OpenAI Credentials Found"
+2. You'll see a prompt showing your current provider's credentials
 3. Choose:
    - "Use Stored Key" - Continue with saved credentials
    - "Clear & Re-enter Key" - Update your API key
+   - "Switch AI Provider" - Toggle between ChatGPT and Claude
    - "Cancel" - Exit without running
 
 **Analyzing Tasks:**
@@ -118,7 +132,7 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 4. Wait for analysis
 
 **Understanding Results:**
-- Tasks with issues are tagged "AI Review"
+- Tasks with issues are tagged "AI: Needs Improvement"
 - High-severity issues are automatically flagged
 - AI suggestions are added to task notes with:
   - Issue type (vague/broad/stale/ambiguous/missing-context)
@@ -215,11 +229,11 @@ Both plugins now include a built-in credential management feature!
 
 **Manual Method (Alternative):**
 
-**OpenAI API Key:**
+**AI API Key (OpenAI or Anthropic):**
 1. Open macOS Keychain Access
-2. Search for "openai"
+2. Search for "openai" or "anthropic" (depending on your provider)
 3. Delete the entry
-4. Run the AI Task Clarifier plugin again
+4. Run the AI plugin again
 5. Enter your new API key
 
 **JIRA Credentials:**
@@ -296,12 +310,11 @@ Task data prepared, sample: {
   "age_days": 5,
   ...
 }
-=== OpenAI API Request ===
+=== AI API Request ===
 URL: https://api.openai.com/v1/chat/completions
 Method: POST
-Request Body: {...}
-Sending request to OpenAI...
-=== OpenAI API Response ===
+Sending request to ChatGPT (OpenAI)...
+=== AI API Response ===
 Status Code: 200
 Response Body: {...}
 Issues found: 2
@@ -323,8 +336,8 @@ Issues found: 2
 - Consider analyzing fewer tasks at once
 
 **"Model not found" or "Access denied"**
-- You don't have access to GPT-5
-- Check your OpenAI account tier
+- You don't have access to the requested model (GPT-5 or Claude Sonnet)
+- Check your account tier with the selected AI provider
 - You may need to upgrade your plan
 
 **No issues found**
@@ -355,10 +368,15 @@ Issues found: 2
 
 ## API Costs
 
-### OpenAI GPT-5
+### ChatGPT (OpenAI GPT-5)
 - Pricing varies based on usage
 - Typical cost: ~$0.01-0.05 per analysis run (50 tasks)
 - Check current pricing at https://openai.com/pricing
+
+### Claude (Anthropic)
+- Pricing varies based on usage
+- Typical cost: ~$0.01-0.05 per analysis run (50 tasks)
+- Check current pricing at https://www.anthropic.com/pricing
 
 ### JIRA API
 - JIRA Cloud API is free for standard usage
@@ -406,6 +424,12 @@ For issues or questions:
 5. JIRA API docs: https://developer.atlassian.com/cloud/jira/platform/rest/v3/
 
 ## Version History
+
+### Version 1.8 (February 2026)
+- AI provider choice: ChatGPT (OpenAI) or Claude (Anthropic)
+- Headless mode for all plugins (run without dialogs)
+- AI Task Breakdown plugin
+- Headless Settings plugin for centralized configuration
 
 ### Version 1.0 (January 2025)
 - Initial release

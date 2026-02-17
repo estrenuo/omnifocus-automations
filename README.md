@@ -11,10 +11,10 @@ Two powerful OmniFocus plugins that integrate AI and JIRA to supercharge your ta
 ## 📦 What's Included
 
 ### 1. AI Task Clarifier (`AI-Task-Clarifier.omnifocusjs`)
-Analyzes your tasks using OpenAI GPT-5 to identify and fix problems.
+Analyzes your tasks using AI (ChatGPT or Claude) to identify and fix problems.
 
 ### 2. AI Task Breakdown (`AI-Task-Breakdown.omnifocusjs`)
-Breaks down complex tasks into actionable subtasks using OpenAI GPT-5.
+Breaks down complex tasks into actionable subtasks using AI (ChatGPT or Claude).
 
 ### 3. JIRA Import (`JIRA-Import.omnifocusjs`)
 Imports all open JIRA issues as OmniFocus tasks with full field mapping.
@@ -31,6 +31,7 @@ Imports all open JIRA issues as OmniFocus tasks with full field mapping.
 - ✅ Provides specific improvement suggestions
 - ✅ Auto-tags problematic tasks for review
 - ✅ Flags high-severity issues
+- ✅ Choose between ChatGPT (OpenAI) and Claude (Anthropic)
 - ✅ Built-in credential management (easy to update API key)
 - ✅ Comprehensive debug logging for troubleshooting
 
@@ -49,6 +50,7 @@ Note includes formatted suggestion with issue type, severity, and actionable adv
 - ✅ Up to 10 subtasks for very complex tasks
 - ✅ Tags subtasks with "AI: Suggested"
 - ✅ Adds breakdown note to parent task
+- ✅ Choose between ChatGPT (OpenAI) and Claude (Anthropic)
 - ✅ Built-in credential management
 - ✅ Comprehensive debug logging
 
@@ -99,8 +101,8 @@ Note:
 
 ## 📋 Requirements
 
-### AI Task Clarifier
-- OpenAI API key with GPT-5 access
+### AI Task Clarifier / AI Task Breakdown
+- OpenAI API key (for ChatGPT) **or** Anthropic API key (for Claude)
 - Active internet connection
 - OmniFocus 4 (macOS or iOS)
 
@@ -127,8 +129,15 @@ The plugins will automatically appear in OmniFocus!
 
 ### Step 1: Get API Credentials
 
-**OpenAI API Key:**
+**OpenAI API Key (for ChatGPT):**
 1. Visit https://platform.openai.com/
+2. Create an account or sign in
+3. Navigate to API Keys
+4. Create a new key
+5. Copy and save it securely
+
+**Anthropic API Key (for Claude):**
+1. Visit https://console.anthropic.com/
 2. Create an account or sign in
 3. Navigate to API Keys
 4. Create a new key
@@ -152,10 +161,11 @@ The plugins will automatically appear in OmniFocus!
 
 ### Step 3: Configure
 
-**First run of each plugin:**
+**First run of each AI plugin:**
 1. Click Automation menu → Select plugin
-2. Enter your credentials when prompted
-3. Credentials are securely stored in macOS Keychain
+2. Choose your AI provider (ChatGPT or Claude)
+3. Enter your API key when prompted
+4. Credentials are securely stored in macOS Keychain
 
 ## 💡 Usage
 
@@ -210,15 +220,20 @@ The plugins will automatically appear in OmniFocus!
 
 - All credentials stored in macOS Keychain (encrypted)
 - HTTPS-only API communication
-- No data sent to third parties (except OpenAI/JIRA APIs)
+- No data sent to third parties (except OpenAI/Anthropic/JIRA APIs)
 - Open source - review the code yourself
 
 ## 💰 Costs
 
-**OpenAI GPT-5:**
+**ChatGPT (OpenAI GPT-5):**
 - Pay-per-use pricing
 - Typical cost: $0.01-0.05 per analysis (50 tasks)
 - Check current pricing: https://openai.com/pricing
+
+**Claude (Anthropic):**
+- Pay-per-use pricing
+- Typical cost: $0.01-0.05 per analysis (50 tasks)
+- Check current pricing: https://www.anthropic.com/pricing
 
 **JIRA API:**
 - Free for standard usage
@@ -329,10 +344,10 @@ Both plugins include comprehensive debug logging visible in the OmniFocus Automa
 - Check project key filter
 - Verify JIRA permissions
 
-**"Model not found" (OpenAI)**
-- No GPT-5 access
-- Check OpenAI account tier
-- May need to upgrade plan
+**"Model not found" (AI API)**
+- No access to the requested model (GPT-5 or Claude Sonnet)
+- Check your account tier with the selected provider
+- May need to upgrade your plan
 
 See PLUGIN_SETUP_GUIDE.md for complete troubleshooting guide.
 
@@ -434,7 +449,7 @@ Modify and distribute freely.
 
 Built with:
 - OmniFocus Omni Automation framework
-- OpenAI GPT-5 API
+- OpenAI GPT-5 API / Anthropic Claude API
 - JIRA REST API v3
 
 ## 📞 Support
@@ -442,6 +457,7 @@ Built with:
 - Check documentation files in this repo
 - OmniFocus forums: https://discourse.omnigroup.com/
 - OpenAI docs: https://platform.openai.com/docs/
+- Anthropic docs: https://docs.anthropic.com/
 - JIRA docs: https://developer.atlassian.com/cloud/jira/
 
 ## 🎯 Roadmap
@@ -449,7 +465,6 @@ Built with:
 Future enhancements:
 - [ ] Bidirectional JIRA sync (update JIRA from OmniFocus)
 - [ ] GitHub issue import
-- [ ] AI-powered task breakdown (auto-create subtasks)
 - [ ] Scheduled automatic imports
 - [ ] Custom AI analysis profiles
 - [ ] Export analysis reports
