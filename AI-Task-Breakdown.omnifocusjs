@@ -13,19 +13,25 @@
 (() => {
     // Credentials for storing OpenAI API key
     const credentials = new Credentials();
-    
+
     const action = new PlugIn.Action(async function(selection, sender) {
         try {
             console.log("=== AI Task Breakdown Debug Log ===");
             console.log("Starting plugin execution...");
-            
+
+            // Headless mode: skip all dialogs, use stored credentials and defaults
+            const prefs = new Preferences("com.omnifocus.ai-task-breakdown");
+            const headless = prefs.readBoolean("headlessMode");
+            console.log("Headless mode:", headless);
+
             // Get OpenAI API key from credentials
             let apiKey = null;
             const storedCreds = credentials.read("openai");
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
-            
+
             if (!storedCreds || !storedCreds.password) {
-                // Prompt for API key if not stored
+                // No stored credentials - always prompt (even in headless mode, credentials must be entered at least once)
+                console.log("No credentials found, prompting user (required for first run)...");
                 const form = new Form();
                 const apiKeyField = new Form.Field.Password(
                     "apiKey",
@@ -33,23 +39,27 @@
                     null
                 );
                 form.addField(apiKeyField);
-                
+
                 const formPrompt = await form.show(
                     "Enter your OpenAI API key (will be stored securely in Keychain)",
                     "Continue"
                 );
-                
+
                 apiKey = formPrompt.values.apiKey;
-                
+
                 if (!apiKey) {
                     throw new Error("API key is required");
                 }
-                
+
                 console.log("Storing new API key in Keychain...");
                 credentials.write("openai", "api-key", apiKey);
                 console.log("API key stored successfully");
+            } else if (headless) {
+                // Headless mode with stored credentials - use silently
+                apiKey = storedCreds.password;
+                console.log("Headless: using stored API key");
             } else {
-                // Credentials exist - offer to use or clear them
+                // Interactive mode - offer to use or clear them
                 const alert = new Alert(
                     "OpenAI Credentials Found",
                     "Stored API key found. What would you like to do?"
@@ -57,9 +67,9 @@
                 alert.addOption("Use Stored Key");
                 alert.addOption("Clear & Re-enter Key");
                 alert.addOption("Cancel");
-                
+
                 const choice = await alert.show();
-                
+
                 if (choice === 0) {
                     apiKey = storedCreds.password;
                     console.log("Using stored API key");
@@ -67,7 +77,7 @@
                     console.log("Clearing stored credentials...");
                     credentials.remove("openai");
                     console.log("Credentials cleared");
-                    
+
                     const form = new Form();
                     const apiKeyField = new Form.Field.Password(
                         "apiKey",
@@ -75,18 +85,18 @@
                         null
                     );
                     form.addField(apiKeyField);
-                    
+
                     const formPrompt = await form.show(
                         "Enter your OpenAI API key (will be stored securely in Keychain)",
                         "Continue"
                     );
-                    
+
                     apiKey = formPrompt.values.apiKey;
-                    
+
                     if (!apiKey) {
                         throw new Error("API key is required");
                     }
-                    
+
                     console.log("Storing new API key in Keychain...");
                     credentials.write("openai", "api-key", apiKey);
                     console.log("API key stored successfully");
@@ -95,40 +105,50 @@
                     return;
                 }
             }
-            
+
             // Get selected tasks
             if (selection.tasks.length === 0) {
-                new Alert("No Tasks Selected", "Please select one or more tasks to break down into subtasks.").show();
+                console.log("No tasks selected");
+                if (!headless) {
+                    new Alert("No Tasks Selected", "Please select one or more tasks to break down into subtasks.").show();
+                }
                 return;
             }
-            
+
             const tasksToBreakdown = selection.tasks.filter(task => !task.completed);
             console.log("Tasks selected:", tasksToBreakdown.length);
-            
+
             if (tasksToBreakdown.length === 0) {
-                new Alert("No Incomplete Tasks", "All selected tasks are already completed.").show();
+                console.log("No incomplete tasks found");
+                if (!headless) {
+                    new Alert("No Incomplete Tasks", "All selected tasks are already completed.").show();
+                }
                 return;
             }
-            
+
             // Limit to 5 tasks to avoid timeouts
             if (tasksToBreakdown.length > 5) {
                 console.log("Too many tasks, limiting to 5");
-                const alert = new Alert(
-                    "Too Many Tasks",
-                    `Selected ${tasksToBreakdown.length} tasks. Will break down the first 5 tasks only to avoid timeouts.`
-                );
-                alert.addOption("Continue");
-                alert.addOption("Cancel");
-                const choice = await alert.show();
-                if (choice === 1) {
-                    console.log("User cancelled due to task limit");
-                    return;
+                if (!headless) {
+                    const alert = new Alert(
+                        "Too Many Tasks",
+                        `Selected ${tasksToBreakdown.length} tasks. Will break down the first 5 tasks only to avoid timeouts.`
+                    );
+                    alert.addOption("Continue");
+                    alert.addOption("Cancel");
+                    const choice = await alert.show();
+                    if (choice === 1) {
+                        console.log("User cancelled due to task limit");
+                        return;
+                    }
+                } else {
+                    console.log("Headless: auto-continuing with first 5 tasks");
                 }
-                
+
                 tasksToBreakdown.splice(5);
                 console.log("Limited to 5 tasks");
             }
-            
+
             // Prepare task data for AI
             console.log("Preparing task data for AI breakdown...");
             const taskData = tasksToBreakdown.map((task, index) => {
@@ -141,7 +161,7 @@
                 };
             });
             console.log("Task data prepared, sample:", JSON.stringify(taskData[0], null, 2));
-            
+
             // Call OpenAI API
             console.log("Preparing OpenAI API request...");
             const request = new URL.FetchRequest();
@@ -151,7 +171,7 @@
                 "Authorization": `Bearer ${apiKey}`,
                 "Content-Type": "application/json"
             };
-            
+
             const systemPrompt = `You are a productivity expert helping break down tasks into actionable subtasks.
 
 For each task, create the MINIMUM number of essential subtasks needed (typically 2-5, maximum 10 for very complex tasks).
@@ -173,7 +193,7 @@ Format:
 
 IMPORTANT: Return a JSON object with a "breakdowns" array. Each item must have: index, subtasks (array of strings).
 Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "Book appointment", "Add to calendar"]}]}`;
-            
+
             const requestBody = {
                 model: "gpt-5-2025-08-07",
                 messages: [
@@ -182,9 +202,9 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
                 ],
                 response_format: { type: "json_object" }
             };
-            
+
             request.bodyString = JSON.stringify(requestBody);
-            
+
             console.log("=== OpenAI API Request ===");
             console.log("URL:", request.url.string);
             console.log("Method:", request.method);
@@ -194,14 +214,16 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
                 "Content-Type": "application/json"
             }, null, 2));
             console.log("Request Body:", JSON.stringify(requestBody, null, 2));
-            
+
             // Show progress
-            const progress = new Alert("Breaking Down Tasks", "Sending tasks to AI for breakdown...\n\nThis may take 30-60 seconds for GPT-5.");
-            progress.show(() => {});
-            
+            if (!headless) {
+                const progress = new Alert("Breaking Down Tasks", "Sending tasks to AI for breakdown...\n\nThis may take 30-60 seconds for GPT-5.");
+                progress.show(() => {});
+            }
+
             console.log("Sending request to OpenAI...");
             console.log("Note: GPT-5 can take 30-60 seconds to respond");
-            
+
             let response;
             try {
                 response = await request.fetch();
@@ -209,33 +231,35 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
                 console.error("Fetch error:", fetchError);
                 throw new Error(`Network request failed: ${fetchError.message || 'Request timed out'}. Try breaking down fewer tasks (1-3) or check your internet connection.`);
             }
-            
+
             console.log("=== OpenAI API Response ===");
             console.log("Status Code:", response.statusCode);
             console.log("Response Body:", response.bodyString);
-            
+
             if (response.statusCode !== 200) {
                 console.error("API Error - Status:", response.statusCode);
                 console.error("API Error - Body:", response.bodyString);
                 throw new Error(`API Error: ${response.statusCode} - ${response.bodyString}`);
             }
-            
+
             const data = JSON.parse(response.bodyString);
             console.log("Parsed response data:", JSON.stringify(data, null, 2));
-            
+
             const aiResponse = JSON.parse(data.choices[0].message.content);
             console.log("Parsed AI response:", JSON.stringify(aiResponse, null, 2));
-            
+
             // Process results
             const breakdowns = aiResponse.breakdowns || aiResponse.results || [];
             console.log("Breakdowns found:", breakdowns.length);
-            
+
             if (breakdowns.length === 0) {
                 console.log("No breakdowns found");
-                new Alert("No Breakdowns", "AI couldn't generate subtasks for the selected tasks.").show();
+                if (!headless) {
+                    new Alert("No Breakdowns", "AI couldn't generate subtasks for the selected tasks.").show();
+                }
                 return;
             }
-            
+
             // Create or get "AI: Suggested" tag
             console.log("Creating/finding 'AI: Suggested' tag...");
             let suggestedTag = tags.byName("AI: Suggested");
@@ -245,11 +269,11 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
             } else {
                 console.log("Found existing 'AI: Suggested' tag");
             }
-            
+
             // Apply breakdowns to tasks
             console.log("Creating subtasks...");
             let totalSubtasks = 0;
-            
+
             breakdowns.forEach((breakdown, idx) => {
                 console.log(`Processing breakdown ${idx + 1}/${breakdowns.length}:`, JSON.stringify(breakdown));
                 const task = tasksToBreakdown[breakdown.index];
@@ -257,12 +281,12 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
                     console.warn(`Task not found at index ${breakdown.index}`);
                     return;
                 }
-                
+
                 console.log(`Creating subtasks for: "${task.name}"`);
-                
+
                 const subtasks = breakdown.subtasks || [];
                 console.log(`Creating ${subtasks.length} subtasks`);
-                
+
                 // Add note to parent task
                 const breakdownNote = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🤖 AI TASK BREAKDOWN
@@ -273,9 +297,9 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
 🏷️  Tagged with "AI: Suggested"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
-                
+
                 task.note = (task.note || "") + breakdownNote;
-                
+
                 // Create subtasks
                 subtasks.forEach((subtaskName, subIdx) => {
                     console.log(`Creating subtask ${subIdx + 1}/${subtasks.length}: "${subtaskName}"`);
@@ -283,12 +307,12 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
                     subtask.addTag(suggestedTag);
                     totalSubtasks++;
                 });
-                
+
                 console.log(`Created ${subtasks.length} subtasks for "${task.name}"`);
             });
-            
+
             console.log(`Total subtasks created: ${totalSubtasks}`);
-            
+
             // Show summary
             const summary = `Breakdown Complete!\n\n` +
                 `Tasks processed: ${breakdowns.length}\n` +
@@ -297,27 +321,30 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
                 `🏷️  Tagged with "AI: Suggested"\n` +
                 `📝 Parent tasks updated with breakdown note\n\n` +
                 `Review and adjust subtasks as needed!`;
-            
+
             console.log("=== Breakdown Summary ===");
             console.log(summary);
             console.log("=== End Debug Log ===");
-            
-            new Alert("AI Task Breakdown", summary).show();
-            
+
+            if (!headless) {
+                new Alert("AI Task Breakdown", summary).show();
+            }
+
         } catch (error) {
             console.error("=== ERROR ===");
             console.error("Error message:", error.message);
             console.error("Error stack:", error.stack);
             console.error("=== End Debug Log ===");
-            new Alert("Error", error.message).show();
+            if (!headless) {
+                new Alert("Error", error.message).show();
+            }
         }
     });
-    
+
     action.validate = function(selection, sender) {
         // Only enable if tasks are selected
         return selection.tasks.length > 0;
     };
-    
+
     return action;
 })();
-

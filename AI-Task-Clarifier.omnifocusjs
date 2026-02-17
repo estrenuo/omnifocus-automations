@@ -13,19 +13,26 @@
 (() => {
     // Credentials for storing OpenAI API key
     const credentials = new Credentials();
-    
+
     const action = new PlugIn.Action(async function(selection, sender) {
         try {
             console.log("=== AI Task Clarifier Debug Log ===");
             console.log("Starting plugin execution...");
 
+            // Headless mode: skip all dialogs, use stored credentials and defaults
+            const prefs = new Preferences("com.omnifocus.ai-task-clarifier");
+            const headless = prefs.readBoolean("headlessMode");
+            const defaultScope = prefs.readString("defaultScope") || "all"; // "all" | "selected" | "stale"
+            console.log("Headless mode:", headless, "Default scope:", defaultScope);
+
             // Get OpenAI API key from credentials
             let apiKey = null;
             const storedCreds = credentials.read("openai");
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
-            
+
             if (!storedCreds || !storedCreds.password) {
-                // Prompt for API key if not stored
+                // No stored credentials - always prompt (even in headless mode, credentials must be entered at least once)
+                console.log("No credentials found, prompting user (required for first run)...");
                 const form = new Form();
                 const apiKeyField = new Form.Field.Password(
                     "apiKey",
@@ -46,11 +53,14 @@
                 }
 
                 console.log("Storing new API key in Keychain...");
-                // Store the API key
                 credentials.write("openai", "api-key", apiKey);
                 console.log("API key stored successfully");
+            } else if (headless) {
+                // Headless mode with stored credentials - use silently
+                apiKey = storedCreds.password;
+                console.log("Headless: using stored API key");
             } else {
-                // Credentials exist - offer to use or clear them
+                // Interactive mode - offer to use or clear them
                 const alert = new Alert(
                     "OpenAI Credentials Found",
                     "Stored API key found. What would you like to do?"
@@ -100,7 +110,7 @@
                     return;
                 }
             }
-            
+
             // Get tasks to analyze
             let tasksToAnalyze = [];
 
@@ -109,8 +119,23 @@
             if (selection.tasks.length > 0) {
                 tasksToAnalyze = selection.tasks.filter(task => !task.completed);
                 console.log("Using selected tasks, filtered to incomplete:", tasksToAnalyze.length);
+            } else if (headless) {
+                // Headless mode - use defaultScope preference
+                console.log("Headless: using default scope:", defaultScope);
+                if (defaultScope === "selected") {
+                    throw new Error("No tasks selected. Please select tasks or choose a different scope.");
+                } else if (defaultScope === "stale") {
+                    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+                    tasksToAnalyze = flattenedTasks.filter(task => {
+                        return !task.completed && !task.dropped && task.added && task.added < thirtyDaysAgo;
+                    });
+                    console.log("Headless: analyzing tasks older than 30 days:", tasksToAnalyze.length);
+                } else {
+                    tasksToAnalyze = flattenedTasks.filter(task => !task.completed && !task.dropped);
+                    console.log("Headless: analyzing all incomplete tasks:", tasksToAnalyze.length);
+                }
             } else {
-                // Analyze all incomplete tasks if none selected
+                // Interactive mode - show scope selection form
                 const form = new Form();
                 const scopeField = new Form.Field.Option(
                     "scope",
@@ -120,7 +145,7 @@
                     "All incomplete tasks"
                 );
                 form.addField(scopeField);
-                
+
                 const formPrompt = await form.show("Task Analysis Scope", "Continue");
                 const scope = formPrompt.values.scope;
                 console.log("User selected scope:", scope);
@@ -139,10 +164,12 @@
                     console.log("Analyzing tasks older than 30 days:", tasksToAnalyze.length);
                 }
             }
-            
+
             if (tasksToAnalyze.length === 0) {
                 console.log("No tasks found matching criteria");
-                new Alert("No Tasks Found", "No tasks match the selected criteria.").show();
+                if (!headless) {
+                    new Alert("No Tasks Found", "No tasks match the selected criteria.").show();
+                }
                 return;
             }
 
@@ -151,22 +178,26 @@
             // Limit to 20 tasks to avoid timeout issues
             if (tasksToAnalyze.length > 20) {
                 console.log("Too many tasks, limiting to 20");
-                const alert = new Alert(
-                    "Too Many Tasks",
-                    `Found ${tasksToAnalyze.length} tasks. Will analyze the first 20 tasks only to avoid timeouts.`
-                );
-                alert.addOption("Continue");
-                alert.addOption("Cancel");
-                const choice = await alert.show();
-                if (choice === 1) {
-                    console.log("User cancelled due to task limit");
-                    return;
+                if (!headless) {
+                    const alert = new Alert(
+                        "Too Many Tasks",
+                        `Found ${tasksToAnalyze.length} tasks. Will analyze the first 20 tasks only to avoid timeouts.`
+                    );
+                    alert.addOption("Continue");
+                    alert.addOption("Cancel");
+                    const choice = await alert.show();
+                    if (choice === 1) {
+                        console.log("User cancelled due to task limit");
+                        return;
+                    }
+                } else {
+                    console.log("Headless: auto-continuing with first 20 tasks");
                 }
 
                 tasksToAnalyze = tasksToAnalyze.slice(0, 20);
                 console.log("Limited to 20 tasks");
             }
-            
+
             // Prepare task data for AI analysis
             console.log("Preparing task data for AI analysis...");
             const taskData = tasksToAnalyze.map((task, index) => {
@@ -183,7 +214,7 @@
                 };
             });
             console.log("Task data prepared, sample:", JSON.stringify(taskData[0], null, 2));
-            
+
             // Call OpenAI API
             console.log("Preparing OpenAI API request...");
             const request = new URL.FetchRequest();
@@ -230,10 +261,12 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
                 "Content-Type": "application/json"
             }, null, 2));
             console.log("Request Body:", JSON.stringify(requestBody, null, 2));
-            
+
             // Show progress
-            const progress = new Alert("Analyzing Tasks", "Sending tasks to AI for analysis...\n\nThis may take 30-60 seconds for GPT-5.");
-            progress.show(() => {});
+            if (!headless) {
+                const progress = new Alert("Analyzing Tasks", "Sending tasks to AI for analysis...\n\nThis may take 30-60 seconds for GPT-5.");
+                progress.show(() => {});
+            }
 
             console.log("Sending request to OpenAI...");
             console.log("Note: GPT-5 can take 30-60 seconds to respond");
@@ -261,14 +294,16 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
 
             const aiResponse = JSON.parse(data.choices[0].message.content);
             console.log("Parsed AI response:", JSON.stringify(aiResponse, null, 2));
-            
+
             // Process results - GPT-5 may return different field names
             const issues = aiResponse.results || aiResponse.issues || aiResponse.analysis || [];
             console.log("Issues found:", issues.length);
 
             if (issues.length === 0) {
                 console.log("No issues found, analysis complete");
-                new Alert("Analysis Complete", "No significant issues found! Your tasks look good.").show();
+                if (!headless) {
+                    new Alert("Analysis Complete", "No significant issues found! Your tasks look good.").show();
+                }
                 return;
             }
 
@@ -281,7 +316,7 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
             } else {
                 console.log("Found existing 'AI: Needs Improvement' tag");
             }
-            
+
             // Apply findings to tasks
             console.log("Applying findings to tasks...");
             let updatedCount = 0;
@@ -329,7 +364,7 @@ ${issue.suggestion}
                 updatedCount++;
             });
             console.log(`Updated ${updatedCount} tasks, flagged ${flaggedCount} high-severity tasks`);
-            
+
             // Show summary
             const summary = `Analysis Complete!\n\n` +
                 `Tasks analyzed: ${tasksToAnalyze.length}\n` +
@@ -345,21 +380,24 @@ ${issue.suggestion}
             console.log(summary);
             console.log("=== End Debug Log ===");
 
-            new Alert("AI Task Clarifier", summary).show();
+            if (!headless) {
+                new Alert("AI Task Clarifier", summary).show();
+            }
 
         } catch (error) {
             console.error("=== ERROR ===");
             console.error("Error message:", error.message);
             console.error("Error stack:", error.stack);
             console.error("=== End Debug Log ===");
-            new Alert("Error", error.message).show();
+            if (!headless) {
+                new Alert("Error", error.message).show();
+            }
         }
     });
-    
+
     action.validate = function(selection, sender) {
         return true; // Always available
     };
-    
+
     return action;
 })();
-
