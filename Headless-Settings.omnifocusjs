@@ -3,7 +3,7 @@
     "targets": ["omnifocus"],
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.headless-settings",
-    "version": "1.1.0",
+    "version": "1.9.0",
     "description": "Configure headless mode for all automation plugins (run without dialogs)",
     "label": "Headless Mode Settings",
     "shortLabel": "Headless Settings",

@@ -5,7 +5,7 @@ All notable changes to the OmniFocus plugins will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.0] - 2026-02-17
+## [1.9.0] - 2026-02-17
 
 ### Added
 - **AI Provider Choice**
@@ -26,9 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tags subtasks with "AI: Suggested" for easy filtering
 
 ### Changed
-- AI Task Clarifier updated to v1.8.0 with multi-provider support
-- AI Task Breakdown updated to v1.1.0 with multi-provider support
-- Headless Settings updated to v1.1.0 with AI provider dropdown
+- AI Task Clarifier updated to v1.9.0 with multi-provider support
+- AI Task Breakdown updated to v1.9.0 with multi-provider support
+- Headless Settings updated to v1.9.0 with AI provider dropdown
 - Credential dialog now shows 4 options: Use Stored Key, Clear & Re-enter, Switch AI Provider, Cancel
 - Progress alerts now show which AI provider is being used
 
@@ -119,6 +119,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
-- **1.8.0** (2026-02-17) - AI provider choice (ChatGPT or Claude), headless mode, AI Task Breakdown
+- **1.9.0** (2026-02-17) - AI provider choice (ChatGPT or Claude), headless mode, AI Task Breakdown
 - **1.0.0** (2025-01-26) - Initial release with AI Task Clarifier and JIRA Import plugins
 
