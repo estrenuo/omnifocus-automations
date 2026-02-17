@@ -5,7 +5,7 @@ All notable changes to the OmniFocus plugins will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.7.0] - 2026-02-17
+## [1.8.0] - 2026-02-17
 
 ### Added
 - **Project Selection Support**
@@ -14,13 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Projects are sent to AI with `type: "project"` for context-aware analysis
   - System prompts updated to handle project containers differently from tasks
   - Falls back to scope selection when selected projects have no tasks
-
-- **AI Task Breakdown Plugin**
-  - New plugin for breaking down tasks into subtasks and projects into tasks
-  - Select a project to generate top-level tasks for it
-  - Select a task to generate subtasks within it
-  - Creates 2-10 items depending on complexity
-  - Tags created items with "AI: Suggested"
 
 ### Changed
 - AI Task Clarifier analyzes project names for clarity, specificity, and whether they represent a clear outcome
@@ -108,6 +101,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History
 
-- **1.7.0** (2026-02-17) - Project selection support, AI Task Breakdown plugin
+- **1.8.0** (2026-02-17) - Project selection support, AI Task Breakdown plugin
 - **1.0.0** (2025-01-26) - Initial release with AI Task Clarifier and JIRA Import plugins
 

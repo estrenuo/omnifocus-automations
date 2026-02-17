@@ -445,7 +445,7 @@ For issues or questions:
 
 ## Version History
 
-### Version 1.7.0 (February 2026)
+### Version 1.8.0 (February 2026)
 - Project selection support for AI plugins
 - AI Task Breakdown plugin for breaking down tasks and projects
 - AI Task Clarifier analyzes both tasks and projects

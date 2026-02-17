@@ -3,7 +3,7 @@
     "targets": ["omnifocus"],
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.ai-task-breakdown",
-    "version": "1.0.0",
+    "version": "1.8.0",
     "description": "Uses OpenAI GPT-5 to break down tasks into actionable subtasks with AI-suggested next steps",
     "label": "AI Task Breakdown",
     "shortLabel": "AI Breakdown",

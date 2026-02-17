@@ -519,5 +519,5 @@ Future enhancements:
 
 ---
 
-**Version 1.7.0** | February 2026 | Made with love for OmniFocus users
+**Version 1.8.0** | February 2026 | Made with love for OmniFocus users
 
