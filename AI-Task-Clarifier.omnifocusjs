@@ -4,14 +4,13 @@
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.ai-task-clarifier",
     "version": "1.8.0",
-    "description": "Analyzes tasks using OpenAI GPT-5 to identify vague, non-actionable, or problematic tasks and provides improvement suggestions",
+    "description": "Analyzes tasks and projects using OpenAI GPT-5 to identify vague, non-actionable, or problematic items and provides improvement suggestions",
     "label": "AI Task Clarifier",
     "shortLabel": "AI Clarifier",
     "paletteLabel": "Analyze Tasks with AI",
     "image": "wand.and.stars"
 }*/
 (() => {
-    // Credentials for storing OpenAI API key
     const credentials = new Credentials();
 
     const action = new PlugIn.Action(async function(selection, sender) {
@@ -25,20 +24,11 @@
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
 
             if (!storedCreds || !storedCreds.password) {
-                // Prompt for API key if not stored
+                console.log("No credentials found, prompting user (required for first run)...");
                 const form = new Form();
-                const apiKeyField = new Form.Field.Password(
-                    "apiKey",
-                    "OpenAI API Key",
-                    null
-                );
-                form.addField(apiKeyField);
+                form.addField(new Form.Field.Password("apiKey", "OpenAI API Key", null));
 
-                const formPrompt = await form.show(
-                    "Enter your OpenAI API key (will be stored securely in Keychain)",
-                    "Continue"
-                );
-
+                const formPrompt = await form.show("Enter your OpenAI API key (will be stored securely in Keychain)", "Continue");
                 apiKey = formPrompt.values.apiKey;
 
                 if (!apiKey) {
@@ -49,11 +39,7 @@
                 credentials.write("openai", "api-key", apiKey);
                 console.log("API key stored successfully");
             } else {
-                // Credentials exist - offer to use or clear them
-                const alert = new Alert(
-                    "OpenAI Credentials Found",
-                    "Stored API key found. What would you like to do?"
-                );
+                const alert = new Alert("OpenAI Credentials Found", "Stored API key found. What would you like to do?");
                 alert.addOption("Use Stored Key");
                 alert.addOption("Clear & Re-enter Key");
                 alert.addOption("Cancel");
@@ -61,29 +47,16 @@
                 const choice = await alert.show();
 
                 if (choice === 0) {
-                    // Use stored key
                     apiKey = storedCreds.password;
                     console.log("Using stored API key");
                 } else if (choice === 1) {
-                    // Clear and re-enter
                     console.log("Clearing stored credentials...");
                     credentials.remove("openai");
-                    console.log("Credentials cleared");
 
-                    // Prompt for new key
                     const form = new Form();
-                    const apiKeyField = new Form.Field.Password(
-                        "apiKey",
-                        "OpenAI API Key",
-                        null
-                    );
-                    form.addField(apiKeyField);
+                    form.addField(new Form.Field.Password("apiKey", "OpenAI API Key", null));
 
-                    const formPrompt = await form.show(
-                        "Enter your OpenAI API key (will be stored securely in Keychain)",
-                        "Continue"
-                    );
-
+                    const formPrompt = await form.show("Enter your OpenAI API key (will be stored securely in Keychain)", "Continue");
                     apiKey = formPrompt.values.apiKey;
 
                     if (!apiKey) {
@@ -94,7 +67,6 @@
                     credentials.write("openai", "api-key", apiKey);
                     console.log("API key stored successfully");
                 } else {
-                    // Cancel
                     console.log("User cancelled");
                     return;
                 }
@@ -104,7 +76,7 @@
             let analyzeItems = []; // [{item, type: 'task'|'project'}, ...]
             console.log("Selection check - tasks selected:", selection.tasks.length, "projects selected:", selection.projects.length);
 
-            // First, try to collect items from the selection
+            // Collect items from the selection
             if (selection.tasks.length > 0 || selection.projects.length > 0) {
                 const seen = new Set();
                 for (const task of selection.tasks) {
@@ -162,10 +134,7 @@
             // Limit to 20 items to avoid timeout issues
             if (analyzeItems.length > 20) {
                 console.log("Too many items, limiting to 20");
-                const alert = new Alert(
-                    "Too Many Tasks",
-                    `Found ${analyzeItems.length} tasks. Will analyze the first 20 tasks only to avoid timeouts.`
-                );
+                const alert = new Alert("Too Many Tasks", `Found ${analyzeItems.length} items. Will analyze the first 20 only to avoid timeouts.`);
                 alert.addOption("Continue");
                 alert.addOption("Cancel");
                 const choice = await alert.show();
@@ -173,7 +142,6 @@
                     console.log("User cancelled due to item limit");
                     return;
                 }
-
                 analyzeItems = analyzeItems.slice(0, 20);
                 console.log("Limited to 20 items");
             }
@@ -226,7 +194,7 @@
 4. Stale (old tasks with no progress)
 5. Ambiguous or unclear
 
-Items with type "project" are project containers -- analyze their names and notes for clarity, specificity, and whether they represent a clear outcome.
+Items with type "project" are project containers — analyze their names and notes for clarity, specificity, and whether they represent a clear outcome.
 
 For each problematic item, provide:
 - Issue type (vague/broad/stale/ambiguous/missing-context)
@@ -252,18 +220,13 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
             console.log("URL:", request.url.string);
             console.log("Method:", request.method);
             console.log("API Key (first 20 chars):", apiKey.substring(0, 20) + "...");
-            console.log("Headers:", JSON.stringify({
-                "Authorization": "Bearer [REDACTED]",
-                "Content-Type": "application/json"
-            }, null, 2));
             console.log("Request Body:", JSON.stringify(requestBody, null, 2));
 
             // Show progress
-            const progress = new Alert("Analyzing Tasks", "Sending tasks to AI for analysis...\n\nThis may take 30-60 seconds for GPT-5.");
+            const progress = new Alert("Analyzing Tasks", "Sending tasks to OpenAI for analysis...\n\nThis may take 15-30 seconds.");
             progress.show(() => {});
 
             console.log("Sending request to OpenAI...");
-            console.log("Note: GPT-5 can take 30-60 seconds to respond");
 
             let response;
             try {
@@ -289,7 +252,7 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
             const aiResponse = JSON.parse(data.choices[0].message.content);
             console.log("Parsed AI response:", JSON.stringify(aiResponse, null, 2));
 
-            // Process results - GPT-5 may return different field names
+            // Process results
             const issues = aiResponse.results || aiResponse.issues || aiResponse.analysis || [];
             console.log("Issues found:", issues.length);
 
@@ -324,7 +287,6 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
 
                 console.log(`Updating ${entry.type}: "${entry.item.name}"`);
 
-                // Build a nicely formatted analysis note
                 const analysisNote = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🤖 AI IMPROVEMENT SUGGESTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -369,9 +331,9 @@ ${issue.suggestion}
 
             // Show summary
             const summary = `Analysis Complete!\n\n` +
-                `Tasks analyzed: ${analyzeItems.length}\n` +
+                `Items analyzed: ${analyzeItems.length}\n` +
                 `Issues found: ${issues.length}\n` +
-                `Tasks updated: ${updatedCount}\n` +
+                `Items updated: ${updatedCount}\n` +
                 `High-severity flagged: ${flaggedCount}\n\n` +
                 `✅ Tagged with "AI: Needs Improvement"\n` +
                 `📝 Suggestions added to task notes\n` +

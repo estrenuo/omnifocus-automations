@@ -4,14 +4,13 @@
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.ai-task-breakdown",
     "version": "1.8.0",
-    "description": "Uses OpenAI GPT-5 to break down tasks into actionable subtasks with AI-suggested next steps",
+    "description": "Uses OpenAI GPT-5 to break down tasks into actionable subtasks and generate tasks for projects",
     "label": "AI Task Breakdown",
     "shortLabel": "AI Breakdown",
     "paletteLabel": "Break Down Task with AI",
     "image": "list.bullet.indent"
 }*/
 (() => {
-    // Credentials for storing OpenAI API key
     const credentials = new Credentials();
 
     const action = new PlugIn.Action(async function(selection, sender) {
@@ -25,20 +24,11 @@
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
 
             if (!storedCreds || !storedCreds.password) {
-                // Prompt for API key if not stored
+                console.log("No credentials found, prompting user (required for first run)...");
                 const form = new Form();
-                const apiKeyField = new Form.Field.Password(
-                    "apiKey",
-                    "OpenAI API Key",
-                    null
-                );
-                form.addField(apiKeyField);
+                form.addField(new Form.Field.Password("apiKey", "OpenAI API Key", null));
 
-                const formPrompt = await form.show(
-                    "Enter your OpenAI API key (will be stored securely in Keychain)",
-                    "Continue"
-                );
-
+                const formPrompt = await form.show("Enter your OpenAI API key (will be stored securely in Keychain)", "Continue");
                 apiKey = formPrompt.values.apiKey;
 
                 if (!apiKey) {
@@ -49,11 +39,7 @@
                 credentials.write("openai", "api-key", apiKey);
                 console.log("API key stored successfully");
             } else {
-                // Credentials exist - offer to use or clear them
-                const alert = new Alert(
-                    "OpenAI Credentials Found",
-                    "Stored API key found. What would you like to do?"
-                );
+                const alert = new Alert("OpenAI Credentials Found", "Stored API key found. What would you like to do?");
                 alert.addOption("Use Stored Key");
                 alert.addOption("Clear & Re-enter Key");
                 alert.addOption("Cancel");
@@ -66,21 +52,11 @@
                 } else if (choice === 1) {
                     console.log("Clearing stored credentials...");
                     credentials.remove("openai");
-                    console.log("Credentials cleared");
 
                     const form = new Form();
-                    const apiKeyField = new Form.Field.Password(
-                        "apiKey",
-                        "OpenAI API Key",
-                        null
-                    );
-                    form.addField(apiKeyField);
+                    form.addField(new Form.Field.Password("apiKey", "OpenAI API Key", null));
 
-                    const formPrompt = await form.show(
-                        "Enter your OpenAI API key (will be stored securely in Keychain)",
-                        "Continue"
-                    );
-
+                    const formPrompt = await form.show("Enter your OpenAI API key (will be stored securely in Keychain)", "Continue");
                     apiKey = formPrompt.values.apiKey;
 
                     if (!apiKey) {
@@ -122,10 +98,7 @@
             // Limit to 5 items to avoid timeouts
             if (breakdownItems.length > 5) {
                 console.log("Too many items, limiting to 5");
-                const alert = new Alert(
-                    "Too Many Tasks",
-                    `Selected ${breakdownItems.length} tasks. Will break down the first 5 tasks only to avoid timeouts.`
-                );
+                const alert = new Alert("Too Many Tasks", `Selected ${breakdownItems.length} items. Will break down the first 5 only to avoid timeouts.`);
                 alert.addOption("Continue");
                 alert.addOption("Cancel");
                 const choice = await alert.show();
@@ -133,7 +106,6 @@
                     console.log("User cancelled due to item limit");
                     return;
                 }
-
                 breakdownItems.splice(5);
                 console.log("Limited to 5 items");
             }
@@ -210,18 +182,13 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
             console.log("URL:", request.url.string);
             console.log("Method:", request.method);
             console.log("API Key (first 20 chars):", apiKey.substring(0, 20) + "...");
-            console.log("Headers:", JSON.stringify({
-                "Authorization": "Bearer [REDACTED]",
-                "Content-Type": "application/json"
-            }, null, 2));
             console.log("Request Body:", JSON.stringify(requestBody, null, 2));
 
             // Show progress
-            const progress = new Alert("Breaking Down Tasks", "Sending tasks to AI for breakdown...\n\nThis may take 30-60 seconds for GPT-5.");
+            const progress = new Alert("Breaking Down Tasks", "Sending tasks to OpenAI for breakdown...\n\nThis may take 15-30 seconds.");
             progress.show(() => {});
 
             console.log("Sending request to OpenAI...");
-            console.log("Note: GPT-5 can take 30-60 seconds to respond");
 
             let response;
             try {
@@ -253,7 +220,7 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
 
             if (breakdowns.length === 0) {
                 console.log("No breakdowns found");
-                new Alert("No Breakdowns", "AI couldn't generate subtasks for the selected tasks.").show();
+                new Alert("No Breakdowns", "AI couldn't generate subtasks for the selected items.").show();
                 return;
             }
 
@@ -327,7 +294,7 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
 
             // Show summary
             const summary = `Breakdown Complete!\n\n` +
-                `Tasks processed: ${breakdowns.length}\n` +
+                `Items processed: ${breakdowns.length}\n` +
                 `Subtasks created: ${totalSubtasks}\n\n` +
                 `✅ Subtasks added to parent tasks\n` +
                 `🏷️  Tagged with "AI: Suggested"\n` +
