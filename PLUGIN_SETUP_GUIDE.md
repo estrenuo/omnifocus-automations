@@ -1,24 +1,23 @@
 # OmniFocus Automation Plugins - Setup Guide
 
-This repository contains two powerful OmniFocus automation plugins that integrate with external services.
+This repository contains powerful OmniFocus automation plugins that integrate with external services.
 
 ## Plugins Included
 
 ### 1. AI Task Clarifier (`AI-Task-Clarifier.omnifocusjs`)
-Uses OpenAI GPT-5 to analyze your tasks and projects and identify issues like:
+Uses AI (ChatGPT or Claude) to analyze your tasks and identify issues like:
 - Vague or non-actionable tasks
 - Tasks that are too broad (need breaking down)
 - Missing critical context
 - Stale tasks (old with no progress)
 - Ambiguous or unclear tasks
-- Project names that lack clarity or a specific outcome
 
 ### 2. AI Task Breakdown (`AI-Task-Breakdown.omnifocusjs`)
-Uses OpenAI GPT-5 to break down complex items into actionable steps:
-- Select a task to generate subtasks within it
-- Select a project to generate top-level tasks for it
-- Creates 2-10 items depending on complexity
-- Tags created items with "AI: Suggested"
+Uses AI (ChatGPT or Claude) to break down complex tasks into actionable subtasks:
+- Creates minimum necessary subtasks (typically 2-5)
+- Brief action phrases, not full sentences
+- Tags subtasks with "AI: Suggested"
+- Adds breakdown note to parent task
 
 ### 3. JIRA Import (`JIRA-Import.omnifocusjs`)
 Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping:
@@ -30,12 +29,18 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 
 ## Prerequisites
 
-### For AI Task Clarifier
-1. **OpenAI API Key**
+### For AI Plugins (Clarifier & Breakdown)
+1. **OpenAI API Key** (if using ChatGPT)
    - Sign up at https://platform.openai.com/
    - Navigate to API Keys section
    - Create a new API key
    - **Important**: You need access to GPT-5 (released August 2025)
+   - Keep your API key secure - it will be stored in your macOS Keychain
+
+2. **Anthropic API Key** (if using Claude)
+   - Sign up at https://console.anthropic.com/
+   - Navigate to API Keys section
+   - Create a new API key
    - Keep your API key secure - it will be stored in your macOS Keychain
 
 ### For JIRA Import
@@ -89,49 +94,47 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 
 1. Open the Automation menu (gear icon)
 2. You should see:
-   - "AI Task Clarifier"
-   - "AI Task Breakdown"
-   - "Import JIRA Issues"
+   - "AI Task Clarifier" (or "AI Clarifier")
+   - "Import JIRA Issues" (or "JIRA Import")
 
 ## Usage
 
-### AI Task Clarifier
+### AI Task Clarifier / AI Task Breakdown
 
 **First Run:**
-1. Click Automation menu → "AI Task Clarifier"
-2. You'll be prompted to enter your OpenAI API key
-3. Enter your key and click "Continue"
+1. Click Automation menu → "AI Task Clarifier" (or "AI Task Breakdown")
+2. Choose your AI provider: ChatGPT (OpenAI) or Claude (Anthropic)
+3. Enter your API key and click "Continue"
 4. The key will be securely stored in your macOS Keychain
 
 **Subsequent Runs:**
 1. Click Automation menu → "AI Task Clarifier"
-2. You'll see a prompt: "OpenAI Credentials Found"
+2. You'll see a prompt showing your current provider's credentials
 3. Choose:
    - "Use Stored Key" - Continue with saved credentials
    - "Clear & Re-enter Key" - Update your API key
+   - "Switch AI Provider" - Toggle between ChatGPT and Claude
    - "Cancel" - Exit without running
 
-**Analyzing Tasks and Projects:**
+**Analyzing Tasks:**
 
-**Option A: Analyze Selected Tasks or Projects**
-1. Select one or more tasks or projects in OmniFocus
+**Option A: Analyze Selected Tasks**
+1. Select one or more tasks in OmniFocus
 2. Click Automation menu → "AI Task Clarifier"
 3. Wait for analysis (usually 10-30 seconds)
-4. Projects are analyzed for name clarity, specificity, and whether they represent a clear outcome
 
 **Option B: Analyze All Tasks**
-1. Don't select any tasks (or select a project with no tasks to trigger scope selection)
+1. Don't select any tasks
 2. Click Automation menu → "AI Task Clarifier"
 3. Choose analysis scope:
-   - "Selected tasks/projects" - Analyzes current selection
    - "All incomplete tasks" - Analyzes all open tasks
    - "Tasks older than 30 days" - Focuses on stale tasks
 4. Wait for analysis
 
 **Understanding Results:**
-- Tasks/projects with issues are tagged "AI: Needs Improvement"
+- Tasks with issues are tagged "AI: Needs Improvement"
 - High-severity issues are automatically flagged
-- AI suggestions are added to task/project notes with:
+- AI suggestions are added to task notes with:
   - Issue type (vague/broad/stale/ambiguous/missing-context)
   - Severity level (low/medium/high)
   - Specific improvement suggestion
@@ -139,39 +142,12 @@ Imports all open JIRA issues as OmniFocus tasks with comprehensive field mapping
 
 **Example AI Analysis in Task Note:**
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-AI IMPROVEMENT SUGGESTION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Date: 2/17/2026
-
-Issue Type: VAGUE
-Severity: HIGH
-
-SUGGESTION:
-Change "Think about website" to "Draft 3 key features for website redesign"
-
+--- AI Analysis (1/26/2025) ---
+Issue: vague
+Severity: high
+Suggestion: Change "Think about website" to "Draft 3 key features for website redesign"
 Recommended Action: clarify
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
-
-### AI Task Breakdown
-
-**First Run:**
-1. Click Automation menu → "AI Task Breakdown"
-2. You'll be prompted to enter your OpenAI API key (shared with AI Task Clarifier)
-3. Enter your key and click "Continue"
-
-**Breaking Down Tasks or Projects:**
-1. Select tasks or projects in OmniFocus (1-5 items)
-2. Click Automation menu → "AI Task Breakdown"
-3. Wait for breakdown (30-60 seconds)
-
-**How it works:**
-- Select a **task** → AI creates subtasks within it
-- Select a **project** → AI creates top-level tasks in the project
-- Creates 2-10 items depending on complexity
-- All created items tagged "AI: Suggested"
-- Parent task/project gets a breakdown note
 
 ### JIRA Import
 
@@ -253,11 +229,11 @@ Both plugins now include a built-in credential management feature!
 
 **Manual Method (Alternative):**
 
-**OpenAI API Key:**
+**AI API Key (OpenAI or Anthropic):**
 1. Open macOS Keychain Access
-2. Search for "openai"
+2. Search for "openai" or "anthropic" (depending on your provider)
 3. Delete the entry
-4. Run the AI Task Clarifier plugin again
+4. Run the AI plugin again
 5. Enter your new API key
 
 **JIRA Credentials:**
@@ -334,12 +310,11 @@ Task data prepared, sample: {
   "age_days": 5,
   ...
 }
-=== OpenAI API Request ===
+=== AI API Request ===
 URL: https://api.openai.com/v1/chat/completions
 Method: POST
-Request Body: {...}
-Sending request to OpenAI...
-=== OpenAI API Response ===
+Sending request to ChatGPT (OpenAI)...
+=== AI API Response ===
 Status Code: 200
 Response Body: {...}
 Issues found: 2
@@ -361,8 +336,8 @@ Issues found: 2
 - Consider analyzing fewer tasks at once
 
 **"Model not found" or "Access denied"**
-- You don't have access to GPT-5
-- Check your OpenAI account tier
+- You don't have access to the requested model (GPT-5 or Claude Sonnet)
+- Check your account tier with the selected AI provider
 - You may need to upgrade your plan
 
 **No issues found**
@@ -393,10 +368,15 @@ Issues found: 2
 
 ## API Costs
 
-### OpenAI GPT-5
+### ChatGPT (OpenAI GPT-5)
 - Pricing varies based on usage
 - Typical cost: ~$0.01-0.05 per analysis run (50 tasks)
 - Check current pricing at https://openai.com/pricing
+
+### Claude (Anthropic)
+- Pricing varies based on usage
+- Typical cost: ~$0.01-0.05 per analysis run (50 tasks)
+- Check current pricing at https://www.anthropic.com/pricing
 
 ### JIRA API
 - JIRA Cloud API is free for standard usage
@@ -445,10 +425,11 @@ For issues or questions:
 
 ## Version History
 
-### Version 1.8.0 (February 2026)
-- Project selection support for AI plugins
-- AI Task Breakdown plugin for breaking down tasks and projects
-- AI Task Clarifier analyzes both tasks and projects
+### Version 1.8 (February 2026)
+- AI provider choice: ChatGPT (OpenAI) or Claude (Anthropic)
+- Headless mode for all plugins (run without dialogs)
+- AI Task Breakdown plugin
+- Headless Settings plugin for centralized configuration
 
 ### Version 1.0 (January 2025)
 - Initial release

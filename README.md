@@ -11,10 +11,10 @@ Two powerful OmniFocus plugins that integrate AI and JIRA to supercharge your ta
 ## 📦 What's Included
 
 ### 1. AI Task Clarifier (`AI-Task-Clarifier.omnifocusjs`)
-Analyzes your tasks and projects using OpenAI GPT-5 to identify and fix problems.
+Analyzes your tasks using AI (ChatGPT or Claude) to identify and fix problems.
 
 ### 2. AI Task Breakdown (`AI-Task-Breakdown.omnifocusjs`)
-Breaks down tasks into subtasks and projects into tasks using OpenAI GPT-5.
+Breaks down complex tasks into actionable subtasks using AI (ChatGPT or Claude).
 
 ### 3. JIRA Import (`JIRA-Import.omnifocusjs`)
 Imports all open JIRA issues as OmniFocus tasks with full field mapping.
@@ -24,18 +24,16 @@ Imports all open JIRA issues as OmniFocus tasks with full field mapping.
 ### AI Task Clarifier
 
 **Features:**
-- Works on both individual tasks and entire projects
-- Analyzes project names for clarity, specificity, and whether they represent a clear outcome
-- Identifies vague or non-actionable tasks
-- Detects tasks that need breaking down
-- Flags stale tasks (old with no progress)
-- Finds missing context or ambiguous tasks
-- Provides specific improvement suggestions
-- Auto-tags problematic tasks/projects for review
-- Flags high-severity issues
-- Falls back to scope selection when selected projects have no tasks
-- Built-in credential management (easy to update API key)
-- Comprehensive debug logging for troubleshooting
+- ✅ Identifies vague or non-actionable tasks
+- ✅ Detects tasks that need breaking down
+- ✅ Flags stale tasks (old with no progress)
+- ✅ Finds missing context or ambiguous tasks
+- ✅ Provides specific improvement suggestions
+- ✅ Auto-tags problematic tasks for review
+- ✅ Flags high-severity issues
+- ✅ Choose between ChatGPT (OpenAI) and Claude (Anthropic)
+- ✅ Built-in credential management (easy to update API key)
+- ✅ Comprehensive debug logging for troubleshooting
 
 **Example Output:**
 ```
@@ -46,38 +44,34 @@ Note includes formatted suggestion with issue type, severity, and actionable adv
 ### AI Task Breakdown
 
 **Features:**
-- Works on both individual tasks and entire projects
-- Select a project to generate tasks for it; select a task to generate subtasks
-- Creates MINIMUM necessary items (typically 2-5)
-- Succinct bullet-point style (no full sentences)
-- AI determines optimal number of steps
-- Up to 10 items for very complex tasks/projects
-- Tags created items with "AI: Suggested"
-- Adds breakdown note to parent task or project
-- Built-in credential management
-- Comprehensive debug logging
+- ✅ Creates MINIMUM necessary subtasks (typically 2-5)
+- ✅ Succinct bullet-point style (no full sentences)
+- ✅ AI determines optimal number of steps
+- ✅ Up to 10 subtasks for very complex tasks
+- ✅ Tags subtasks with "AI: Suggested"
+- ✅ Adds breakdown note to parent task
+- ✅ Choose between ChatGPT (OpenAI) and Claude (Anthropic)
+- ✅ Built-in credential management
+- ✅ Comprehensive debug logging
 
-**Example (task):**
+**Example:**
 ```
 Task: "Go get a haircut"
 
 AI creates 3 subtasks:
-  - Find and book appointment at barbershop [AI: Suggested]
-  - Add to calendar with travel time [AI: Suggested]
-  - Get haircut [AI: Suggested]
-```
+  ☐ Find and book appointment at barbershop [AI: Suggested]
+  ☐ Add to calendar with travel time [AI: Suggested]
+  ☐ Get haircut [AI: Suggested]
 
-**Example (project):**
-```
-Project: "Launch new website"
+Task: "Launch new website"
 
-AI creates 6 tasks in the project:
-  - Complete final QA testing on staging [AI: Suggested]
-  - Get stakeholder approval for launch [AI: Suggested]
-  - Prepare deployment and rollback plan [AI: Suggested]
-  - Deploy to production and verify [AI: Suggested]
-  - Update DNS and SSL certificates [AI: Suggested]
-  - Monitor for 24hrs and send announcement [AI: Suggested]
+AI creates 6 subtasks:
+  ☐ Complete final QA testing on staging [AI: Suggested]
+  ☐ Get stakeholder approval for launch [AI: Suggested]
+  ☐ Prepare deployment and rollback plan [AI: Suggested]
+  ☐ Deploy to production and verify [AI: Suggested]
+  ☐ Update DNS and SSL certificates [AI: Suggested]
+  ☐ Monitor for 24hrs and send announcement [AI: Suggested]
 ```
 
 ### JIRA Import
@@ -107,8 +101,8 @@ Note:
 
 ## 📋 Requirements
 
-### AI Task Clarifier
-- OpenAI API key with GPT-5 access
+### AI Task Clarifier / AI Task Breakdown
+- OpenAI API key (for ChatGPT) **or** Anthropic API key (for Claude)
 - Active internet connection
 - OmniFocus 4 (macOS or iOS)
 
@@ -135,8 +129,15 @@ The plugins will automatically appear in OmniFocus!
 
 ### Step 1: Get API Credentials
 
-**OpenAI API Key:**
+**OpenAI API Key (for ChatGPT):**
 1. Visit https://platform.openai.com/
+2. Create an account or sign in
+3. Navigate to API Keys
+4. Create a new key
+5. Copy and save it securely
+
+**Anthropic API Key (for Claude):**
+1. Visit https://console.anthropic.com/
 2. Create an account or sign in
 3. Navigate to API Keys
 4. Create a new key
@@ -160,43 +161,31 @@ The plugins will automatically appear in OmniFocus!
 
 ### Step 3: Configure
 
-**First run of each plugin:**
+**First run of each AI plugin:**
 1. Click Automation menu → Select plugin
-2. Enter your credentials when prompted
-3. Credentials are securely stored in macOS Keychain
+2. Choose your AI provider (ChatGPT or Claude)
+3. Enter your API key when prompted
+4. Credentials are securely stored in macOS Keychain
 
 ## 💡 Usage
 
 ### AI Task Clarifier
 
-**Analyze Selected Tasks or Projects:**
-1. Select tasks or projects in OmniFocus
+**Analyze Selected Tasks:**
+1. Select tasks in OmniFocus
 2. Automation menu → "AI Task Clarifier"
 3. Review results
 
 **Analyze All Tasks:**
-1. Don't select anything (or select an empty/deferred project)
+1. Don't select anything
 2. Automation menu → "AI Task Clarifier"
 3. Choose scope (all tasks, or tasks older than 30 days)
 4. Review results
 
 **Results:**
-- Problematic tasks/projects tagged "AI: Needs Improvement"
+- Problematic tasks tagged "AI Review"
 - High-severity issues flagged
-- Suggestions added to task/project notes
-
-### AI Task Breakdown
-
-**Break Down Selected Tasks or Projects:**
-1. Select tasks or projects in OmniFocus
-2. Automation menu → "AI Task Breakdown"
-3. Review created subtasks/tasks
-
-**How it works:**
-- Select a **task** → AI creates subtasks within it
-- Select a **project** → AI creates top-level tasks in the project
-- Creates 2-10 items depending on complexity
-- All created items tagged "AI: Suggested"
+- Suggestions added to task notes
 
 ### JIRA Import
 
@@ -231,15 +220,20 @@ The plugins will automatically appear in OmniFocus!
 
 - All credentials stored in macOS Keychain (encrypted)
 - HTTPS-only API communication
-- No data sent to third parties (except OpenAI/JIRA APIs)
+- No data sent to third parties (except OpenAI/Anthropic/JIRA APIs)
 - Open source - review the code yourself
 
 ## 💰 Costs
 
-**OpenAI GPT-5:**
+**ChatGPT (OpenAI GPT-5):**
 - Pay-per-use pricing
 - Typical cost: $0.01-0.05 per analysis (50 tasks)
 - Check current pricing: https://openai.com/pricing
+
+**Claude (Anthropic):**
+- Pay-per-use pricing
+- Typical cost: $0.01-0.05 per analysis (50 tasks)
+- Check current pricing: https://www.anthropic.com/pricing
 
 **JIRA API:**
 - Free for standard usage
@@ -350,10 +344,10 @@ Both plugins include comprehensive debug logging visible in the OmniFocus Automa
 - Check project key filter
 - Verify JIRA permissions
 
-**"Model not found" (OpenAI)**
-- No GPT-5 access
-- Check OpenAI account tier
-- May need to upgrade plan
+**"Model not found" (AI API)**
+- No access to the requested model (GPT-5 or Claude Sonnet)
+- Check your account tier with the selected provider
+- May need to upgrade your plan
 
 See PLUGIN_SETUP_GUIDE.md for complete troubleshooting guide.
 
@@ -394,58 +388,16 @@ Task: "Website stuff"
 
 **After:**
 ```
-Task: "Website stuff" [FLAGGED] [Tagged: AI: Needs Improvement]
+Task: "Website stuff" [FLAGGED] [Tagged: AI Review]
 Note:
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  AI IMPROVEMENT SUGGESTION
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Date: 2/17/2026
-
-  Issue Type: VAGUE
-  Severity: HIGH
-
-  SUGGESTION:
-  Specify what needs to be done. Consider:
+  --- AI Analysis (1/26/2025) ---
+  Issue: vague
+  Severity: high
+  Suggestion: Specify what needs to be done. Consider:
     - "Update website homepage copy"
     - "Fix website mobile navigation bug"
     - "Review website analytics report"
-
   Recommended Action: clarify
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-**Project analysis example:**
-```
-Project: "Improve website"
-Note:
-  AI suggests renaming to "Redesign company website with new brand guidelines"
-  - More specific outcome
-  - Clear deliverable
-```
-
-### AI Task Breakdown Output
-
-**Task breakdown:**
-```
-Task: "Plan vacation"
-AI creates 5 subtasks:
-  - Choose destination and dates [AI: Suggested]
-  - Book flights and accommodation [AI: Suggested]
-  - Check passport/visa requirements [AI: Suggested]
-  - Create itinerary and book activities [AI: Suggested]
-  - Arrange pet care and pack [AI: Suggested]
-```
-
-**Project breakdown:**
-```
-Project: "Launch new website"
-AI creates 6 tasks in the project:
-  - Complete final QA testing on staging [AI: Suggested]
-  - Get stakeholder approval for launch [AI: Suggested]
-  - Prepare deployment and rollback plan [AI: Suggested]
-  - Deploy to production and verify [AI: Suggested]
-  - Update DNS and SSL certificates [AI: Suggested]
-  - Monitor for 24hrs and send announcement [AI: Suggested]
 ```
 
 ### JIRA Import Result
@@ -497,7 +449,7 @@ Modify and distribute freely.
 
 Built with:
 - OmniFocus Omni Automation framework
-- OpenAI GPT-5 API
+- OpenAI GPT-5 API / Anthropic Claude API
 - JIRA REST API v3
 
 ## 📞 Support
@@ -505,6 +457,7 @@ Built with:
 - Check documentation files in this repo
 - OmniFocus forums: https://discourse.omnigroup.com/
 - OpenAI docs: https://platform.openai.com/docs/
+- Anthropic docs: https://docs.anthropic.com/
 - JIRA docs: https://developer.atlassian.com/cloud/jira/
 
 ## 🎯 Roadmap
@@ -519,5 +472,5 @@ Future enhancements:
 
 ---
 
-**Version 1.8.0** | February 2026 | Made with love for OmniFocus users
+**Version 1.0** | January 2025 | Made with ❤️ for OmniFocus users
 

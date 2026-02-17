@@ -2,35 +2,31 @@
 
 ## Overview
 
-The AI Task Breakdown plugin uses OpenAI GPT-5 to automatically break down complex tasks into subtasks and projects into tasks. It works on both individual tasks and entire projects, making it perfect for items that feel overwhelming or unclear about where to start.
+The AI Task Breakdown plugin uses AI (ChatGPT or Claude) to automatically break down complex tasks into actionable subtasks. It's perfect for tasks that feel overwhelming or unclear about where to start. You can choose your preferred AI provider on first run or switch at any time.
 
 ## How It Works
 
-1. **Select tasks or projects** you want to break down (1-5 items)
+1. **Select tasks** you want to break down (1-5 tasks)
 2. **Run the plugin** from Automation menu
-3. **AI analyzes** each item and determines logical steps
-4. **Items are created** automatically (2-10 per parent):
-   - For **tasks**: subtasks are created as children
-   - For **projects**: top-level tasks are created inside the project
+3. **AI analyzes** each task and determines logical steps
+4. **Subtasks are created** automatically (2-10 per task)
 5. **Tagged** with "AI: Suggested" for easy filtering
-6. **Parent task/project updated** with breakdown note
+6. **Parent task updated** with breakdown note
 
 ## Features
 
 ### Intelligent Breakdown
 - ✅ AI creates MINIMUM necessary steps (typically 2-5)
-- ✅ Succinct, bullet-point style items
+- ✅ Succinct, bullet-point style subtasks
 - ✅ No unnecessary steps or fluff
-- ✅ Up to 10 items for very complex tasks/projects only
+- ✅ Up to 10 subtasks for very complex tasks only
 - ✅ Brief action phrases, no full sentences
 
 ### Seamless Integration
-- ✅ Works on both tasks and projects
-- ✅ Task selection → subtasks created as children
-- ✅ Project selection → top-level tasks created in project
+- ✅ Subtasks created as children of parent task
 - ✅ Tagged with "AI: Suggested" for filtering
-- ✅ Parent task/project gets breakdown note
-- ✅ Preserves existing structure
+- ✅ Parent task gets breakdown note
+- ✅ Preserves existing task structure
 
 ### Smart & Fast
 - ✅ Processes 1-5 tasks at once
@@ -42,11 +38,10 @@ The AI Task Breakdown plugin uses OpenAI GPT-5 to automatically break down compl
 
 ### Basic Workflow
 
-**Step 1: Select Tasks or Projects**
+**Step 1: Select Tasks**
 ```
-Select 1-5 tasks or projects that need breaking down
-Example task: "Launch new website"
-Example project: "Q2 Marketing Campaign"
+Select 1-5 tasks that need breaking down
+Example: "Launch new website"
 ```
 
 **Step 2: Run Plugin**
@@ -57,8 +52,8 @@ Automation menu → AI Task Breakdown
 
 **Step 3: Wait for AI**
 ```
-Progress message shows: "Breaking Down Tasks..."
-Wait 30-60 seconds for GPT-5
+Progress message shows: "Sending tasks to [provider] for breakdown..."
+Wait 30-60 seconds
 ```
 
 **Step 4: Review Results**
@@ -128,51 +123,20 @@ AI creates (8 subtasks - complex task):
 ☐ Deploy to staging and run security audit
 ```
 
-**Example 5: Project Breakdown**
-```
-Project: "Q2 Marketing Campaign"
-
-AI creates (5 tasks in the project):
-☐ Define campaign goals and target audience
-☐ Design creative assets and landing pages
-☐ Set up ad campaigns across channels
-☐ Configure analytics and tracking
-☐ Launch campaign and monitor first week
-```
-
-**Example 6: Project with Context**
-```
-Project: "Office Move"
-Note: "Moving from downtown to new office park, 50 employees, March deadline"
-
-AI creates (7 tasks in the project):
-☐ Finalize lease and get building access
-☐ Hire moving company and set date
-☐ Plan IT infrastructure and network setup
-☐ Coordinate employee desk assignments
-☐ Pack and label department equipment
-☐ Execute move over weekend
-☐ Verify systems and settle in first week
-```
-
 ## Best Practices
 
-### 1. Select Appropriate Items
+### 1. Select Appropriate Tasks
 
-**Good candidates for tasks:**
+**Good candidates:**
 - Complex tasks with multiple steps
 - Tasks you're procrastinating on
 - Tasks where you're unsure where to start
-
-**Good candidates for projects:**
-- New projects that need initial task planning
-- Projects with no tasks yet
-- Projects that feel overwhelming
+- Projects that need planning
 
 **Not ideal:**
 - Already simple tasks ("Call John")
 - Tasks with obvious single action
-- Tasks/projects that are already broken down
+- Tasks that are already broken down
 
 ### 2. Start Small
 
@@ -308,11 +272,11 @@ AI will create more specific subtasks based on this context
 
 ## Troubleshooting
 
-### "No Tasks or Projects Selected"
+### "No Tasks Selected"
 
-**Problem:** Plugin requires task or project selection
+**Problem:** Plugin requires task selection
 
-**Solution:** Select 1-5 tasks or projects before running
+**Solution:** Select 1-5 tasks before running
 
 ### "Request timed out"
 
@@ -368,6 +332,7 @@ AI will create more specific subtasks based on this context
 - Comprehensive (rarely misses steps)
 - Reduces mental load
 - Helps overcome procrastination
+- Choice of AI provider (ChatGPT or Claude)
 
 **Cons:**
 - Requires review/editing
@@ -457,6 +422,7 @@ Quick workflow:
 ## Future Enhancements
 
 **Possible improvements:**
+- Additional AI providers (Google Gemini, etc.)
 - Custom breakdown styles (detailed vs brief)
 - Time estimates for each subtask
 - Dependency detection
@@ -467,25 +433,24 @@ Quick workflow:
 ## Summary
 
 The AI Task Breakdown plugin:
-- ✅ Breaks down complex tasks and projects automatically
-- ✅ Creates 2-10 actionable subtasks or tasks
-- ✅ Works on both individual tasks and entire projects
+- ✅ Breaks down complex tasks automatically
+- ✅ Creates 2-10 actionable subtasks
 - ✅ Tags with "AI: Suggested"
+- ✅ Choose between ChatGPT and Claude
 - ✅ Saves time and mental energy
 - ✅ Helps overcome procrastination
 - ✅ Improves task planning skills
 
 **Perfect for:**
-- Complex tasks that need subtasks
-- New projects that need initial planning
-- Tasks or projects you're avoiding
+- Complex projects
+- Tasks you're avoiding
 - Planning and preparation
 - Learning better task breakdown
 
 **Start using it today:**
-1. Select a complex task or project
+1. Select a complex task
 2. Run AI Task Breakdown
-3. Review the created items
+3. Review the subtasks
 4. Start making progress!
 
 🚀 Turn overwhelming tasks into manageable steps!

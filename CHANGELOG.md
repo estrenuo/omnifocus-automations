@@ -5,21 +5,39 @@ All notable changes to the OmniFocus plugins will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.0] - 2026-02-17
+## [1.9.0] - 2026-02-17
 
 ### Added
-- **Project Selection Support**
-  - AI Task Clarifier now analyzes both tasks and projects
-  - AI Task Breakdown now creates tasks inside selected projects (not just subtasks of tasks)
-  - Projects are sent to AI with `type: "project"` for context-aware analysis
-  - System prompts updated to handle project containers differently from tasks
-  - Falls back to scope selection when selected projects have no tasks
+- **AI Provider Choice**
+  - Choose between ChatGPT (OpenAI GPT-5) and Claude (Anthropic Claude Sonnet) as your AI provider
+  - Provider selection stored in preferences and remembered across runs
+  - Switch providers at any time via "Switch AI Provider" option in credential dialog
+  - Both AI Task Clarifier and AI Task Breakdown support both providers
+
+- **Headless Mode Support**
+  - All AI plugins support headless mode (run without dialogs)
+  - Headless Settings plugin now includes AI Provider dropdown
+  - Provider defaults to ChatGPT in headless mode if not previously set
+  - Credentials must be stored interactively before using headless mode
+
+- **AI Task Breakdown Plugin**
+  - New plugin for breaking down complex tasks into actionable subtasks
+  - Creates 2-10 subtasks depending on task complexity
+  - Tags subtasks with "AI: Suggested" for easy filtering
 
 ### Changed
-- AI Task Clarifier analyzes project names for clarity, specificity, and whether they represent a clear outcome
-- AI Task Breakdown `action.validate` now enables when tasks or projects are selected
-- Scope selection option renamed to "Selected tasks/projects"
-- Project findings applied via `project.task.addTag()` and `project.note`
+- AI Task Clarifier updated to v1.9.0 with multi-provider support
+- AI Task Breakdown updated to v1.9.0 with multi-provider support
+- Headless Settings updated to v1.9.0 with AI provider dropdown
+- Credential dialog now shows 4 options: Use Stored Key, Clear & Re-enter, Switch AI Provider, Cancel
+- Progress alerts now show which AI provider is being used
+
+### Technical
+- Added `AI_PROVIDERS` configuration object with `buildRequest()` and `parseResponse()` per provider
+- Added `callAI()` async helper function for provider-agnostic API calls
+- Claude integration uses `api.anthropic.com/v1/messages` with `x-api-key` auth and JSON fallback parsing
+- ChatGPT integration uses `api.openai.com/v1/chat/completions` with `Bearer` auth and `json_object` response format
+- Provider preference stored as `aiProvider` in plugin preferences
 
 ## [1.0.0] - 2025-01-26
 
@@ -79,7 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No sensitive data in error messages
 
 ### Technical
-- Uses OpenAI GPT-5 API (model: `gpt-5-2025-08-07`)
+- Uses OpenAI GPT-5 API (model: `gpt-5-2025-08-07`) or Anthropic Claude API (model: `claude-sonnet-4-20250514`)
 - Uses JIRA REST API v3
 - Supports OmniFocus 4 on macOS and iOS/iPadOS
 - Cross-platform JavaScript (ES6+)
@@ -91,16 +109,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Planned Features
 - Bidirectional JIRA sync (update JIRA from OmniFocus)
 - GitHub issue import
-- AI-powered task breakdown (auto-create subtasks)
 - Scheduled automatic imports
 - Custom AI analysis profiles
 - Export analysis reports
 - Linear, Asana, Trello integrations
+- Additional AI providers (Google Gemini, etc.)
 
 ---
 
 ## Version History
 
-- **1.8.0** (2026-02-17) - Project selection support, AI Task Breakdown plugin
+- **1.9.0** (2026-02-17) - AI provider choice (ChatGPT or Claude), headless mode, AI Task Breakdown
 - **1.0.0** (2025-01-26) - Initial release with AI Task Clarifier and JIRA Import plugins
 

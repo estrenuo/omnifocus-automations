@@ -1,38 +1,46 @@
 # Credential Management Guide
 
-Both OmniFocus plugins include built-in credential management, making it easy to update or change your API keys and tokens without manually editing the Keychain.
+All OmniFocus plugins include built-in credential management, making it easy to update or change your API keys and tokens without manually editing the Keychain.
 
 ## Overview
 
-When you run a plugin:
-1. **First time**: You'll be prompted to enter credentials
-2. **Subsequent runs**: You'll be asked if you want to use stored credentials or re-enter them
+When you run an AI plugin:
+1. **First time**: You'll be prompted to choose an AI provider (ChatGPT or Claude) and enter credentials
+2. **Subsequent runs**: You'll be asked if you want to use stored credentials, re-enter them, or switch AI provider
 
 This makes it easy to:
 - Test with different API keys
 - Update expired tokens
+- Switch between AI providers (ChatGPT ↔ Claude)
 - Switch between accounts
 - Fix incorrect credentials
 
-## AI Task Clarifier
+## AI Plugins (Clarifier & Breakdown)
 
 ### First Run
 
-When you run the plugin for the first time:
+When you run an AI plugin for the first time:
 
-1. Click Automation menu → "AI Task Clarifier"
-2. You'll see a form:
+1. Click Automation menu → "AI Task Clarifier" (or "AI Task Breakdown")
+2. You'll first choose your AI provider:
    ```
-   Enter your OpenAI API key
-   (will be stored securely in Keychain)
-   
-   OpenAI API Key: [password field]
-   
+   Choose your AI provider
+
+   AI Provider: [ChatGPT (OpenAI) / Claude (Anthropic)]
+
    [Continue]
    ```
-3. Enter your API key
-4. Click "Continue"
-5. The key is stored securely in macOS Keychain
+3. Then enter your API key:
+   ```
+   Enter your ChatGPT (OpenAI) API key
+   (will be stored securely in Keychain)
+
+   ChatGPT (OpenAI) API Key: [password field]
+
+   [Continue]
+   ```
+4. The key is stored securely in macOS Keychain
+5. Your provider choice is remembered for future runs
 
 ### Subsequent Runs
 
@@ -41,22 +49,23 @@ When credentials are already stored:
 1. Click Automation menu → "AI Task Clarifier"
 2. You'll see an alert:
    ```
-   OpenAI Credentials Found
-   
+   ChatGPT (OpenAI) Credentials Found
+
    Stored API key found. What would you like to do?
-   
-   [Use Stored Key]  [Clear & Re-enter Key]  [Cancel]
+
+   [Use Stored Key]  [Clear & Re-enter Key]  [Switch AI Provider]  [Cancel]
    ```
 
 **Options:**
 
 - **Use Stored Key**: Continue with the saved API key (normal operation)
 - **Clear & Re-enter Key**: Delete stored credentials and enter new ones
+- **Switch AI Provider**: Toggle to the other provider (ChatGPT ↔ Claude), check/prompt for its credentials
 - **Cancel**: Exit without running the plugin
 
 ### Updating Your API Key
 
-To update your OpenAI API key:
+To update your API key:
 
 1. Run the plugin
 2. Click "Clear & Re-enter Key"
@@ -69,6 +78,18 @@ To update your OpenAI API key:
 - You want to test with a different account
 - You entered the wrong key initially
 - You're switching between development and production keys
+
+### Switching AI Providers
+
+To switch between ChatGPT and Claude:
+
+1. Run the plugin
+2. Click "Switch AI Provider"
+3. If the other provider has stored credentials, they're used automatically
+4. If not, you'll be prompted for the new provider's API key
+5. Your preference is saved for future runs
+
+**Alternatively**, use the Headless Settings plugin to change the AI provider for all plugins at once.
 
 ## JIRA Import
 
@@ -139,10 +160,20 @@ To update your JIRA credentials:
 
 ### What Gets Stored
 
-**AI Task Clarifier:**
+**AI Plugins (ChatGPT provider):**
 - Service: `openai`
 - User: `api-key`
 - Password: Your OpenAI API key
+
+**AI Plugins (Claude provider):**
+- Service: `anthropic`
+- User: `api-key`
+- Password: Your Anthropic API key
+
+**AI Provider Preference:**
+- Stored in OmniFocus Preferences (not Keychain)
+- Key: `aiProvider` (value: `"chatgpt"` or `"claude"`)
+- Set per plugin (`com.omnifocus.ai-task-clarifier`, `com.omnifocus.ai-task-breakdown`)
 
 **JIRA Import:**
 - Service: `jira`
@@ -235,10 +266,11 @@ If you're developing or testing:
 
 ### Multiple Accounts
 
-If you have multiple JIRA instances or OpenAI accounts:
+If you have multiple JIRA instances or AI provider accounts:
 
 **Option 1: Switch as needed**
-- Clear and re-enter credentials when switching
+- For AI plugins: use "Switch AI Provider" to toggle between ChatGPT and Claude
+- For same-provider switches: use "Clear & Re-enter Key"
 - Takes 30 seconds per switch
 
 **Option 2: Duplicate plugins**
@@ -257,15 +289,25 @@ Example:
 
 ## Examples
 
-### Example 1: Testing with Different OpenAI Keys
+### Example 1: Testing with Different API Keys
 
-**Scenario:** You want to test GPT-5 with a different API key.
+**Scenario:** You want to test with a different API key.
 
 1. Run AI Task Clarifier
 2. Click "Clear & Re-enter Key"
 3. Enter test API key
 4. Run analysis
 5. When done, repeat to switch back to production key
+
+### Example 5: Switching from ChatGPT to Claude
+
+**Scenario:** You want to try Claude instead of ChatGPT.
+
+1. Run AI Task Clarifier
+2. Click "Switch AI Provider"
+3. Enter your Anthropic API key (if not stored)
+4. Analysis runs using Claude
+5. Preference saved — future runs use Claude automatically
 
 ### Example 2: Changing JIRA Project Filter
 
@@ -323,7 +365,7 @@ When the alert appears:
 If you're modifying the plugins, you can access credentials programmatically:
 
 ```javascript
-// Read credentials
+// Read credentials (service name depends on provider: "openai" or "anthropic")
 const creds = credentials.read("openai");
 if (creds) {
     const apiKey = creds.password;
@@ -332,12 +374,18 @@ if (creds) {
 
 // Write credentials
 credentials.write("openai", "api-key", "sk-proj-...");
+credentials.write("anthropic", "api-key", "sk-ant-...");
 
 // Remove credentials
 credentials.remove("openai");
 
 // Check if credentials exist
 const hasCredentials = credentials.read("openai") !== null;
+
+// Read/write provider preference
+const prefs = new Preferences("com.omnifocus.ai-task-clarifier");
+const provider = prefs.readString("aiProvider"); // "chatgpt" or "claude"
+prefs.write("aiProvider", "claude");
 ```
 
 ## FAQ
@@ -367,10 +415,11 @@ A: Yes, it's completely safe. The old credentials are securely deleted before ne
 
 The built-in credential management makes it easy to:
 - ✅ Update expired API keys/tokens
+- ✅ Switch between AI providers (ChatGPT ↔ Claude)
 - ✅ Switch between accounts
 - ✅ Fix incorrect credentials
 - ✅ Test with different configurations
 - ✅ Manage multiple environments
 
-No need to manually edit Keychain or remember complex commands. Just click "Clear & Re-enter" and you're done!
+No need to manually edit Keychain or remember complex commands. Use "Switch AI Provider" to change providers, or "Clear & Re-enter" to update keys!
 
