@@ -23,6 +23,7 @@ ICLOUD_PLUGINS_DIR="/Users/$USER/Library/Mobile Documents/iCloud~com~omnigroup~O
 PLUGINS=(
     "AI-Task-Clarifier.omnifocusjs"
     "AI-Task-Breakdown.omnifocusjs"
+    "Headless-Settings.omnifocusjs"
     "JIRA-Import.omnifocusjs"
 )
 
