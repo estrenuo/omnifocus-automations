@@ -4,13 +4,253 @@
     "author": "OmniFocus Automation",
     "identifier": "com.omnifocus.headless-settings",
     "version": "1.9.0",
-    "description": "Configure headless mode for all automation plugins (run without dialogs)",
+    "description": "Configure headless mode and language for all automation plugins",
     "label": "Headless Mode Settings",
     "shortLabel": "Headless Settings",
     "paletteLabel": "Configure Headless Mode",
     "image": "gearshape"
 }*/
 (() => {
+    // === Localization ===
+    const LANG_NAMES = {
+        en: "English", es: "Español", fr: "Français", de: "Deutsch",
+        it: "Italiano", pt: "Português", ja: "日本語", zh: "中文", nl: "Nederlands"
+    };
+
+    const STRINGS = {
+        en: {
+            settingsTitle: "Headless Mode Settings",
+            settingsDescription: "Configure headless mode and language for all plugins.\n\nWhen headless mode is enabled, plugins run without any dialogs.\nCredentials must be stored in Keychain first (run each plugin once interactively).",
+            saveButton: "Save",
+            headlessLabel: "Enable headless mode (skip all dialogs)",
+            scopeLabel: "Default task scope (AI Clarifier)",
+            providerLabel: "AI Provider",
+            languageLabel: "Interface Language",
+            languageAuto: "Auto-detect (System)",
+            scopeAll: "All incomplete tasks",
+            scopeSelected: "Selected tasks only",
+            scopeStale: "Tasks older than 30 days",
+            headlessOn: "ON",
+            headlessOff: "OFF",
+            summaryHeadless: "Headless mode",
+            summaryScope: "Default scope (Clarifier)",
+            summaryProvider: "AI Provider",
+            summaryLanguage: "Language",
+            summaryApplied: "Settings applied to all plugins.",
+            summaryKeychainWarning: "Make sure credentials are stored in Keychain by running each plugin once interactively before using headless mode.",
+            summaryDialogsNormal: "Plugins will show dialogs as usual.",
+            errorTitle: "Error"
+        },
+        es: {
+            settingsTitle: "Configuración modo autónomo",
+            settingsDescription: "Configura el modo autónomo e idioma para todos los plugins.\n\nCuando el modo autónomo está activado, los plugins se ejecutan sin diálogos.\nLas credenciales deben almacenarse primero en el Llavero (ejecuta cada plugin una vez de forma interactiva).",
+            saveButton: "Guardar",
+            headlessLabel: "Activar modo autónomo (omitir todos los diálogos)",
+            scopeLabel: "Alcance de tareas predeterminado (AI Clarifier)",
+            providerLabel: "Proveedor de IA",
+            languageLabel: "Idioma de la interfaz",
+            languageAuto: "Detección automática (Sistema)",
+            scopeAll: "Todas las tareas pendientes",
+            scopeSelected: "Solo tareas seleccionadas",
+            scopeStale: "Tareas con más de 30 días",
+            headlessOn: "ACTIVADO",
+            headlessOff: "DESACTIVADO",
+            summaryHeadless: "Modo autónomo",
+            summaryScope: "Alcance predeterminado (Clarifier)",
+            summaryProvider: "Proveedor de IA",
+            summaryLanguage: "Idioma",
+            summaryApplied: "Configuración aplicada a todos los plugins.",
+            summaryKeychainWarning: "Asegúrate de que las credenciales estén almacenadas en el Llavero ejecutando cada plugin una vez de forma interactiva antes de usar el modo autónomo.",
+            summaryDialogsNormal: "Los plugins mostrarán diálogos como de costumbre.",
+            errorTitle: "Error"
+        },
+        fr: {
+            settingsTitle: "Paramètres du mode autonome",
+            settingsDescription: "Configurez le mode autonome et la langue pour tous les plugins.\n\nQuand le mode autonome est activé, les plugins s'exécutent sans boîtes de dialogue.\nLes identifiants doivent d'abord être stockés dans le Trousseau (exécutez chaque plugin une fois de manière interactive).",
+            saveButton: "Enregistrer",
+            headlessLabel: "Activer le mode autonome (ignorer toutes les boîtes de dialogue)",
+            scopeLabel: "Portée des tâches par défaut (AI Clarifier)",
+            providerLabel: "Fournisseur IA",
+            languageLabel: "Langue de l'interface",
+            languageAuto: "Détection automatique (Système)",
+            scopeAll: "Toutes les tâches en cours",
+            scopeSelected: "Tâches sélectionnées uniquement",
+            scopeStale: "Tâches de plus de 30 jours",
+            headlessOn: "ACTIVÉ",
+            headlessOff: "DÉSACTIVÉ",
+            summaryHeadless: "Mode autonome",
+            summaryScope: "Portée par défaut (Clarifier)",
+            summaryProvider: "Fournisseur IA",
+            summaryLanguage: "Langue",
+            summaryApplied: "Paramètres appliqués à tous les plugins.",
+            summaryKeychainWarning: "Assurez-vous que les identifiants sont stockés dans le Trousseau en exécutant chaque plugin une fois de manière interactive avant d'utiliser le mode autonome.",
+            summaryDialogsNormal: "Les plugins afficheront les boîtes de dialogue normalement.",
+            errorTitle: "Erreur"
+        },
+        de: {
+            settingsTitle: "Einstellungen für den Headless-Modus",
+            settingsDescription: "Konfigurieren Sie den Headless-Modus und die Sprache für alle Plugins.\n\nWenn der Headless-Modus aktiviert ist, laufen Plugins ohne Dialoge.\nZugangsdaten müssen zuerst im Schlüsselbund gespeichert werden (führen Sie jedes Plugin einmal interaktiv aus).",
+            saveButton: "Speichern",
+            headlessLabel: "Headless-Modus aktivieren (alle Dialoge überspringen)",
+            scopeLabel: "Standard-Aufgabenumfang (AI Clarifier)",
+            providerLabel: "KI-Anbieter",
+            languageLabel: "Sprache der Oberfläche",
+            languageAuto: "Automatisch erkennen (System)",
+            scopeAll: "Alle offenen Aufgaben",
+            scopeSelected: "Nur ausgewählte Aufgaben",
+            scopeStale: "Aufgaben älter als 30 Tage",
+            headlessOn: "EIN",
+            headlessOff: "AUS",
+            summaryHeadless: "Headless-Modus",
+            summaryScope: "Standardumfang (Clarifier)",
+            summaryProvider: "KI-Anbieter",
+            summaryLanguage: "Sprache",
+            summaryApplied: "Einstellungen auf alle Plugins angewendet.",
+            summaryKeychainWarning: "Stellen Sie sicher, dass Zugangsdaten im Schlüsselbund gespeichert sind, indem Sie jedes Plugin einmal interaktiv ausführen, bevor Sie den Headless-Modus verwenden.",
+            summaryDialogsNormal: "Plugins zeigen Dialoge wie gewohnt an.",
+            errorTitle: "Fehler"
+        },
+        it: {
+            settingsTitle: "Impostazioni modalità autonoma",
+            settingsDescription: "Configura la modalità autonoma e la lingua per tutti i plugin.\n\nQuando la modalità autonoma è attiva, i plugin funzionano senza finestre di dialogo.\nLe credenziali devono essere prima memorizzate nel Portachiavi (esegui ogni plugin una volta in modo interattivo).",
+            saveButton: "Salva",
+            headlessLabel: "Attiva modalità autonoma (salta tutti i dialoghi)",
+            scopeLabel: "Ambito attività predefinito (AI Clarifier)",
+            providerLabel: "Provider IA",
+            languageLabel: "Lingua dell'interfaccia",
+            languageAuto: "Rilevamento automatico (Sistema)",
+            scopeAll: "Tutte le attività in corso",
+            scopeSelected: "Solo attività selezionate",
+            scopeStale: "Attività più vecchie di 30 giorni",
+            headlessOn: "ATTIVO",
+            headlessOff: "DISATTIVO",
+            summaryHeadless: "Modalità autonoma",
+            summaryScope: "Ambito predefinito (Clarifier)",
+            summaryProvider: "Provider IA",
+            summaryLanguage: "Lingua",
+            summaryApplied: "Impostazioni applicate a tutti i plugin.",
+            summaryKeychainWarning: "Assicurati che le credenziali siano memorizzate nel Portachiavi eseguendo ogni plugin una volta in modo interattivo prima di usare la modalità autonoma.",
+            summaryDialogsNormal: "I plugin mostreranno i dialoghi come al solito.",
+            errorTitle: "Errore"
+        },
+        pt: {
+            settingsTitle: "Configurações do modo autônomo",
+            settingsDescription: "Configure o modo autônomo e o idioma para todos os plugins.\n\nQuando o modo autônomo está ativado, os plugins funcionam sem diálogos.\nAs credenciais devem ser armazenadas primeiro nas Chaves (execute cada plugin uma vez de forma interativa).",
+            saveButton: "Salvar",
+            headlessLabel: "Ativar modo autônomo (pular todos os diálogos)",
+            scopeLabel: "Escopo de tarefas padrão (AI Clarifier)",
+            providerLabel: "Provedor de IA",
+            languageLabel: "Idioma da interface",
+            languageAuto: "Detecção automática (Sistema)",
+            scopeAll: "Todas as tarefas pendentes",
+            scopeSelected: "Apenas tarefas selecionadas",
+            scopeStale: "Tarefas com mais de 30 dias",
+            headlessOn: "ATIVADO",
+            headlessOff: "DESATIVADO",
+            summaryHeadless: "Modo autônomo",
+            summaryScope: "Escopo padrão (Clarifier)",
+            summaryProvider: "Provedor de IA",
+            summaryLanguage: "Idioma",
+            summaryApplied: "Configurações aplicadas a todos os plugins.",
+            summaryKeychainWarning: "Certifique-se de que as credenciais estejam armazenadas nas Chaves executando cada plugin uma vez de forma interativa antes de usar o modo autônomo.",
+            summaryDialogsNormal: "Os plugins exibirão diálogos normalmente.",
+            errorTitle: "Erro"
+        },
+        ja: {
+            settingsTitle: "ヘッドレスモード設定",
+            settingsDescription: "すべてのプラグインのヘッドレスモードと言語を設定します。\n\nヘッドレスモードが有効な場合、プラグインはダイアログなしで実行されます。\n認証情報は事前にキーチェーンに保存する必要があります（各プラグインを一度対話的に実行してください）。",
+            saveButton: "保存",
+            headlessLabel: "ヘッドレスモードを有効にする（すべてのダイアログをスキップ）",
+            scopeLabel: "デフォルトのタスク範囲（AI Clarifier）",
+            providerLabel: "AIプロバイダー",
+            languageLabel: "インターフェース言語",
+            languageAuto: "自動検出（システム）",
+            scopeAll: "すべての未完了タスク",
+            scopeSelected: "選択したタスクのみ",
+            scopeStale: "30日以上前のタスク",
+            headlessOn: "オン",
+            headlessOff: "オフ",
+            summaryHeadless: "ヘッドレスモード",
+            summaryScope: "デフォルト範囲（Clarifier）",
+            summaryProvider: "AIプロバイダー",
+            summaryLanguage: "言語",
+            summaryApplied: "設定がすべてのプラグインに適用されました。",
+            summaryKeychainWarning: "ヘッドレスモードを使用する前に、各プラグインを一度対話的に実行して認証情報をキーチェーンに保存してください。",
+            summaryDialogsNormal: "プラグインは通常通りダイアログを表示します。",
+            errorTitle: "エラー"
+        },
+        zh: {
+            settingsTitle: "无头模式设置",
+            settingsDescription: "为所有插件配置无头模式和语言。\n\n启用无头模式后，插件将在无对话框的情况下运行。\n凭据必须先存储在钥匙串中（先以交互方式运行每个插件一次）。",
+            saveButton: "保存",
+            headlessLabel: "启用无头模式（跳过所有对话框）",
+            scopeLabel: "默认任务范围（AI Clarifier）",
+            providerLabel: "AI 提供商",
+            languageLabel: "界面语言",
+            languageAuto: "自动检测（系统）",
+            scopeAll: "所有未完成的任务",
+            scopeSelected: "仅选中的任务",
+            scopeStale: "超过30天的任务",
+            headlessOn: "开启",
+            headlessOff: "关闭",
+            summaryHeadless: "无头模式",
+            summaryScope: "默认范围（Clarifier）",
+            summaryProvider: "AI 提供商",
+            summaryLanguage: "语言",
+            summaryApplied: "设置已应用到所有插件。",
+            summaryKeychainWarning: "在使用无头模式之前，请先以交互方式运行每个插件一次，确保凭据已存储在钥匙串中。",
+            summaryDialogsNormal: "插件将照常显示对话框。",
+            errorTitle: "错误"
+        },
+        nl: {
+            settingsTitle: "Headless-modusinstellingen",
+            settingsDescription: "Configureer de headless-modus en taal voor alle plugins.\n\nWanneer de headless-modus is ingeschakeld, draaien plugins zonder dialoogvensters.\nInloggegevens moeten eerst in de Sleutelhanger worden opgeslagen (voer elke plugin één keer interactief uit).",
+            saveButton: "Opslaan",
+            headlessLabel: "Headless-modus inschakelen (alle dialoogvensters overslaan)",
+            scopeLabel: "Standaard takenbereik (AI Clarifier)",
+            providerLabel: "AI-provider",
+            languageLabel: "Interfacetaal",
+            languageAuto: "Automatisch detecteren (Systeem)",
+            scopeAll: "Alle openstaande taken",
+            scopeSelected: "Alleen geselecteerde taken",
+            scopeStale: "Taken ouder dan 30 dagen",
+            headlessOn: "AAN",
+            headlessOff: "UIT",
+            summaryHeadless: "Headless-modus",
+            summaryScope: "Standaardbereik (Clarifier)",
+            summaryProvider: "AI-provider",
+            summaryLanguage: "Taal",
+            summaryApplied: "Instellingen toegepast op alle plugins.",
+            summaryKeychainWarning: "Zorg ervoor dat inloggegevens in de Sleutelhanger zijn opgeslagen door elke plugin één keer interactief uit te voeren voordat je de headless-modus gebruikt.",
+            summaryDialogsNormal: "Plugins tonen dialoogvensters zoals gebruikelijk.",
+            errorTitle: "Fout"
+        }
+    };
+
+    function getSystemLanguage() {
+        try {
+            const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+            return locale ? locale.split("-")[0].toLowerCase() : "en";
+        } catch (e) {
+            return "en";
+        }
+    }
+
+    function getEffectiveLanguage() {
+        const prefs = new Preferences("com.omnifocus.headless-settings");
+        const override = prefs.readString("language");
+        if (override && override !== "auto") {
+            return STRINGS[override] ? override : "en";
+        }
+        const detected = getSystemLanguage();
+        return STRINGS[detected] ? detected : "en";
+    }
+
+    function t(key) {
+        const lang = getEffectiveLanguage();
+        return (STRINGS[lang] && STRINGS[lang][key]) || STRINGS.en[key] || key;
+    }
+
     const action = new PlugIn.Action(async function(selection, sender) {
         try {
             console.log("=== Headless Settings Debug Log ===");
@@ -29,52 +269,69 @@
 
             // Read current state from the clarifier (representative)
             const clarifierPrefs = new Preferences("com.omnifocus.ai-task-clarifier");
+            const settingsPrefs = new Preferences("com.omnifocus.headless-settings");
             const currentHeadless = clarifierPrefs.readBoolean("headlessMode") || false;
             const currentScope = clarifierPrefs.readString("defaultScope") || "all";
             const currentProvider = clarifierPrefs.readString("aiProvider") || "chatgpt";
+            const currentLanguage = settingsPrefs.readString("language") || "auto";
 
             console.log("Current headless mode:", currentHeadless);
             console.log("Current default scope:", currentScope);
             console.log("Current AI provider:", currentProvider);
+            console.log("Current language:", currentLanguage);
 
             // Build settings form
             const form = new Form();
 
             const headlessField = new Form.Field.Checkbox(
                 "headlessMode",
-                "Enable headless mode (skip all dialogs)",
+                t("headlessLabel"),
                 currentHeadless
             );
 
             const scopeField = new Form.Field.Option(
                 "defaultScope",
-                "Default task scope (AI Clarifier)",
+                t("scopeLabel"),
                 ["all", "selected", "stale"],
-                ["All incomplete tasks", "Selected tasks only", "Tasks older than 30 days"],
+                [t("scopeAll"), t("scopeSelected"), t("scopeStale")],
                 currentScope
             );
 
             const providerField = new Form.Field.Option(
                 "aiProvider",
-                "AI Provider",
+                t("providerLabel"),
                 ["chatgpt", "claude"],
                 ["ChatGPT (OpenAI)", "Claude (Anthropic)"],
                 currentProvider
             );
 
+            // Language selection: auto + all supported languages
+            const langKeys = ["auto"].concat(Object.keys(LANG_NAMES));
+            const langLabels = [t("languageAuto")].concat(Object.values(LANG_NAMES));
+            const languageField = new Form.Field.Option(
+                "language",
+                t("languageLabel"),
+                langKeys,
+                langLabels,
+                currentLanguage
+            );
+
             form.addField(headlessField);
             form.addField(scopeField);
             form.addField(providerField);
+            form.addField(languageField);
 
-            const result = await form.show("Configure headless mode for all plugins.\n\nWhen enabled, plugins run without any dialogs.\nCredentials must be stored in Keychain first (run each plugin once interactively).", "Save");
+            const result = await form.show(t("settingsDescription"), t("saveButton"));
 
             const newHeadless = result.values.headlessMode;
             const newScope = result.values.defaultScope;
             const newProvider = result.values.aiProvider;
+            const newLanguage = result.values.language;
 
             console.log("New headless mode:", newHeadless);
             console.log("New default scope:", newScope);
             console.log("New AI provider:", newProvider);
+            console.log("New language:", newLanguage);
 
             // Apply headless mode to all plugins
             for (const pluginId of pluginIds) {
@@ -94,24 +351,35 @@
                 console.log(`Set aiProvider=${newProvider} for ${pluginId}`);
             }
 
+            // Language is stored in headless-settings prefs (shared across all plugins)
+            settingsPrefs.write("language", newLanguage);
+            console.log(`Set language=${newLanguage}`);
+
+            // Re-read effective language after saving (may have changed)
+            const effectiveLang = newLanguage === "auto" ? getSystemLanguage() : newLanguage;
+            const displayLang = newLanguage === "auto"
+                ? `${t("languageAuto")} (${LANG_NAMES[effectiveLang] || effectiveLang})`
+                : (LANG_NAMES[newLanguage] || newLanguage);
+
             // Show confirmation
-            const statusText = newHeadless ? "ON" : "OFF";
-            const scopeLabels = { "all": "All incomplete tasks", "selected": "Selected tasks only", "stale": "Tasks older than 30 days" };
+            const statusText = newHeadless ? t("headlessOn") : t("headlessOff");
+            const scopeLabels = { "all": t("scopeAll"), "selected": t("scopeSelected"), "stale": t("scopeStale") };
             const providerLabels = { "chatgpt": "ChatGPT (OpenAI)", "claude": "Claude (Anthropic)" };
-            const summary = `Headless mode: ${statusText}\n` +
-                `Default scope (Clarifier): ${scopeLabels[newScope]}\n` +
-                `AI Provider: ${providerLabels[newProvider]}\n\n` +
-                `Settings applied to all plugins.\n` +
-                (newHeadless ? "Make sure credentials are stored in Keychain by running each plugin once interactively before using headless mode." : "Plugins will show dialogs as usual.");
+            const summary = `${t("summaryHeadless")}: ${statusText}\n` +
+                `${t("summaryScope")}: ${scopeLabels[newScope]}\n` +
+                `${t("summaryProvider")}: ${providerLabels[newProvider]}\n` +
+                `${t("summaryLanguage")}: ${displayLang}\n\n` +
+                `${t("summaryApplied")}\n` +
+                (newHeadless ? t("summaryKeychainWarning") : t("summaryDialogsNormal"));
 
             console.log("=== Settings saved ===");
             console.log(summary);
 
-            new Alert("Headless Mode Settings", summary).show();
+            new Alert(t("settingsTitle"), summary).show();
 
         } catch (error) {
             console.error("Error:", error.message);
-            new Alert("Error", error.message).show();
+            new Alert(t("errorTitle"), error.message).show();
         }
     });
 

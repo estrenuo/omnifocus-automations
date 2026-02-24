@@ -13,6 +13,387 @@
 (() => {
     const credentials = new Credentials();
 
+    // === Localization ===
+    const LANG_NAMES = {
+        en: "English", es: "Español", fr: "Français", de: "Deutsch",
+        it: "Italiano", pt: "Português", ja: "日本語", zh: "中文", nl: "Nederlands"
+    };
+
+    const STRINGS = {
+        en: {
+            providerLabel: "AI Provider",
+            providerFormTitle: "Choose your AI provider",
+            continueButton: "Continue",
+            cancelButton: "Cancel",
+            credentialsFound: "Credentials Found",
+            credentialsFoundMsg: "Stored API key found. What would you like to do?",
+            useStoredKey: "Use Stored Key",
+            clearReenter: "Clear & Re-enter Key",
+            switchProvider: "Switch AI Provider",
+            apiKeyLabel: "API Key",
+            apiKeyPrompt: "Enter your {provider} API key (will be stored securely in Keychain)",
+            apiKeyRequired: "API key is required",
+            noIncompleteTitle: "No Incomplete Tasks",
+            noIncompleteMsg: "All selected tasks are already completed.",
+            noSelectedTitle: "No Tasks Selected",
+            noSelectedMsg: "Please select one or more tasks or projects to break down.",
+            tooManyTitle: "Too Many Tasks",
+            tooManyMsg: "Selected {count} items. Will break down the first 5 only to avoid timeouts.",
+            breakingTitle: "Breaking Down Tasks",
+            breakingMsg: "Sending tasks to {provider} for breakdown...\n\nThis may take 15-30 seconds.",
+            noBreakdownsTitle: "No Breakdowns",
+            noBreakdownsMsg: "AI couldn't generate subtasks for the selected items.",
+            completeTitle: "Breakdown Complete",
+            summaryTitle: "AI Task Breakdown",
+            summaryProcessed: "Items processed",
+            summaryCreated: "Subtasks created",
+            summarySubtaskLine: "Subtasks added to parent tasks",
+            summaryTagLine: 'Tagged with "AI: Suggested"',
+            summaryNoteLine: "Parent tasks updated with breakdown note",
+            summaryReviewTip: "Review and adjust subtasks as needed!",
+            errorTitle: "Error",
+            noteHeader: "AI TASK BREAKDOWN",
+            noteDate: "Date",
+            noteCreated: "Created {count} AI-suggested subtasks below",
+            noteTagLine: 'Tagged with "AI: Suggested"',
+            tagName: "AI: Suggested"
+        },
+        es: {
+            providerLabel: "Proveedor de IA",
+            providerFormTitle: "Elige tu proveedor de IA",
+            continueButton: "Continuar",
+            cancelButton: "Cancelar",
+            credentialsFound: "Credenciales encontradas",
+            credentialsFoundMsg: "Se encontró una clave API almacenada. ¿Qué deseas hacer?",
+            useStoredKey: "Usar clave guardada",
+            clearReenter: "Borrar y volver a ingresar",
+            switchProvider: "Cambiar proveedor de IA",
+            apiKeyLabel: "Clave API",
+            apiKeyPrompt: "Ingresa tu clave API de {provider} (se almacenará de forma segura en el Llavero)",
+            apiKeyRequired: "La clave API es obligatoria",
+            noIncompleteTitle: "Sin tareas pendientes",
+            noIncompleteMsg: "Todas las tareas seleccionadas ya están completadas.",
+            noSelectedTitle: "Sin tareas seleccionadas",
+            noSelectedMsg: "Selecciona una o más tareas o proyectos para desglosar.",
+            tooManyTitle: "Demasiadas tareas",
+            tooManyMsg: "Se seleccionaron {count} elementos. Solo se desglosarán los primeros 5 para evitar tiempos de espera.",
+            breakingTitle: "Desglosando tareas",
+            breakingMsg: "Enviando tareas a {provider} para desglose...\n\nEsto puede tardar 15-30 segundos.",
+            noBreakdownsTitle: "Sin desglose",
+            noBreakdownsMsg: "La IA no pudo generar subtareas para los elementos seleccionados.",
+            completeTitle: "Desglose completado",
+            summaryTitle: "AI Task Breakdown",
+            summaryProcessed: "Elementos procesados",
+            summaryCreated: "Subtareas creadas",
+            summarySubtaskLine: "Subtareas añadidas a las tareas padre",
+            summaryTagLine: 'Etiquetados con "AI: Suggested"',
+            summaryNoteLine: "Tareas padre actualizadas con nota de desglose",
+            summaryReviewTip: "¡Revisa y ajusta las subtareas según sea necesario!",
+            errorTitle: "Error",
+            noteHeader: "DESGLOSE DE TAREAS IA",
+            noteDate: "Fecha",
+            noteCreated: "Se crearon {count} subtareas sugeridas por IA a continuación",
+            noteTagLine: 'Etiquetado con "AI: Suggested"',
+            tagName: "AI: Suggested"
+        },
+        fr: {
+            providerLabel: "Fournisseur IA",
+            providerFormTitle: "Choisissez votre fournisseur IA",
+            continueButton: "Continuer",
+            cancelButton: "Annuler",
+            credentialsFound: "Identifiants trouvés",
+            credentialsFoundMsg: "Clé API stockée trouvée. Que souhaitez-vous faire ?",
+            useStoredKey: "Utiliser la clé stockée",
+            clearReenter: "Effacer et ressaisir",
+            switchProvider: "Changer de fournisseur IA",
+            apiKeyLabel: "Clé API",
+            apiKeyPrompt: "Entrez votre clé API {provider} (sera stockée de manière sécurisée dans le Trousseau)",
+            apiKeyRequired: "La clé API est requise",
+            noIncompleteTitle: "Aucune tâche en cours",
+            noIncompleteMsg: "Toutes les tâches sélectionnées sont déjà terminées.",
+            noSelectedTitle: "Aucune tâche sélectionnée",
+            noSelectedMsg: "Veuillez sélectionner une ou plusieurs tâches ou projets à décomposer.",
+            tooManyTitle: "Trop de tâches",
+            tooManyMsg: "{count} éléments sélectionnés. Seuls les 5 premiers seront décomposés pour éviter les délais.",
+            breakingTitle: "Décomposition des tâches",
+            breakingMsg: "Envoi des tâches à {provider} pour décomposition...\n\nCela peut prendre 15 à 30 secondes.",
+            noBreakdownsTitle: "Aucune décomposition",
+            noBreakdownsMsg: "L'IA n'a pas pu générer de sous-tâches pour les éléments sélectionnés.",
+            completeTitle: "Décomposition terminée",
+            summaryTitle: "AI Task Breakdown",
+            summaryProcessed: "Éléments traités",
+            summaryCreated: "Sous-tâches créées",
+            summarySubtaskLine: "Sous-tâches ajoutées aux tâches parentes",
+            summaryTagLine: 'Étiquetés avec "AI: Suggested"',
+            summaryNoteLine: "Tâches parentes mises à jour avec note de décomposition",
+            summaryReviewTip: "Examinez et ajustez les sous-tâches si nécessaire !",
+            errorTitle: "Erreur",
+            noteHeader: "DÉCOMPOSITION DE TÂCHES IA",
+            noteDate: "Date",
+            noteCreated: "Créé {count} sous-tâches suggérées par l'IA ci-dessous",
+            noteTagLine: 'Étiqueté avec "AI: Suggested"',
+            tagName: "AI: Suggested"
+        },
+        de: {
+            providerLabel: "KI-Anbieter",
+            providerFormTitle: "Wählen Sie Ihren KI-Anbieter",
+            continueButton: "Weiter",
+            cancelButton: "Abbrechen",
+            credentialsFound: "Zugangsdaten gefunden",
+            credentialsFoundMsg: "Gespeicherter API-Schlüssel gefunden. Was möchten Sie tun?",
+            useStoredKey: "Gespeicherten Schlüssel verwenden",
+            clearReenter: "Löschen und neu eingeben",
+            switchProvider: "KI-Anbieter wechseln",
+            apiKeyLabel: "API-Schlüssel",
+            apiKeyPrompt: "Geben Sie Ihren {provider} API-Schlüssel ein (wird sicher im Schlüsselbund gespeichert)",
+            apiKeyRequired: "API-Schlüssel ist erforderlich",
+            noIncompleteTitle: "Keine offenen Aufgaben",
+            noIncompleteMsg: "Alle ausgewählten Aufgaben sind bereits erledigt.",
+            noSelectedTitle: "Keine Aufgaben ausgewählt",
+            noSelectedMsg: "Bitte wählen Sie eine oder mehrere Aufgaben oder Projekte zum Aufteilen aus.",
+            tooManyTitle: "Zu viele Aufgaben",
+            tooManyMsg: "{count} Elemente ausgewählt. Nur die ersten 5 werden aufgeteilt.",
+            breakingTitle: "Aufgaben werden aufgeteilt",
+            breakingMsg: "Aufgaben werden an {provider} zur Aufteilung gesendet...\n\nDies kann 15-30 Sekunden dauern.",
+            noBreakdownsTitle: "Keine Aufteilung",
+            noBreakdownsMsg: "KI konnte keine Unteraufgaben für die ausgewählten Elemente generieren.",
+            completeTitle: "Aufteilung abgeschlossen",
+            summaryTitle: "AI Task Breakdown",
+            summaryProcessed: "Verarbeitete Elemente",
+            summaryCreated: "Erstellte Unteraufgaben",
+            summarySubtaskLine: "Unteraufgaben zu übergeordneten Aufgaben hinzugefügt",
+            summaryTagLine: 'Markiert mit "AI: Suggested"',
+            summaryNoteLine: "Übergeordnete Aufgaben mit Aufschlüsselungsnotiz aktualisiert",
+            summaryReviewTip: "Überprüfen und passen Sie die Unteraufgaben bei Bedarf an!",
+            errorTitle: "Fehler",
+            noteHeader: "KI-AUFGABENAUFSCHLÜSSELUNG",
+            noteDate: "Datum",
+            noteCreated: "{count} KI-vorgeschlagene Unteraufgaben unten erstellt",
+            noteTagLine: 'Markiert mit "AI: Suggested"',
+            tagName: "AI: Suggested"
+        },
+        it: {
+            providerLabel: "Provider IA",
+            providerFormTitle: "Scegli il tuo provider IA",
+            continueButton: "Continua",
+            cancelButton: "Annulla",
+            credentialsFound: "Credenziali trovate",
+            credentialsFoundMsg: "Chiave API memorizzata trovata. Cosa vuoi fare?",
+            useStoredKey: "Usa chiave memorizzata",
+            clearReenter: "Cancella e reinserisci",
+            switchProvider: "Cambia provider IA",
+            apiKeyLabel: "Chiave API",
+            apiKeyPrompt: "Inserisci la tua chiave API {provider} (verrà memorizzata in modo sicuro nel Portachiavi)",
+            apiKeyRequired: "La chiave API è obbligatoria",
+            noIncompleteTitle: "Nessuna attività in corso",
+            noIncompleteMsg: "Tutte le attività selezionate sono già completate.",
+            noSelectedTitle: "Nessuna attività selezionata",
+            noSelectedMsg: "Seleziona una o più attività o progetti da scomporre.",
+            tooManyTitle: "Troppe attività",
+            tooManyMsg: "Selezionati {count} elementi. Verranno scomposti solo i primi 5.",
+            breakingTitle: "Scomposizione attività",
+            breakingMsg: "Invio attività a {provider} per la scomposizione...\n\nPotrebbe richiedere 15-30 secondi.",
+            noBreakdownsTitle: "Nessuna scomposizione",
+            noBreakdownsMsg: "L'IA non è riuscita a generare sotto-attività per gli elementi selezionati.",
+            completeTitle: "Scomposizione completata",
+            summaryTitle: "AI Task Breakdown",
+            summaryProcessed: "Elementi elaborati",
+            summaryCreated: "Sotto-attività create",
+            summarySubtaskLine: "Sotto-attività aggiunte alle attività padre",
+            summaryTagLine: 'Etichettati con "AI: Suggested"',
+            summaryNoteLine: "Attività padre aggiornate con nota di scomposizione",
+            summaryReviewTip: "Rivedi e modifica le sotto-attività secondo necessità!",
+            errorTitle: "Errore",
+            noteHeader: "SCOMPOSIZIONE ATTIVITÀ IA",
+            noteDate: "Data",
+            noteCreated: "Create {count} sotto-attività suggerite dall'IA qui sotto",
+            noteTagLine: 'Etichettato con "AI: Suggested"',
+            tagName: "AI: Suggested"
+        },
+        pt: {
+            providerLabel: "Provedor de IA",
+            providerFormTitle: "Escolha seu provedor de IA",
+            continueButton: "Continuar",
+            cancelButton: "Cancelar",
+            credentialsFound: "Credenciais encontradas",
+            credentialsFoundMsg: "Chave API armazenada encontrada. O que deseja fazer?",
+            useStoredKey: "Usar chave armazenada",
+            clearReenter: "Limpar e reinserir",
+            switchProvider: "Trocar provedor de IA",
+            apiKeyLabel: "Chave API",
+            apiKeyPrompt: "Insira sua chave API {provider} (será armazenada com segurança nas Chaves)",
+            apiKeyRequired: "A chave API é obrigatória",
+            noIncompleteTitle: "Sem tarefas pendentes",
+            noIncompleteMsg: "Todas as tarefas selecionadas já estão concluídas.",
+            noSelectedTitle: "Nenhuma tarefa selecionada",
+            noSelectedMsg: "Selecione uma ou mais tarefas ou projetos para decompor.",
+            tooManyTitle: "Muitas tarefas",
+            tooManyMsg: "Selecionados {count} itens. Apenas os primeiros 5 serão decompostos.",
+            breakingTitle: "Decompondo tarefas",
+            breakingMsg: "Enviando tarefas para {provider} para decomposição...\n\nIsso pode levar 15-30 segundos.",
+            noBreakdownsTitle: "Sem decomposição",
+            noBreakdownsMsg: "A IA não conseguiu gerar subtarefas para os itens selecionados.",
+            completeTitle: "Decomposição concluída",
+            summaryTitle: "AI Task Breakdown",
+            summaryProcessed: "Itens processados",
+            summaryCreated: "Subtarefas criadas",
+            summarySubtaskLine: "Subtarefas adicionadas às tarefas pai",
+            summaryTagLine: 'Etiquetados com "AI: Suggested"',
+            summaryNoteLine: "Tarefas pai atualizadas com nota de decomposição",
+            summaryReviewTip: "Revise e ajuste as subtarefas conforme necessário!",
+            errorTitle: "Erro",
+            noteHeader: "DECOMPOSIÇÃO DE TAREFAS IA",
+            noteDate: "Data",
+            noteCreated: "Criadas {count} subtarefas sugeridas pela IA abaixo",
+            noteTagLine: 'Etiquetado com "AI: Suggested"',
+            tagName: "AI: Suggested"
+        },
+        ja: {
+            providerLabel: "AIプロバイダー",
+            providerFormTitle: "AIプロバイダーを選択してください",
+            continueButton: "続行",
+            cancelButton: "キャンセル",
+            credentialsFound: "認証情報が見つかりました",
+            credentialsFoundMsg: "保存されたAPIキーが見つかりました。どうしますか？",
+            useStoredKey: "保存されたキーを使用",
+            clearReenter: "削除して再入力",
+            switchProvider: "AIプロバイダーを切替",
+            apiKeyLabel: "APIキー",
+            apiKeyPrompt: "{provider}のAPIキーを入力してください（キーチェーンに安全に保存されます）",
+            apiKeyRequired: "APIキーは必須です",
+            noIncompleteTitle: "未完了タスクなし",
+            noIncompleteMsg: "選択したタスクはすべて完了済みです。",
+            noSelectedTitle: "タスク未選択",
+            noSelectedMsg: "分解するタスクまたはプロジェクトを1つ以上選択してください。",
+            tooManyTitle: "タスクが多すぎます",
+            tooManyMsg: "{count}件のアイテムを選択。タイムアウトを避けるため、最初の5件のみ分解します。",
+            breakingTitle: "タスクを分解中",
+            breakingMsg: "タスクを{provider}に送信して分解中...\n\n15〜30秒かかる場合があります。",
+            noBreakdownsTitle: "分解なし",
+            noBreakdownsMsg: "AIは選択したアイテムのサブタスクを生成できませんでした。",
+            completeTitle: "分解完了",
+            summaryTitle: "AI Task Breakdown",
+            summaryProcessed: "処理されたアイテム",
+            summaryCreated: "作成されたサブタスク",
+            summarySubtaskLine: "サブタスクを親タスクに追加",
+            summaryTagLine: '"AI: Suggested" でタグ付け',
+            summaryNoteLine: "親タスクに分解ノートを追加",
+            summaryReviewTip: "必要に応じてサブタスクを確認・調整してください！",
+            errorTitle: "エラー",
+            noteHeader: "AIタスク分解",
+            noteDate: "日付",
+            noteCreated: "以下に{count}件のAI提案サブタスクを作成",
+            noteTagLine: '"AI: Suggested" でタグ付け',
+            tagName: "AI: Suggested"
+        },
+        zh: {
+            providerLabel: "AI 提供商",
+            providerFormTitle: "选择您的 AI 提供商",
+            continueButton: "继续",
+            cancelButton: "取消",
+            credentialsFound: "已找到凭据",
+            credentialsFoundMsg: "已找到存储的 API 密钥。您想怎么做？",
+            useStoredKey: "使用已存储的密钥",
+            clearReenter: "清除并重新输入",
+            switchProvider: "切换 AI 提供商",
+            apiKeyLabel: "API 密钥",
+            apiKeyPrompt: "输入您的 {provider} API 密钥（将安全存储在钥匙串中）",
+            apiKeyRequired: "API 密钥是必填项",
+            noIncompleteTitle: "无未完成任务",
+            noIncompleteMsg: "所选任务均已完成。",
+            noSelectedTitle: "未选择任务",
+            noSelectedMsg: "请选择一个或多个任务或项目进行分解。",
+            tooManyTitle: "任务过多",
+            tooManyMsg: "已选择 {count} 个项目。为避免超时，仅分解前5个。",
+            breakingTitle: "正在分解任务",
+            breakingMsg: "正在将任务发送到 {provider} 进行分解...\n\n这可能需要15-30秒。",
+            noBreakdownsTitle: "无分解结果",
+            noBreakdownsMsg: "AI 无法为所选项目生成子任务。",
+            completeTitle: "分解完成",
+            summaryTitle: "AI Task Breakdown",
+            summaryProcessed: "已处理项目",
+            summaryCreated: "已创建子任务",
+            summarySubtaskLine: "子任务已添加到父任务",
+            summaryTagLine: '已标记 "AI: Suggested"',
+            summaryNoteLine: "父任务已更新分解备注",
+            summaryReviewTip: "请根据需要检查和调整子任务！",
+            errorTitle: "错误",
+            noteHeader: "AI 任务分解",
+            noteDate: "日期",
+            noteCreated: "以下创建了 {count} 个 AI 建议子任务",
+            noteTagLine: '已标记 "AI: Suggested"',
+            tagName: "AI: Suggested"
+        },
+        nl: {
+            providerLabel: "AI-provider",
+            providerFormTitle: "Kies je AI-provider",
+            continueButton: "Doorgaan",
+            cancelButton: "Annuleren",
+            credentialsFound: "Inloggegevens gevonden",
+            credentialsFoundMsg: "Opgeslagen API-sleutel gevonden. Wat wil je doen?",
+            useStoredKey: "Opgeslagen sleutel gebruiken",
+            clearReenter: "Wissen en opnieuw invoeren",
+            switchProvider: "Wissel van AI-provider",
+            apiKeyLabel: "API-sleutel",
+            apiKeyPrompt: "Voer je {provider} API-sleutel in (wordt veilig opgeslagen in de Sleutelhanger)",
+            apiKeyRequired: "API-sleutel is vereist",
+            noIncompleteTitle: "Geen openstaande taken",
+            noIncompleteMsg: "Alle geselecteerde taken zijn al voltooid.",
+            noSelectedTitle: "Geen taken geselecteerd",
+            noSelectedMsg: "Selecteer een of meer taken of projecten om op te splitsen.",
+            tooManyTitle: "Te veel taken",
+            tooManyMsg: "{count} items geselecteerd. Alleen de eerste 5 worden opgesplitst om time-outs te voorkomen.",
+            breakingTitle: "Taken opsplitsen",
+            breakingMsg: "Taken worden naar {provider} gestuurd voor opsplitsing...\n\nDit kan 15-30 seconden duren.",
+            noBreakdownsTitle: "Geen opsplitsing",
+            noBreakdownsMsg: "AI kon geen subtaken genereren voor de geselecteerde items.",
+            completeTitle: "Opsplitsing voltooid",
+            summaryTitle: "AI Task Breakdown",
+            summaryProcessed: "Verwerkte items",
+            summaryCreated: "Aangemaakte subtaken",
+            summarySubtaskLine: "Subtaken toegevoegd aan bovenliggende taken",
+            summaryTagLine: 'Getagd met "AI: Suggested"',
+            summaryNoteLine: "Bovenliggende taken bijgewerkt met opsplitsingsnotitie",
+            summaryReviewTip: "Controleer en pas de subtaken aan indien nodig!",
+            errorTitle: "Fout",
+            noteHeader: "AI TAAKOPSPLITSING",
+            noteDate: "Datum",
+            noteCreated: "{count} door AI voorgestelde subtaken hieronder aangemaakt",
+            noteTagLine: 'Getagd met "AI: Suggested"',
+            tagName: "AI: Suggested"
+        }
+    };
+
+    function getSystemLanguage() {
+        try {
+            const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+            return locale ? locale.split("-")[0].toLowerCase() : "en";
+        } catch (e) {
+            return "en";
+        }
+    }
+
+    function getEffectiveLanguage() {
+        const prefs = new Preferences("com.omnifocus.headless-settings");
+        const override = prefs.readString("language");
+        if (override && override !== "auto") {
+            return STRINGS[override] ? override : "en";
+        }
+        const detected = getSystemLanguage();
+        return STRINGS[detected] ? detected : "en";
+    }
+
+    function t(key, replacements) {
+        const lang = getEffectiveLanguage();
+        let str = (STRINGS[lang] && STRINGS[lang][key]) || STRINGS.en[key] || key;
+        if (replacements) {
+            for (const [k, v] of Object.entries(replacements)) {
+                str = str.replace(`{${k}}`, v);
+            }
+        }
+        return str;
+    }
+
     const AI_PROVIDERS = {
         chatgpt: {
             label: "ChatGPT (OpenAI)",
@@ -135,12 +516,12 @@
                     const providerForm = new Form();
                     providerForm.addField(new Form.Field.Option(
                         "aiProvider",
-                        "AI Provider",
+                        t("providerLabel"),
                         ["chatgpt", "claude"],
                         ["ChatGPT (OpenAI)", "Claude (Anthropic)"],
                         "chatgpt"
                     ));
-                    const providerResult = await providerForm.show("Choose your AI provider", "Continue");
+                    const providerResult = await providerForm.show(t("providerFormTitle"), t("continueButton"));
                     providerKey = providerResult.values.aiProvider;
                     provider = AI_PROVIDERS[providerKey];
                     prefs.write("aiProvider", providerKey);
@@ -156,11 +537,11 @@
             if (!storedCreds || !storedCreds.password) {
                 console.log("No credentials found, prompting user (required for first run)...");
                 const form = new Form();
-                form.addField(new Form.Field.Password("apiKey", `${provider.label} API Key`, null));
-                const formPrompt = await form.show(`Enter your ${provider.label} API key (will be stored securely in Keychain)`, "Continue");
+                form.addField(new Form.Field.Password("apiKey", `${provider.label} ${t("apiKeyLabel")}`, null));
+                const formPrompt = await form.show(t("apiKeyPrompt", {provider: provider.label}), t("continueButton"));
                 apiKey = formPrompt.values.apiKey;
                 if (!apiKey) {
-                    throw new Error("API key is required");
+                    throw new Error(t("apiKeyRequired"));
                 }
                 console.log("Storing new API key in Keychain...");
                 credentials.write(provider.credentialService, "api-key", apiKey);
@@ -169,11 +550,11 @@
                 apiKey = storedCreds.password;
                 console.log("Headless: using stored API key");
             } else {
-                const alert = new Alert(`${provider.label} Credentials Found`, "Stored API key found. What would you like to do?");
-                alert.addOption("Use Stored Key");
-                alert.addOption("Clear & Re-enter Key");
-                alert.addOption("Switch AI Provider");
-                alert.addOption("Cancel");
+                const alert = new Alert(`${provider.label} — ${t("credentialsFound")}`, t("credentialsFoundMsg"));
+                alert.addOption(t("useStoredKey"));
+                alert.addOption(t("clearReenter"));
+                alert.addOption(t("switchProvider"));
+                alert.addOption(t("cancelButton"));
 
                 const choice = await alert.show();
 
@@ -184,11 +565,11 @@
                     console.log("Clearing stored credentials...");
                     credentials.remove(provider.credentialService);
                     const form = new Form();
-                    form.addField(new Form.Field.Password("apiKey", `${provider.label} API Key`, null));
-                    const formPrompt = await form.show(`Enter your ${provider.label} API key (will be stored securely in Keychain)`, "Continue");
+                    form.addField(new Form.Field.Password("apiKey", `${provider.label} ${t("apiKeyLabel")}`, null));
+                    const formPrompt = await form.show(t("apiKeyPrompt", {provider: provider.label}), t("continueButton"));
                     apiKey = formPrompt.values.apiKey;
                     if (!apiKey) {
-                        throw new Error("API key is required");
+                        throw new Error(t("apiKeyRequired"));
                     }
                     console.log("Storing new API key in Keychain...");
                     credentials.write(provider.credentialService, "api-key", apiKey);
@@ -206,11 +587,11 @@
                         console.log("Using stored key for", provider.label);
                     } else {
                         const form = new Form();
-                        form.addField(new Form.Field.Password("apiKey", `${provider.label} API Key`, null));
-                        const formPrompt = await form.show(`Enter your ${provider.label} API key (will be stored securely in Keychain)`, "Continue");
+                        form.addField(new Form.Field.Password("apiKey", `${provider.label} ${t("apiKeyLabel")}`, null));
+                        const formPrompt = await form.show(t("apiKeyPrompt", {provider: provider.label}), t("continueButton"));
                         apiKey = formPrompt.values.apiKey;
                         if (!apiKey) {
-                            throw new Error("API key is required");
+                            throw new Error(t("apiKeyRequired"));
                         }
                         credentials.write(provider.credentialService, "api-key", apiKey);
                         console.log("Stored new key for", provider.label);
@@ -237,12 +618,12 @@
                 if (selection.tasks.length > 0) {
                     console.log("No incomplete tasks found");
                     if (!headless) {
-                        new Alert("No Incomplete Tasks", "All selected tasks are already completed.").show();
+                        new Alert(t("noIncompleteTitle"), t("noIncompleteMsg")).show();
                     }
                 } else {
                     console.log("No tasks or projects selected");
                     if (!headless) {
-                        new Alert("No Tasks Selected", "Please select one or more tasks or projects to break down.").show();
+                        new Alert(t("noSelectedTitle"), t("noSelectedMsg")).show();
                     }
                 }
                 return;
@@ -252,9 +633,9 @@
             if (breakdownItems.length > 5) {
                 console.log("Too many items, limiting to 5");
                 if (!headless) {
-                    const alert = new Alert("Too Many Tasks", `Selected ${breakdownItems.length} items. Will break down the first 5 only to avoid timeouts.`);
-                    alert.addOption("Continue");
-                    alert.addOption("Cancel");
+                    const alert = new Alert(t("tooManyTitle"), t("tooManyMsg", {count: breakdownItems.length}));
+                    alert.addOption(t("continueButton"));
+                    alert.addOption(t("cancelButton"));
                     const choice = await alert.show();
                     if (choice === 1) {
                         console.log("User cancelled due to item limit");
@@ -291,6 +672,12 @@
             console.log("Task data prepared, sample:", JSON.stringify(taskData[0], null, 2));
 
             // Call AI API
+            const effectiveLang = getEffectiveLanguage();
+            const langName = LANG_NAMES[effectiveLang] || "English";
+            const langInstruction = effectiveLang !== "en"
+                ? `\n\nIMPORTANT: Write all subtask names in ${langName}. The JSON keys (index, subtasks) must remain in English.`
+                : "";
+
             const systemPrompt = `You are a productivity expert helping break down tasks and projects into actionable items.
 
 For each item, create the MINIMUM number of essential sub-items needed (typically 2-5, maximum 10 for very complex items).
@@ -313,13 +700,13 @@ Format:
 - Start with verb when possible
 
 IMPORTANT: Return a JSON object with a "breakdowns" array. Each item must have: index, subtasks (array of strings).
-Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "Book appointment", "Add to calendar"]}]}`;
+Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "Book appointment", "Add to calendar"]}]}${langInstruction}`;
 
             const userMessage = `Break down these items into actionable subtasks:\n${JSON.stringify(taskData, null, 2)}`;
 
             // Show progress
             if (!headless) {
-                const progress = new Alert("Breaking Down Tasks", `Sending tasks to ${provider.label} for breakdown...\n\nThis may take 15-30 seconds.`);
+                const progress = new Alert(t("breakingTitle"), t("breakingMsg", {provider: provider.label}));
                 progress.show(() => {});
             }
 
@@ -334,19 +721,20 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
             if (breakdowns.length === 0) {
                 console.log("No breakdowns found");
                 if (!headless) {
-                    new Alert("No Breakdowns", "AI couldn't generate subtasks for the selected items.").show();
+                    new Alert(t("noBreakdownsTitle"), t("noBreakdownsMsg")).show();
                 }
                 return;
             }
 
             // Create or get "AI: Suggested" tag
-            console.log("Creating/finding 'AI: Suggested' tag...");
-            let suggestedTag = tags.byName("AI: Suggested");
+            const tagName = t("tagName");
+            console.log(`Creating/finding '${tagName}' tag...`);
+            let suggestedTag = tags.byName(tagName);
             if (!suggestedTag) {
-                suggestedTag = new Tag("AI: Suggested", tags.ending);
-                console.log("Created new 'AI: Suggested' tag");
+                suggestedTag = new Tag(tagName, tags.ending);
+                console.log(`Created new '${tagName}' tag`);
             } else {
-                console.log("Found existing 'AI: Suggested' tag");
+                console.log(`Found existing '${tagName}' tag`);
             }
 
             // Apply breakdowns to tasks and projects
@@ -363,12 +751,12 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
 
                 const subtasks = breakdown.subtasks || [];
                 const breakdownNote = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🤖 AI TASK BREAKDOWN
+🤖 ${t("noteHeader")}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📅 Date: ${new Date().toLocaleDateString()}
+📅 ${t("noteDate")}: ${new Date().toLocaleDateString()}
 
-✅ Created ${subtasks.length} AI-suggested subtasks below
-🏷️  Tagged with "AI: Suggested"
+✅ ${t("noteCreated", {count: subtasks.length})}
+🏷️  ${t("noteTagLine")}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
@@ -408,20 +796,20 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
             console.log(`Total subtasks created: ${totalSubtasks}`);
 
             // Show summary
-            const summary = `Breakdown Complete!\n\n` +
-                `Items processed: ${breakdowns.length}\n` +
-                `Subtasks created: ${totalSubtasks}\n\n` +
-                `✅ Subtasks added to parent tasks\n` +
-                `🏷️  Tagged with "AI: Suggested"\n` +
-                `📝 Parent tasks updated with breakdown note\n\n` +
-                `Review and adjust subtasks as needed!`;
+            const summary = `${t("completeTitle")}!\n\n` +
+                `${t("summaryProcessed")}: ${breakdowns.length}\n` +
+                `${t("summaryCreated")}: ${totalSubtasks}\n\n` +
+                `✅ ${t("summarySubtaskLine")}\n` +
+                `🏷️  ${t("summaryTagLine")}\n` +
+                `📝 ${t("summaryNoteLine")}\n\n` +
+                t("summaryReviewTip");
 
             console.log("=== Breakdown Summary ===");
             console.log(summary);
             console.log("=== End Debug Log ===");
 
             if (!headless) {
-                new Alert("AI Task Breakdown", summary).show();
+                new Alert(t("summaryTitle"), summary).show();
             }
 
         } catch (error) {
@@ -430,7 +818,7 @@ Example format: {"breakdowns": [{"index": 0, "subtasks": ["Research options", "B
             console.error("Error stack:", error.stack);
             console.error("=== End Debug Log ===");
             if (!headless) {
-                new Alert("Error", error.message).show();
+                new Alert(t("errorTitle"), error.message).show();
             }
         }
     });

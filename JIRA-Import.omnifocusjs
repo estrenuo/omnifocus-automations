@@ -13,7 +13,464 @@
 (() => {
     // Credentials for storing JIRA credentials
     const credentials = new Credentials();
-    
+
+    // === Localization ===
+    const STRINGS = {
+        en: {
+            continueButton: "Continue",
+            cancelButton: "Cancel",
+            credentialsPrompt: "Enter your JIRA credentials (will be stored securely)",
+            domainLabel: "JIRA Domain/URL",
+            domainPlaceholder: "your-company.atlassian.net or https://jira.yourcompany.com",
+            authTypeLabel: "Authentication Type",
+            authCloud: "Cloud (Email + API Token)",
+            authServer: "Server/DC (Personal Access Token)",
+            emailLabel: "Email (Cloud only)",
+            apiTokenLabel: "API Token / Personal Access Token",
+            projectKeyLabel: "Project Key (optional)",
+            projectKeyPlaceholder: "Leave empty to import from all projects",
+            domainTokenRequired: "Domain and API token are required",
+            emailRequired: "Email is required for Cloud authentication",
+            credentialsFoundTitle: "JIRA Credentials Found",
+            credentialsFoundMsg: "Stored credentials found for:\nDomain: {domain}\nEmail: {email}\n\nWhat would you like to do?",
+            useStored: "Use Stored Credentials",
+            clearReenter: "Clear & Re-enter Credentials",
+            reenterDomainLabel: "JIRA Domain",
+            reenterEmailLabel: "JIRA Email",
+            reenterTokenLabel: "JIRA API Token",
+            allFieldsRequired: "Domain, email, and API token are required",
+            importingTitle: "Importing JIRA Issues",
+            importingMsg: "Fetching issues from JIRA...",
+            noIssuesTitle: "No Issues Found",
+            noIssuesMsg: "No open JIRA issues found matching the criteria.",
+            summaryTitle: "JIRA Import",
+            summaryComplete: "JIRA Import Complete",
+            summaryTotal: "Total issues found",
+            summaryCreated: "New tasks created",
+            summarySkipped: "Skipped (already imported)",
+            summaryLocation: 'Tasks have been added to the "JIRA Issues" project in the "JIRA" folder.',
+            errorTitle: "Error",
+            noteIssue: "JIRA ISSUE",
+            noteLink: "Link",
+            noteStatus: "Status",
+            noteType: "Type",
+            notePriority: "Priority",
+            noteAssignee: "Assignee",
+            noteReporter: "Reporter",
+            noteLabels: "Labels",
+            noteComponents: "Components",
+            noteCreated: "Created",
+            noteUpdated: "Updated",
+            noteDescription: "DESCRIPTION"
+        },
+        es: {
+            continueButton: "Continuar",
+            cancelButton: "Cancelar",
+            credentialsPrompt: "Ingresa tus credenciales de JIRA (se almacenarán de forma segura)",
+            domainLabel: "Dominio/URL de JIRA",
+            domainPlaceholder: "tu-empresa.atlassian.net o https://jira.tuempresa.com",
+            authTypeLabel: "Tipo de autenticación",
+            authCloud: "Cloud (Email + Token API)",
+            authServer: "Server/DC (Token de acceso personal)",
+            emailLabel: "Email (solo Cloud)",
+            apiTokenLabel: "Token API / Token de acceso personal",
+            projectKeyLabel: "Clave de proyecto (opcional)",
+            projectKeyPlaceholder: "Dejar vacío para importar de todos los proyectos",
+            domainTokenRequired: "El dominio y el token API son obligatorios",
+            emailRequired: "El email es obligatorio para autenticación Cloud",
+            credentialsFoundTitle: "Credenciales JIRA encontradas",
+            credentialsFoundMsg: "Credenciales almacenadas para:\nDominio: {domain}\nEmail: {email}\n\n¿Qué deseas hacer?",
+            useStored: "Usar credenciales guardadas",
+            clearReenter: "Borrar y volver a ingresar",
+            reenterDomainLabel: "Dominio JIRA",
+            reenterEmailLabel: "Email JIRA",
+            reenterTokenLabel: "Token API JIRA",
+            allFieldsRequired: "Dominio, email y token API son obligatorios",
+            importingTitle: "Importando issues de JIRA",
+            importingMsg: "Obteniendo issues de JIRA...",
+            noIssuesTitle: "Sin issues",
+            noIssuesMsg: "No se encontraron issues JIRA abiertos que coincidan con los criterios.",
+            summaryTitle: "Importación JIRA",
+            summaryComplete: "Importación JIRA completada",
+            summaryTotal: "Total de issues encontrados",
+            summaryCreated: "Nuevas tareas creadas",
+            summarySkipped: "Omitidos (ya importados)",
+            summaryLocation: 'Las tareas se han añadido al proyecto "JIRA Issues" en la carpeta "JIRA".',
+            errorTitle: "Error",
+            noteIssue: "ISSUE JIRA",
+            noteLink: "Enlace",
+            noteStatus: "Estado",
+            noteType: "Tipo",
+            notePriority: "Prioridad",
+            noteAssignee: "Asignado",
+            noteReporter: "Reportado por",
+            noteLabels: "Etiquetas",
+            noteComponents: "Componentes",
+            noteCreated: "Creado",
+            noteUpdated: "Actualizado",
+            noteDescription: "DESCRIPCIÓN"
+        },
+        fr: {
+            continueButton: "Continuer",
+            cancelButton: "Annuler",
+            credentialsPrompt: "Entrez vos identifiants JIRA (seront stockés de manière sécurisée)",
+            domainLabel: "Domaine/URL JIRA",
+            domainPlaceholder: "votre-entreprise.atlassian.net ou https://jira.votreentreprise.com",
+            authTypeLabel: "Type d'authentification",
+            authCloud: "Cloud (Email + Jeton API)",
+            authServer: "Server/DC (Jeton d'accès personnel)",
+            emailLabel: "Email (Cloud uniquement)",
+            apiTokenLabel: "Jeton API / Jeton d'accès personnel",
+            projectKeyLabel: "Clé de projet (optionnel)",
+            projectKeyPlaceholder: "Laisser vide pour importer de tous les projets",
+            domainTokenRequired: "Le domaine et le jeton API sont requis",
+            emailRequired: "L'email est requis pour l'authentification Cloud",
+            credentialsFoundTitle: "Identifiants JIRA trouvés",
+            credentialsFoundMsg: "Identifiants stockés pour :\nDomaine : {domain}\nEmail : {email}\n\nQue souhaitez-vous faire ?",
+            useStored: "Utiliser les identifiants stockés",
+            clearReenter: "Effacer et ressaisir",
+            reenterDomainLabel: "Domaine JIRA",
+            reenterEmailLabel: "Email JIRA",
+            reenterTokenLabel: "Jeton API JIRA",
+            allFieldsRequired: "Domaine, email et jeton API sont requis",
+            importingTitle: "Importation des tickets JIRA",
+            importingMsg: "Récupération des tickets depuis JIRA...",
+            noIssuesTitle: "Aucun ticket trouvé",
+            noIssuesMsg: "Aucun ticket JIRA ouvert ne correspond aux critères.",
+            summaryTitle: "Importation JIRA",
+            summaryComplete: "Importation JIRA terminée",
+            summaryTotal: "Total de tickets trouvés",
+            summaryCreated: "Nouvelles tâches créées",
+            summarySkipped: "Ignorés (déjà importés)",
+            summaryLocation: 'Les tâches ont été ajoutées au projet "JIRA Issues" dans le dossier "JIRA".',
+            errorTitle: "Erreur",
+            noteIssue: "TICKET JIRA",
+            noteLink: "Lien",
+            noteStatus: "Statut",
+            noteType: "Type",
+            notePriority: "Priorité",
+            noteAssignee: "Assigné à",
+            noteReporter: "Rapporteur",
+            noteLabels: "Libellés",
+            noteComponents: "Composants",
+            noteCreated: "Créé",
+            noteUpdated: "Mis à jour",
+            noteDescription: "DESCRIPTION"
+        },
+        de: {
+            continueButton: "Weiter",
+            cancelButton: "Abbrechen",
+            credentialsPrompt: "Geben Sie Ihre JIRA-Zugangsdaten ein (werden sicher gespeichert)",
+            domainLabel: "JIRA-Domain/URL",
+            domainPlaceholder: "ihre-firma.atlassian.net oder https://jira.ihrefirma.com",
+            authTypeLabel: "Authentifizierungstyp",
+            authCloud: "Cloud (Email + API-Token)",
+            authServer: "Server/DC (Persönlicher Zugriffstoken)",
+            emailLabel: "Email (nur Cloud)",
+            apiTokenLabel: "API-Token / Persönlicher Zugriffstoken",
+            projectKeyLabel: "Projektschlüssel (optional)",
+            projectKeyPlaceholder: "Leer lassen, um aus allen Projekten zu importieren",
+            domainTokenRequired: "Domain und API-Token sind erforderlich",
+            emailRequired: "Email ist für Cloud-Authentifizierung erforderlich",
+            credentialsFoundTitle: "JIRA-Zugangsdaten gefunden",
+            credentialsFoundMsg: "Gespeicherte Zugangsdaten für:\nDomain: {domain}\nEmail: {email}\n\nWas möchten Sie tun?",
+            useStored: "Gespeicherte Zugangsdaten verwenden",
+            clearReenter: "Löschen und neu eingeben",
+            reenterDomainLabel: "JIRA-Domain",
+            reenterEmailLabel: "JIRA-Email",
+            reenterTokenLabel: "JIRA API-Token",
+            allFieldsRequired: "Domain, Email und API-Token sind erforderlich",
+            importingTitle: "JIRA-Vorgänge importieren",
+            importingMsg: "Vorgänge von JIRA abrufen...",
+            noIssuesTitle: "Keine Vorgänge gefunden",
+            noIssuesMsg: "Keine offenen JIRA-Vorgänge gefunden, die den Kriterien entsprechen.",
+            summaryTitle: "JIRA-Import",
+            summaryComplete: "JIRA-Import abgeschlossen",
+            summaryTotal: "Gefundene Vorgänge gesamt",
+            summaryCreated: "Neue Aufgaben erstellt",
+            summarySkipped: "Übersprungen (bereits importiert)",
+            summaryLocation: 'Aufgaben wurden dem Projekt "JIRA Issues" im Ordner "JIRA" hinzugefügt.',
+            errorTitle: "Fehler",
+            noteIssue: "JIRA-VORGANG",
+            noteLink: "Link",
+            noteStatus: "Status",
+            noteType: "Typ",
+            notePriority: "Priorität",
+            noteAssignee: "Bearbeiter",
+            noteReporter: "Ersteller",
+            noteLabels: "Labels",
+            noteComponents: "Komponenten",
+            noteCreated: "Erstellt",
+            noteUpdated: "Aktualisiert",
+            noteDescription: "BESCHREIBUNG"
+        },
+        it: {
+            continueButton: "Continua",
+            cancelButton: "Annulla",
+            credentialsPrompt: "Inserisci le tue credenziali JIRA (verranno memorizzate in modo sicuro)",
+            domainLabel: "Dominio/URL JIRA",
+            domainPlaceholder: "tua-azienda.atlassian.net o https://jira.tuaazienda.com",
+            authTypeLabel: "Tipo di autenticazione",
+            authCloud: "Cloud (Email + Token API)",
+            authServer: "Server/DC (Token di accesso personale)",
+            emailLabel: "Email (solo Cloud)",
+            apiTokenLabel: "Token API / Token di accesso personale",
+            projectKeyLabel: "Chiave progetto (opzionale)",
+            projectKeyPlaceholder: "Lasciare vuoto per importare da tutti i progetti",
+            domainTokenRequired: "Dominio e token API sono obbligatori",
+            emailRequired: "L'email è obbligatoria per l'autenticazione Cloud",
+            credentialsFoundTitle: "Credenziali JIRA trovate",
+            credentialsFoundMsg: "Credenziali memorizzate per:\nDominio: {domain}\nEmail: {email}\n\nCosa vuoi fare?",
+            useStored: "Usa credenziali memorizzate",
+            clearReenter: "Cancella e reinserisci",
+            reenterDomainLabel: "Dominio JIRA",
+            reenterEmailLabel: "Email JIRA",
+            reenterTokenLabel: "Token API JIRA",
+            allFieldsRequired: "Dominio, email e token API sono obbligatori",
+            importingTitle: "Importazione ticket JIRA",
+            importingMsg: "Recupero ticket da JIRA...",
+            noIssuesTitle: "Nessun ticket trovato",
+            noIssuesMsg: "Nessun ticket JIRA aperto corrisponde ai criteri.",
+            summaryTitle: "Importazione JIRA",
+            summaryComplete: "Importazione JIRA completata",
+            summaryTotal: "Ticket totali trovati",
+            summaryCreated: "Nuove attività create",
+            summarySkipped: "Ignorati (già importati)",
+            summaryLocation: 'Le attività sono state aggiunte al progetto "JIRA Issues" nella cartella "JIRA".',
+            errorTitle: "Errore",
+            noteIssue: "TICKET JIRA",
+            noteLink: "Link",
+            noteStatus: "Stato",
+            noteType: "Tipo",
+            notePriority: "Priorità",
+            noteAssignee: "Assegnato a",
+            noteReporter: "Segnalato da",
+            noteLabels: "Etichette",
+            noteComponents: "Componenti",
+            noteCreated: "Creato",
+            noteUpdated: "Aggiornato",
+            noteDescription: "DESCRIZIONE"
+        },
+        pt: {
+            continueButton: "Continuar",
+            cancelButton: "Cancelar",
+            credentialsPrompt: "Insira suas credenciais JIRA (serão armazenadas com segurança)",
+            domainLabel: "Domínio/URL JIRA",
+            domainPlaceholder: "sua-empresa.atlassian.net ou https://jira.suaempresa.com",
+            authTypeLabel: "Tipo de autenticação",
+            authCloud: "Cloud (Email + Token API)",
+            authServer: "Server/DC (Token de acesso pessoal)",
+            emailLabel: "Email (apenas Cloud)",
+            apiTokenLabel: "Token API / Token de acesso pessoal",
+            projectKeyLabel: "Chave do projeto (opcional)",
+            projectKeyPlaceholder: "Deixe vazio para importar de todos os projetos",
+            domainTokenRequired: "Domínio e token API são obrigatórios",
+            emailRequired: "Email é obrigatório para autenticação Cloud",
+            credentialsFoundTitle: "Credenciais JIRA encontradas",
+            credentialsFoundMsg: "Credenciais armazenadas para:\nDomínio: {domain}\nEmail: {email}\n\nO que deseja fazer?",
+            useStored: "Usar credenciais armazenadas",
+            clearReenter: "Limpar e reinserir",
+            reenterDomainLabel: "Domínio JIRA",
+            reenterEmailLabel: "Email JIRA",
+            reenterTokenLabel: "Token API JIRA",
+            allFieldsRequired: "Domínio, email e token API são obrigatórios",
+            importingTitle: "Importando issues JIRA",
+            importingMsg: "Buscando issues do JIRA...",
+            noIssuesTitle: "Nenhum issue encontrado",
+            noIssuesMsg: "Nenhum issue JIRA aberto encontrado correspondente aos critérios.",
+            summaryTitle: "Importação JIRA",
+            summaryComplete: "Importação JIRA concluída",
+            summaryTotal: "Total de issues encontrados",
+            summaryCreated: "Novas tarefas criadas",
+            summarySkipped: "Ignorados (já importados)",
+            summaryLocation: 'As tarefas foram adicionadas ao projeto "JIRA Issues" na pasta "JIRA".',
+            errorTitle: "Erro",
+            noteIssue: "ISSUE JIRA",
+            noteLink: "Link",
+            noteStatus: "Status",
+            noteType: "Tipo",
+            notePriority: "Prioridade",
+            noteAssignee: "Responsável",
+            noteReporter: "Reportado por",
+            noteLabels: "Rótulos",
+            noteComponents: "Componentes",
+            noteCreated: "Criado",
+            noteUpdated: "Atualizado",
+            noteDescription: "DESCRIÇÃO"
+        },
+        ja: {
+            continueButton: "続行",
+            cancelButton: "キャンセル",
+            credentialsPrompt: "JIRA認証情報を入力してください（安全に保存されます）",
+            domainLabel: "JIRAドメイン/URL",
+            domainPlaceholder: "your-company.atlassian.net または https://jira.yourcompany.com",
+            authTypeLabel: "認証タイプ",
+            authCloud: "Cloud（メール + APIトークン）",
+            authServer: "Server/DC（個人アクセストークン）",
+            emailLabel: "メール（Cloudのみ）",
+            apiTokenLabel: "APIトークン / 個人アクセストークン",
+            projectKeyLabel: "プロジェクトキー（任意）",
+            projectKeyPlaceholder: "すべてのプロジェクトからインポートするには空欄のままにしてください",
+            domainTokenRequired: "ドメインとAPIトークンは必須です",
+            emailRequired: "Cloud認証にはメールが必要です",
+            credentialsFoundTitle: "JIRA認証情報が見つかりました",
+            credentialsFoundMsg: "保存された認証情報:\nドメイン: {domain}\nメール: {email}\n\nどうしますか？",
+            useStored: "保存された認証情報を使用",
+            clearReenter: "削除して再入力",
+            reenterDomainLabel: "JIRAドメイン",
+            reenterEmailLabel: "JIRAメール",
+            reenterTokenLabel: "JIRA APIトークン",
+            allFieldsRequired: "ドメイン、メール、APIトークンは必須です",
+            importingTitle: "JIRAチケットをインポート中",
+            importingMsg: "JIRAからチケットを取得中...",
+            noIssuesTitle: "チケットが見つかりません",
+            noIssuesMsg: "条件に一致するオープンなJIRAチケットはありません。",
+            summaryTitle: "JIRAインポート",
+            summaryComplete: "JIRAインポート完了",
+            summaryTotal: "見つかったチケット合計",
+            summaryCreated: "新規タスク作成",
+            summarySkipped: "スキップ（インポート済み）",
+            summaryLocation: 'タスクは「JIRA」フォルダの「JIRA Issues」プロジェクトに追加されました。',
+            errorTitle: "エラー",
+            noteIssue: "JIRAチケット",
+            noteLink: "リンク",
+            noteStatus: "ステータス",
+            noteType: "タイプ",
+            notePriority: "優先度",
+            noteAssignee: "担当者",
+            noteReporter: "報告者",
+            noteLabels: "ラベル",
+            noteComponents: "コンポーネント",
+            noteCreated: "作成日",
+            noteUpdated: "更新日",
+            noteDescription: "説明"
+        },
+        zh: {
+            continueButton: "继续",
+            cancelButton: "取消",
+            credentialsPrompt: "输入您的 JIRA 凭据（将安全存储）",
+            domainLabel: "JIRA 域名/URL",
+            domainPlaceholder: "your-company.atlassian.net 或 https://jira.yourcompany.com",
+            authTypeLabel: "认证类型",
+            authCloud: "Cloud（邮箱 + API 令牌）",
+            authServer: "Server/DC（个人访问令牌）",
+            emailLabel: "邮箱（仅 Cloud）",
+            apiTokenLabel: "API 令牌 / 个人访问令牌",
+            projectKeyLabel: "项目键（可选）",
+            projectKeyPlaceholder: "留空以从所有项目导入",
+            domainTokenRequired: "域名和 API 令牌是必填项",
+            emailRequired: "Cloud 认证需要邮箱",
+            credentialsFoundTitle: "已找到 JIRA 凭据",
+            credentialsFoundMsg: "已存储的凭据：\n域名：{domain}\n邮箱：{email}\n\n您想怎么做？",
+            useStored: "使用已存储的凭据",
+            clearReenter: "清除并重新输入",
+            reenterDomainLabel: "JIRA 域名",
+            reenterEmailLabel: "JIRA 邮箱",
+            reenterTokenLabel: "JIRA API 令牌",
+            allFieldsRequired: "域名、邮箱和 API 令牌是必填项",
+            importingTitle: "正在导入 JIRA 问题",
+            importingMsg: "正在从 JIRA 获取问题...",
+            noIssuesTitle: "未找到问题",
+            noIssuesMsg: "未找到符合条件的开放 JIRA 问题。",
+            summaryTitle: "JIRA 导入",
+            summaryComplete: "JIRA 导入完成",
+            summaryTotal: "找到的问题总数",
+            summaryCreated: "新创建的任务",
+            summarySkipped: "已跳过（已导入）",
+            summaryLocation: '任务已添加到 "JIRA" 文件夹中的 "JIRA Issues" 项目。',
+            errorTitle: "错误",
+            noteIssue: "JIRA 问题",
+            noteLink: "链接",
+            noteStatus: "状态",
+            noteType: "类型",
+            notePriority: "优先级",
+            noteAssignee: "经办人",
+            noteReporter: "报告人",
+            noteLabels: "标签",
+            noteComponents: "组件",
+            noteCreated: "创建日期",
+            noteUpdated: "更新日期",
+            noteDescription: "描述"
+        },
+        nl: {
+            continueButton: "Doorgaan",
+            cancelButton: "Annuleren",
+            credentialsPrompt: "Voer je JIRA-inloggegevens in (worden veilig opgeslagen)",
+            domainLabel: "JIRA-domein/URL",
+            domainPlaceholder: "je-bedrijf.atlassian.net of https://jira.jebedrijf.com",
+            authTypeLabel: "Authenticatietype",
+            authCloud: "Cloud (E-mail + API-token)",
+            authServer: "Server/DC (Persoonlijk toegangstoken)",
+            emailLabel: "E-mail (alleen Cloud)",
+            apiTokenLabel: "API-token / Persoonlijk toegangstoken",
+            projectKeyLabel: "Projectsleutel (optioneel)",
+            projectKeyPlaceholder: "Laat leeg om uit alle projecten te importeren",
+            domainTokenRequired: "Domein en API-token zijn vereist",
+            emailRequired: "E-mail is vereist voor Cloud-authenticatie",
+            credentialsFoundTitle: "JIRA-inloggegevens gevonden",
+            credentialsFoundMsg: "Opgeslagen inloggegevens voor:\nDomein: {domain}\nE-mail: {email}\n\nWat wil je doen?",
+            useStored: "Opgeslagen inloggegevens gebruiken",
+            clearReenter: "Wissen en opnieuw invoeren",
+            reenterDomainLabel: "JIRA-domein",
+            reenterEmailLabel: "JIRA-e-mail",
+            reenterTokenLabel: "JIRA API-token",
+            allFieldsRequired: "Domein, e-mail en API-token zijn vereist",
+            importingTitle: "JIRA-issues importeren",
+            importingMsg: "Issues ophalen uit JIRA...",
+            noIssuesTitle: "Geen issues gevonden",
+            noIssuesMsg: "Geen open JIRA-issues gevonden die aan de criteria voldoen.",
+            summaryTitle: "JIRA-import",
+            summaryComplete: "JIRA-import voltooid",
+            summaryTotal: "Totaal gevonden issues",
+            summaryCreated: "Nieuwe taken aangemaakt",
+            summarySkipped: "Overgeslagen (al geïmporteerd)",
+            summaryLocation: 'Taken zijn toegevoegd aan het project "JIRA Issues" in de map "JIRA".',
+            errorTitle: "Fout",
+            noteIssue: "JIRA-ISSUE",
+            noteLink: "Link",
+            noteStatus: "Status",
+            noteType: "Type",
+            notePriority: "Prioriteit",
+            noteAssignee: "Toegewezen aan",
+            noteReporter: "Gemeld door",
+            noteLabels: "Labels",
+            noteComponents: "Componenten",
+            noteCreated: "Aangemaakt",
+            noteUpdated: "Bijgewerkt",
+            noteDescription: "BESCHRIJVING"
+        }
+    };
+
+    function getSystemLanguage() {
+        try {
+            const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+            return locale ? locale.split("-")[0].toLowerCase() : "en";
+        } catch (e) {
+            return "en";
+        }
+    }
+
+    function getEffectiveLanguage() {
+        const prefs = new Preferences("com.omnifocus.headless-settings");
+        const override = prefs.readString("language");
+        if (override && override !== "auto") {
+            return STRINGS[override] ? override : "en";
+        }
+        const detected = getSystemLanguage();
+        return STRINGS[detected] ? detected : "en";
+    }
+
+    function t(key, replacements) {
+        const lang = getEffectiveLanguage();
+        let str = (STRINGS[lang] && STRINGS[lang][key]) || STRINGS.en[key] || key;
+        if (replacements) {
+            for (const [k, v] of Object.entries(replacements)) {
+                str = str.replace(`{${k}}`, v);
+            }
+        }
+        return str;
+    }
+
     const action = new PlugIn.Action(async function(selection, sender) {
         try {
             console.log("=== JIRA Import Debug Log ===");
@@ -28,7 +485,7 @@
             let jiraConfig = null;
             const storedCreds = credentials.read("jira");
             console.log("Credentials check:", storedCreds ? "Found stored credentials" : "No stored credentials");
-            
+
             if (!storedCreds) {
                 // No stored credentials - always prompt (even in headless mode, credentials must be entered at least once)
                 console.log("No credentials found, prompting user (required for first run)...");
@@ -36,34 +493,34 @@
 
                 const domainField = new Form.Field.String(
                     "domain",
-                    "JIRA Domain/URL",
-                    "your-company.atlassian.net or https://jira.yourcompany.com"
+                    t("domainLabel"),
+                    t("domainPlaceholder")
                 );
 
                 const authTypeField = new Form.Field.Option(
                     "authType",
-                    "Authentication Type",
+                    t("authTypeLabel"),
                     ["cloud", "server"],
-                    ["Cloud (Email + API Token)", "Server/DC (Personal Access Token)"],
+                    [t("authCloud"), t("authServer")],
                     0
                 );
 
                 const emailField = new Form.Field.String(
                     "email",
-                    "Email (Cloud only)",
+                    t("emailLabel"),
                     null
                 );
 
                 const apiTokenField = new Form.Field.Password(
                     "apiToken",
-                    "API Token / Personal Access Token",
+                    t("apiTokenLabel"),
                     null
                 );
 
                 const projectKeyField = new Form.Field.String(
                     "projectKey",
-                    "Project Key (optional)",
-                    "Leave empty to import from all projects"
+                    t("projectKeyLabel"),
+                    t("projectKeyPlaceholder")
                 );
 
                 form.addField(domainField);
@@ -73,8 +530,8 @@
                 form.addField(projectKeyField);
 
                 const formPrompt = await form.show(
-                    "Enter your JIRA credentials (will be stored securely)",
-                    "Continue"
+                    t("credentialsPrompt"),
+                    t("continueButton")
                 );
 
                 jiraConfig = {
@@ -95,10 +552,10 @@
 
                 // Validate based on auth type
                 if (!jiraConfig.domain || !jiraConfig.apiToken) {
-                    throw new Error("Domain and API token are required");
+                    throw new Error(t("domainTokenRequired"));
                 }
                 if (jiraConfig.authType === "cloud" && !jiraConfig.email) {
-                    throw new Error("Email is required for Cloud authentication");
+                    throw new Error(t("emailRequired"));
                 }
 
                 console.log("Storing credentials in Keychain...");
@@ -138,12 +595,12 @@
                 const settings = settingsData ? JSON.parse(settingsData.password) : {};
 
                 const alert = new Alert(
-                    "JIRA Credentials Found",
-                    `Stored credentials found for:\nDomain: ${settings.domain || 'Unknown'}\nEmail: ${storedCreds.user}\n\nWhat would you like to do?`
+                    t("credentialsFoundTitle"),
+                    t("credentialsFoundMsg", {domain: settings.domain || 'Unknown', email: storedCreds.user})
                 );
-                alert.addOption("Use Stored Credentials");
-                alert.addOption("Clear & Re-enter Credentials");
-                alert.addOption("Cancel");
+                alert.addOption(t("useStored"));
+                alert.addOption(t("clearReenter"));
+                alert.addOption(t("cancelButton"));
 
                 const choice = await alert.show();
 
@@ -176,26 +633,26 @@
 
                     const domainField = new Form.Field.String(
                         "domain",
-                        "JIRA Domain",
+                        t("reenterDomainLabel"),
                         settings.domain || "your-company.atlassian.net"
                     );
 
                     const emailField = new Form.Field.String(
                         "email",
-                        "JIRA Email",
+                        t("reenterEmailLabel"),
                         storedCreds.user || null
                     );
 
                     const apiTokenField = new Form.Field.Password(
                         "apiToken",
-                        "JIRA API Token",
+                        t("reenterTokenLabel"),
                         null
                     );
 
                     const projectKeyField = new Form.Field.String(
                         "projectKey",
-                        "Project Key (optional)",
-                        settings.projectKey || "Leave empty to import from all projects"
+                        t("projectKeyLabel"),
+                        settings.projectKey || t("projectKeyPlaceholder")
                     );
 
                     form.addField(domainField);
@@ -204,8 +661,8 @@
                     form.addField(projectKeyField);
 
                     const formPrompt = await form.show(
-                        "Enter your JIRA credentials (will be stored securely)",
-                        "Continue"
+                        t("credentialsPrompt"),
+                        t("continueButton")
                     );
 
                     jiraConfig = {
@@ -223,7 +680,7 @@
                     });
 
                     if (!jiraConfig.domain || !jiraConfig.email || !jiraConfig.apiToken) {
-                        throw new Error("Domain, email, and API token are required");
+                        throw new Error(t("allFieldsRequired"));
                     }
 
                     console.log("Storing new credentials in Keychain...");
@@ -241,7 +698,7 @@
                     return;
                 }
             }
-            
+
             // Build JQL query for open issues assigned to current user
             let jql = 'assignee = currentUser() AND resolution = Unresolved ORDER BY created DESC';
             if (jiraConfig.projectKey) {
@@ -308,10 +765,10 @@
                 "Accept": "application/json"
             }, null, 2));
             console.log("Request Body:", JSON.stringify(requestBody, null, 2));
-            
+
             // Show progress
             if (!headless) {
-                const progress = new Alert("Importing JIRA Issues", "Fetching issues from JIRA...");
+                const progress = new Alert(t("importingTitle"), t("importingMsg"));
                 progress.show(() => {});
             }
 
@@ -333,11 +790,11 @@
             console.log("Issues returned:", data.issues ? data.issues.length : 0);
 
             const issues = data.issues || [];
-            
+
             if (issues.length === 0) {
                 console.log("No issues found");
                 if (!headless) {
-                    new Alert("No Issues Found", "No open JIRA issues found matching the criteria.").show();
+                    new Alert(t("noIssuesTitle"), t("noIssuesMsg")).show();
                 }
                 return;
             }
@@ -372,7 +829,7 @@
             } else {
                 console.log("Found existing JIRA tag");
             }
-            
+
             // Process each issue
             console.log("Processing issues...");
             let importedCount = 0;
@@ -403,49 +860,49 @@
                 }
 
                 console.log(`Creating new task for ${issueKey}`);
-                
+
                 // Create task
                 const taskName = `[${issueKey}] ${fields.summary}`;
                 const task = new Task(taskName, jiraProject.task.ending);
-                
+
                 // Build task note with JIRA details and clickable link
                 let noteContent = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-                noteContent += `🔗 JIRA ISSUE: ${issueKey}\n`;
+                noteContent += `🔗 ${t("noteIssue")}: ${issueKey}\n`;
                 noteContent += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-                noteContent += `🌐 Link: https://${jiraConfig.domain}/browse/${issueKey}\n\n`;
-                noteContent += `📊 Status: ${fields.status.name}\n`;
-                noteContent += `📝 Type: ${fields.issuetype.name}\n`;
-                noteContent += `⚡ Priority: ${fields.priority ? fields.priority.name : 'None'}\n`;
+                noteContent += `🌐 ${t("noteLink")}: https://${jiraConfig.domain}/browse/${issueKey}\n\n`;
+                noteContent += `📊 ${t("noteStatus")}: ${fields.status.name}\n`;
+                noteContent += `📝 ${t("noteType")}: ${fields.issuetype.name}\n`;
+                noteContent += `⚡ ${t("notePriority")}: ${fields.priority ? fields.priority.name : 'None'}\n`;
 
                 if (fields.assignee) {
-                    noteContent += `👤 Assignee: ${fields.assignee.displayName}\n`;
+                    noteContent += `👤 ${t("noteAssignee")}: ${fields.assignee.displayName}\n`;
                 }
 
                 if (fields.reporter) {
-                    noteContent += `📢 Reporter: ${fields.reporter.displayName}\n`;
+                    noteContent += `📢 ${t("noteReporter")}: ${fields.reporter.displayName}\n`;
                 }
 
                 if (fields.labels && fields.labels.length > 0) {
-                    noteContent += `🏷️  Labels: ${fields.labels.join(', ')}\n`;
+                    noteContent += `🏷️  ${t("noteLabels")}: ${fields.labels.join(', ')}\n`;
                 }
 
                 if (fields.components && fields.components.length > 0) {
                     const componentNames = fields.components.map(c => c.name).join(', ');
-                    noteContent += `🔧 Components: ${componentNames}\n`;
+                    noteContent += `🔧 ${t("noteComponents")}: ${componentNames}\n`;
                 }
 
-                noteContent += `📅 Created: ${new Date(fields.created).toLocaleDateString()}\n`;
-                noteContent += `🔄 Updated: ${new Date(fields.updated).toLocaleDateString()}\n`;
+                noteContent += `📅 ${t("noteCreated")}: ${new Date(fields.created).toLocaleDateString()}\n`;
+                noteContent += `🔄 ${t("noteUpdated")}: ${new Date(fields.updated).toLocaleDateString()}\n`;
 
                 if (fields.description) {
                     noteContent += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-                    noteContent += `📄 DESCRIPTION\n`;
+                    noteContent += `📄 ${t("noteDescription")}\n`;
                     noteContent += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
                     noteContent += fields.description;
                 }
 
                 task.note = noteContent;
-                
+
                 // Set due date if available
                 if (fields.duedate) {
                     task.dueDate = new Date(fields.duedate);
@@ -455,24 +912,24 @@
                 // Add only the JIRA tag (all other info is in notes)
                 task.addTag(jiraTag);
                 console.log("Added JIRA tag");
-                
+
                 importedCount++;
                 console.log(`Successfully created task for ${issueKey}`);
             }
 
             // Show summary
-            const summary = `JIRA Import Complete!\n\n` +
-                `Total issues found: ${issues.length}\n` +
-                `New tasks created: ${importedCount}\n` +
-                `Skipped (already imported): ${skippedCount}\n\n` +
-                `Tasks have been added to the "JIRA Issues" project in the "JIRA" folder.`;
+            const summary = `${t("summaryComplete")}!\n\n` +
+                `${t("summaryTotal")}: ${issues.length}\n` +
+                `${t("summaryCreated")}: ${importedCount}\n` +
+                `${t("summarySkipped")}: ${skippedCount}\n\n` +
+                t("summaryLocation");
 
             console.log("=== Import Summary ===");
             console.log(summary);
             console.log("=== End Debug Log ===");
 
             if (!headless) {
-                new Alert("JIRA Import", summary).show();
+                new Alert(t("summaryTitle"), summary).show();
             }
 
         } catch (error) {
@@ -481,15 +938,14 @@
             console.error("Error stack:", error.stack);
             console.error("=== End Debug Log ===");
             if (!headless) {
-                new Alert("Error", error.message).show();
+                new Alert(t("errorTitle"), error.message).show();
             }
         }
     });
-    
+
     action.validate = function(selection, sender) {
         return true; // Always available
     };
-    
+
     return action;
 })();
-

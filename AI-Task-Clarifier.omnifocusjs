@@ -13,6 +13,450 @@
 (() => {
     const credentials = new Credentials();
 
+    // === Localization ===
+    const LANG_NAMES = {
+        en: "English", es: "Español", fr: "Français", de: "Deutsch",
+        it: "Italiano", pt: "Português", ja: "日本語", zh: "中文", nl: "Nederlands"
+    };
+
+    const STRINGS = {
+        en: {
+            providerLabel: "AI Provider",
+            providerFormTitle: "Choose your AI provider",
+            continueButton: "Continue",
+            cancelButton: "Cancel",
+            credentialsFound: "Credentials Found",
+            credentialsFoundMsg: "Stored API key found. What would you like to do?",
+            useStoredKey: "Use Stored Key",
+            clearReenter: "Clear & Re-enter Key",
+            switchProvider: "Switch AI Provider",
+            apiKeyLabel: "API Key",
+            apiKeyPrompt: "Enter your {provider} API key (will be stored securely in Keychain)",
+            apiKeyRequired: "API key is required",
+            scopeLabel: "Analyze which tasks?",
+            scopeTitle: "Task Analysis Scope",
+            scopeSelected: "Selected tasks/projects",
+            scopeAll: "All incomplete tasks",
+            scopeStale: "Tasks older than 30 days",
+            noSelectionError: "No tasks selected. Please select tasks/projects or choose a different scope.",
+            noTasksTitle: "No Tasks Found",
+            noTasksMsg: "No tasks match the selected criteria.",
+            tooManyTitle: "Too Many Tasks",
+            tooManyMsg: "Found {count} items. Will analyze the first 20 only to avoid timeouts.",
+            analyzingTitle: "Analyzing Tasks",
+            analyzingMsg: "Sending tasks to {provider} for analysis...\n\nThis may take 15-30 seconds.",
+            completeTitle: "Analysis Complete",
+            noIssuesMsg: "No significant issues found! Your tasks look good.",
+            summaryTitle: "AI Task Clarifier",
+            summaryItemsAnalyzed: "Items analyzed",
+            summaryIssuesFound: "Issues found",
+            summaryItemsUpdated: "Items updated",
+            summaryFlagged: "High-severity flagged",
+            summaryTagLine: 'Tagged with "AI: Needs Improvement"',
+            summaryNoteLine: "Suggestions added to task notes",
+            summaryFlagLine: "High-severity tasks flagged",
+            summaryFilterTip: "Filter by tag to review improvements!",
+            errorTitle: "Error",
+            noteHeader: "AI IMPROVEMENT SUGGESTION",
+            noteDate: "Date",
+            noteIssueType: "Issue Type",
+            noteSeverity: "Severity",
+            noteSuggestion: "SUGGESTION",
+            noteAction: "Recommended Action",
+            tagName: "AI: Needs Improvement"
+        },
+        es: {
+            providerLabel: "Proveedor de IA",
+            providerFormTitle: "Elige tu proveedor de IA",
+            continueButton: "Continuar",
+            cancelButton: "Cancelar",
+            credentialsFound: "Credenciales encontradas",
+            credentialsFoundMsg: "Se encontró una clave API almacenada. ¿Qué deseas hacer?",
+            useStoredKey: "Usar clave guardada",
+            clearReenter: "Borrar y volver a ingresar",
+            switchProvider: "Cambiar proveedor de IA",
+            apiKeyLabel: "Clave API",
+            apiKeyPrompt: "Ingresa tu clave API de {provider} (se almacenará de forma segura en el Llavero)",
+            apiKeyRequired: "La clave API es obligatoria",
+            scopeLabel: "¿Qué tareas analizar?",
+            scopeTitle: "Alcance del análisis",
+            scopeSelected: "Tareas/proyectos seleccionados",
+            scopeAll: "Todas las tareas pendientes",
+            scopeStale: "Tareas con más de 30 días",
+            noSelectionError: "No hay tareas seleccionadas. Selecciona tareas/proyectos o elige otro alcance.",
+            noTasksTitle: "Sin tareas",
+            noTasksMsg: "Ninguna tarea coincide con los criterios seleccionados.",
+            tooManyTitle: "Demasiadas tareas",
+            tooManyMsg: "Se encontraron {count} elementos. Solo se analizarán los primeros 20 para evitar tiempos de espera.",
+            analyzingTitle: "Analizando tareas",
+            analyzingMsg: "Enviando tareas a {provider} para análisis...\n\nEsto puede tardar 15-30 segundos.",
+            completeTitle: "Análisis completado",
+            noIssuesMsg: "¡No se encontraron problemas significativos! Tus tareas se ven bien.",
+            summaryTitle: "AI Task Clarifier",
+            summaryItemsAnalyzed: "Elementos analizados",
+            summaryIssuesFound: "Problemas encontrados",
+            summaryItemsUpdated: "Elementos actualizados",
+            summaryFlagged: "Marcados de alta gravedad",
+            summaryTagLine: 'Etiquetados con "AI: Needs Improvement"',
+            summaryNoteLine: "Sugerencias añadidas a las notas",
+            summaryFlagLine: "Tareas de alta gravedad marcadas",
+            summaryFilterTip: "¡Filtra por etiqueta para revisar las mejoras!",
+            errorTitle: "Error",
+            noteHeader: "SUGERENCIA DE MEJORA IA",
+            noteDate: "Fecha",
+            noteIssueType: "Tipo de problema",
+            noteSeverity: "Gravedad",
+            noteSuggestion: "SUGERENCIA",
+            noteAction: "Acción recomendada",
+            tagName: "AI: Needs Improvement"
+        },
+        fr: {
+            providerLabel: "Fournisseur IA",
+            providerFormTitle: "Choisissez votre fournisseur IA",
+            continueButton: "Continuer",
+            cancelButton: "Annuler",
+            credentialsFound: "Identifiants trouvés",
+            credentialsFoundMsg: "Clé API stockée trouvée. Que souhaitez-vous faire ?",
+            useStoredKey: "Utiliser la clé stockée",
+            clearReenter: "Effacer et ressaisir",
+            switchProvider: "Changer de fournisseur IA",
+            apiKeyLabel: "Clé API",
+            apiKeyPrompt: "Entrez votre clé API {provider} (sera stockée de manière sécurisée dans le Trousseau)",
+            apiKeyRequired: "La clé API est requise",
+            scopeLabel: "Quelles tâches analyser ?",
+            scopeTitle: "Portée de l'analyse",
+            scopeSelected: "Tâches/projets sélectionnés",
+            scopeAll: "Toutes les tâches en cours",
+            scopeStale: "Tâches de plus de 30 jours",
+            noSelectionError: "Aucune tâche sélectionnée. Sélectionnez des tâches/projets ou choisissez une autre portée.",
+            noTasksTitle: "Aucune tâche trouvée",
+            noTasksMsg: "Aucune tâche ne correspond aux critères sélectionnés.",
+            tooManyTitle: "Trop de tâches",
+            tooManyMsg: "Trouvé {count} éléments. Seuls les 20 premiers seront analysés pour éviter les délais.",
+            analyzingTitle: "Analyse des tâches",
+            analyzingMsg: "Envoi des tâches à {provider} pour analyse...\n\nCela peut prendre 15 à 30 secondes.",
+            completeTitle: "Analyse terminée",
+            noIssuesMsg: "Aucun problème significatif trouvé ! Vos tâches sont en bon état.",
+            summaryTitle: "AI Task Clarifier",
+            summaryItemsAnalyzed: "Éléments analysés",
+            summaryIssuesFound: "Problèmes trouvés",
+            summaryItemsUpdated: "Éléments mis à jour",
+            summaryFlagged: "Signalés haute gravité",
+            summaryTagLine: 'Étiquetés avec "AI: Needs Improvement"',
+            summaryNoteLine: "Suggestions ajoutées aux notes",
+            summaryFlagLine: "Tâches haute gravité signalées",
+            summaryFilterTip: "Filtrez par étiquette pour examiner les améliorations !",
+            errorTitle: "Erreur",
+            noteHeader: "SUGGESTION D'AMÉLIORATION IA",
+            noteDate: "Date",
+            noteIssueType: "Type de problème",
+            noteSeverity: "Gravité",
+            noteSuggestion: "SUGGESTION",
+            noteAction: "Action recommandée",
+            tagName: "AI: Needs Improvement"
+        },
+        de: {
+            providerLabel: "KI-Anbieter",
+            providerFormTitle: "Wählen Sie Ihren KI-Anbieter",
+            continueButton: "Weiter",
+            cancelButton: "Abbrechen",
+            credentialsFound: "Zugangsdaten gefunden",
+            credentialsFoundMsg: "Gespeicherter API-Schlüssel gefunden. Was möchten Sie tun?",
+            useStoredKey: "Gespeicherten Schlüssel verwenden",
+            clearReenter: "Löschen und neu eingeben",
+            switchProvider: "KI-Anbieter wechseln",
+            apiKeyLabel: "API-Schlüssel",
+            apiKeyPrompt: "Geben Sie Ihren {provider} API-Schlüssel ein (wird sicher im Schlüsselbund gespeichert)",
+            apiKeyRequired: "API-Schlüssel ist erforderlich",
+            scopeLabel: "Welche Aufgaben analysieren?",
+            scopeTitle: "Analyseumfang",
+            scopeSelected: "Ausgewählte Aufgaben/Projekte",
+            scopeAll: "Alle offenen Aufgaben",
+            scopeStale: "Aufgaben älter als 30 Tage",
+            noSelectionError: "Keine Aufgaben ausgewählt. Bitte wählen Sie Aufgaben/Projekte oder einen anderen Umfang.",
+            noTasksTitle: "Keine Aufgaben gefunden",
+            noTasksMsg: "Keine Aufgaben entsprechen den ausgewählten Kriterien.",
+            tooManyTitle: "Zu viele Aufgaben",
+            tooManyMsg: "Es wurden {count} Elemente gefunden. Nur die ersten 20 werden analysiert.",
+            analyzingTitle: "Aufgaben werden analysiert",
+            analyzingMsg: "Aufgaben werden an {provider} zur Analyse gesendet...\n\nDies kann 15-30 Sekunden dauern.",
+            completeTitle: "Analyse abgeschlossen",
+            noIssuesMsg: "Keine wesentlichen Probleme gefunden! Ihre Aufgaben sehen gut aus.",
+            summaryTitle: "AI Task Clarifier",
+            summaryItemsAnalyzed: "Analysierte Elemente",
+            summaryIssuesFound: "Gefundene Probleme",
+            summaryItemsUpdated: "Aktualisierte Elemente",
+            summaryFlagged: "Hohe Priorität markiert",
+            summaryTagLine: 'Markiert mit "AI: Needs Improvement"',
+            summaryNoteLine: "Vorschläge in Notizen hinzugefügt",
+            summaryFlagLine: "Aufgaben hoher Priorität markiert",
+            summaryFilterTip: "Filtern Sie nach Tag, um die Verbesserungen zu überprüfen!",
+            errorTitle: "Fehler",
+            noteHeader: "KI-VERBESSERUNGSVORSCHLAG",
+            noteDate: "Datum",
+            noteIssueType: "Problemtyp",
+            noteSeverity: "Schweregrad",
+            noteSuggestion: "VORSCHLAG",
+            noteAction: "Empfohlene Maßnahme",
+            tagName: "AI: Needs Improvement"
+        },
+        it: {
+            providerLabel: "Provider IA",
+            providerFormTitle: "Scegli il tuo provider IA",
+            continueButton: "Continua",
+            cancelButton: "Annulla",
+            credentialsFound: "Credenziali trovate",
+            credentialsFoundMsg: "Chiave API memorizzata trovata. Cosa vuoi fare?",
+            useStoredKey: "Usa chiave memorizzata",
+            clearReenter: "Cancella e reinserisci",
+            switchProvider: "Cambia provider IA",
+            apiKeyLabel: "Chiave API",
+            apiKeyPrompt: "Inserisci la tua chiave API {provider} (verrà memorizzata in modo sicuro nel Portachiavi)",
+            apiKeyRequired: "La chiave API è obbligatoria",
+            scopeLabel: "Quali attività analizzare?",
+            scopeTitle: "Ambito di analisi",
+            scopeSelected: "Attività/progetti selezionati",
+            scopeAll: "Tutte le attività in corso",
+            scopeStale: "Attività più vecchie di 30 giorni",
+            noSelectionError: "Nessuna attività selezionata. Seleziona attività/progetti o scegli un altro ambito.",
+            noTasksTitle: "Nessuna attività trovata",
+            noTasksMsg: "Nessuna attività corrisponde ai criteri selezionati.",
+            tooManyTitle: "Troppe attività",
+            tooManyMsg: "Trovati {count} elementi. Verranno analizzati solo i primi 20.",
+            analyzingTitle: "Analisi attività",
+            analyzingMsg: "Invio attività a {provider} per l'analisi...\n\nPotrebbe richiedere 15-30 secondi.",
+            completeTitle: "Analisi completata",
+            noIssuesMsg: "Nessun problema significativo trovato! Le tue attività sono in ordine.",
+            summaryTitle: "AI Task Clarifier",
+            summaryItemsAnalyzed: "Elementi analizzati",
+            summaryIssuesFound: "Problemi trovati",
+            summaryItemsUpdated: "Elementi aggiornati",
+            summaryFlagged: "Alta gravità segnalati",
+            summaryTagLine: 'Etichettati con "AI: Needs Improvement"',
+            summaryNoteLine: "Suggerimenti aggiunti alle note",
+            summaryFlagLine: "Attività ad alta gravità segnalate",
+            summaryFilterTip: "Filtra per etichetta per rivedere i miglioramenti!",
+            errorTitle: "Errore",
+            noteHeader: "SUGGERIMENTO DI MIGLIORAMENTO IA",
+            noteDate: "Data",
+            noteIssueType: "Tipo di problema",
+            noteSeverity: "Gravità",
+            noteSuggestion: "SUGGERIMENTO",
+            noteAction: "Azione raccomandata",
+            tagName: "AI: Needs Improvement"
+        },
+        pt: {
+            providerLabel: "Provedor de IA",
+            providerFormTitle: "Escolha seu provedor de IA",
+            continueButton: "Continuar",
+            cancelButton: "Cancelar",
+            credentialsFound: "Credenciais encontradas",
+            credentialsFoundMsg: "Chave API armazenada encontrada. O que deseja fazer?",
+            useStoredKey: "Usar chave armazenada",
+            clearReenter: "Limpar e reinserir",
+            switchProvider: "Trocar provedor de IA",
+            apiKeyLabel: "Chave API",
+            apiKeyPrompt: "Insira sua chave API {provider} (será armazenada com segurança nas Chaves)",
+            apiKeyRequired: "A chave API é obrigatória",
+            scopeLabel: "Quais tarefas analisar?",
+            scopeTitle: "Escopo da análise",
+            scopeSelected: "Tarefas/projetos selecionados",
+            scopeAll: "Todas as tarefas pendentes",
+            scopeStale: "Tarefas com mais de 30 dias",
+            noSelectionError: "Nenhuma tarefa selecionada. Selecione tarefas/projetos ou escolha outro escopo.",
+            noTasksTitle: "Nenhuma tarefa encontrada",
+            noTasksMsg: "Nenhuma tarefa corresponde aos critérios selecionados.",
+            tooManyTitle: "Muitas tarefas",
+            tooManyMsg: "Encontrados {count} itens. Apenas os primeiros 20 serão analisados.",
+            analyzingTitle: "Analisando tarefas",
+            analyzingMsg: "Enviando tarefas para {provider} para análise...\n\nIsso pode levar 15-30 segundos.",
+            completeTitle: "Análise concluída",
+            noIssuesMsg: "Nenhum problema significativo encontrado! Suas tarefas estão em ordem.",
+            summaryTitle: "AI Task Clarifier",
+            summaryItemsAnalyzed: "Itens analisados",
+            summaryIssuesFound: "Problemas encontrados",
+            summaryItemsUpdated: "Itens atualizados",
+            summaryFlagged: "Alta gravidade sinalizados",
+            summaryTagLine: 'Etiquetados com "AI: Needs Improvement"',
+            summaryNoteLine: "Sugestões adicionadas às notas",
+            summaryFlagLine: "Tarefas de alta gravidade sinalizadas",
+            summaryFilterTip: "Filtre por etiqueta para revisar as melhorias!",
+            errorTitle: "Erro",
+            noteHeader: "SUGESTÃO DE MELHORIA IA",
+            noteDate: "Data",
+            noteIssueType: "Tipo de problema",
+            noteSeverity: "Gravidade",
+            noteSuggestion: "SUGESTÃO",
+            noteAction: "Ação recomendada",
+            tagName: "AI: Needs Improvement"
+        },
+        ja: {
+            providerLabel: "AIプロバイダー",
+            providerFormTitle: "AIプロバイダーを選択してください",
+            continueButton: "続行",
+            cancelButton: "キャンセル",
+            credentialsFound: "認証情報が見つかりました",
+            credentialsFoundMsg: "保存されたAPIキーが見つかりました。どうしますか？",
+            useStoredKey: "保存されたキーを使用",
+            clearReenter: "削除して再入力",
+            switchProvider: "AIプロバイダーを切替",
+            apiKeyLabel: "APIキー",
+            apiKeyPrompt: "{provider}のAPIキーを入力してください（キーチェーンに安全に保存されます）",
+            apiKeyRequired: "APIキーは必須です",
+            scopeLabel: "どのタスクを分析しますか？",
+            scopeTitle: "分析範囲",
+            scopeSelected: "選択したタスク/プロジェクト",
+            scopeAll: "すべての未完了タスク",
+            scopeStale: "30日以上前のタスク",
+            noSelectionError: "タスクが選択されていません。タスク/プロジェクトを選択するか、別の範囲を選んでください。",
+            noTasksTitle: "タスクが見つかりません",
+            noTasksMsg: "選択した条件に一致するタスクがありません。",
+            tooManyTitle: "タスクが多すぎます",
+            tooManyMsg: "{count}件のアイテムが見つかりました。タイムアウトを避けるため、最初の20件のみ分析します。",
+            analyzingTitle: "タスクを分析中",
+            analyzingMsg: "タスクを{provider}に送信して分析中...\n\n15〜30秒かかる場合があります。",
+            completeTitle: "分析完了",
+            noIssuesMsg: "重大な問題は見つかりませんでした！タスクは良好です。",
+            summaryTitle: "AI Task Clarifier",
+            summaryItemsAnalyzed: "分析されたアイテム",
+            summaryIssuesFound: "発見された問題",
+            summaryItemsUpdated: "更新されたアイテム",
+            summaryFlagged: "高重大度のフラグ",
+            summaryTagLine: '"AI: Needs Improvement" でタグ付け',
+            summaryNoteLine: "タスクのメモに提案を追加",
+            summaryFlagLine: "高重大度タスクにフラグ付け",
+            summaryFilterTip: "タグでフィルターして改善点を確認してください！",
+            errorTitle: "エラー",
+            noteHeader: "AI改善提案",
+            noteDate: "日付",
+            noteIssueType: "問題の種類",
+            noteSeverity: "重大度",
+            noteSuggestion: "提案",
+            noteAction: "推奨アクション",
+            tagName: "AI: Needs Improvement"
+        },
+        zh: {
+            providerLabel: "AI 提供商",
+            providerFormTitle: "选择您的 AI 提供商",
+            continueButton: "继续",
+            cancelButton: "取消",
+            credentialsFound: "已找到凭据",
+            credentialsFoundMsg: "已找到存储的 API 密钥。您想怎么做？",
+            useStoredKey: "使用已存储的密钥",
+            clearReenter: "清除并重新输入",
+            switchProvider: "切换 AI 提供商",
+            apiKeyLabel: "API 密钥",
+            apiKeyPrompt: "输入您的 {provider} API 密钥（将安全存储在钥匙串中）",
+            apiKeyRequired: "API 密钥是必填项",
+            scopeLabel: "分析哪些任务？",
+            scopeTitle: "分析范围",
+            scopeSelected: "已选择的任务/项目",
+            scopeAll: "所有未完成的任务",
+            scopeStale: "超过30天的任务",
+            noSelectionError: "未选择任务。请选择任务/项目或选择其他范围。",
+            noTasksTitle: "未找到任务",
+            noTasksMsg: "没有符合所选条件的任务。",
+            tooManyTitle: "任务过多",
+            tooManyMsg: "找到 {count} 个项目。为避免超时，仅分析前20个。",
+            analyzingTitle: "正在分析任务",
+            analyzingMsg: "正在将任务发送到 {provider} 进行分析...\n\n这可能需要15-30秒。",
+            completeTitle: "分析完成",
+            noIssuesMsg: "未发现重大问题！您的任务状况良好。",
+            summaryTitle: "AI Task Clarifier",
+            summaryItemsAnalyzed: "已分析项目",
+            summaryIssuesFound: "发现的问题",
+            summaryItemsUpdated: "已更新项目",
+            summaryFlagged: "高严重性标记",
+            summaryTagLine: '已标记 "AI: Needs Improvement"',
+            summaryNoteLine: "建议已添加到任务备注",
+            summaryFlagLine: "高严重性任务已标记",
+            summaryFilterTip: "按标签筛选以查看改进建议！",
+            errorTitle: "错误",
+            noteHeader: "AI 改进建议",
+            noteDate: "日期",
+            noteIssueType: "问题类型",
+            noteSeverity: "严重程度",
+            noteSuggestion: "建议",
+            noteAction: "建议操作",
+            tagName: "AI: Needs Improvement"
+        },
+        nl: {
+            providerLabel: "AI-provider",
+            providerFormTitle: "Kies je AI-provider",
+            continueButton: "Doorgaan",
+            cancelButton: "Annuleren",
+            credentialsFound: "Inloggegevens gevonden",
+            credentialsFoundMsg: "Opgeslagen API-sleutel gevonden. Wat wil je doen?",
+            useStoredKey: "Opgeslagen sleutel gebruiken",
+            clearReenter: "Wissen en opnieuw invoeren",
+            switchProvider: "Wissel van AI-provider",
+            apiKeyLabel: "API-sleutel",
+            apiKeyPrompt: "Voer je {provider} API-sleutel in (wordt veilig opgeslagen in de Sleutelhanger)",
+            apiKeyRequired: "API-sleutel is vereist",
+            scopeLabel: "Welke taken analyseren?",
+            scopeTitle: "Analysebereik",
+            scopeSelected: "Geselecteerde taken/projecten",
+            scopeAll: "Alle openstaande taken",
+            scopeStale: "Taken ouder dan 30 dagen",
+            noSelectionError: "Geen taken geselecteerd. Selecteer taken/projecten of kies een ander bereik.",
+            noTasksTitle: "Geen taken gevonden",
+            noTasksMsg: "Geen taken voldoen aan de geselecteerde criteria.",
+            tooManyTitle: "Te veel taken",
+            tooManyMsg: "{count} items gevonden. Alleen de eerste 20 worden geanalyseerd om time-outs te voorkomen.",
+            analyzingTitle: "Taken analyseren",
+            analyzingMsg: "Taken worden naar {provider} gestuurd voor analyse...\n\nDit kan 15-30 seconden duren.",
+            completeTitle: "Analyse voltooid",
+            noIssuesMsg: "Geen significante problemen gevonden! Je taken zien er goed uit.",
+            summaryTitle: "AI Task Clarifier",
+            summaryItemsAnalyzed: "Geanalyseerde items",
+            summaryIssuesFound: "Gevonden problemen",
+            summaryItemsUpdated: "Bijgewerkte items",
+            summaryFlagged: "Hoge ernst gemarkeerd",
+            summaryTagLine: 'Getagd met "AI: Needs Improvement"',
+            summaryNoteLine: "Suggesties toegevoegd aan notities",
+            summaryFlagLine: "Taken met hoge ernst gemarkeerd",
+            summaryFilterTip: "Filter op tag om verbeteringen te bekijken!",
+            errorTitle: "Fout",
+            noteHeader: "AI VERBETERINGSVOORSTEL",
+            noteDate: "Datum",
+            noteIssueType: "Probleemtype",
+            noteSeverity: "Ernst",
+            noteSuggestion: "VOORSTEL",
+            noteAction: "Aanbevolen actie",
+            tagName: "AI: Needs Improvement"
+        }
+    };
+
+    function getSystemLanguage() {
+        try {
+            const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+            return locale ? locale.split("-")[0].toLowerCase() : "en";
+        } catch (e) {
+            return "en";
+        }
+    }
+
+    function getEffectiveLanguage() {
+        const prefs = new Preferences("com.omnifocus.headless-settings");
+        const override = prefs.readString("language");
+        if (override && override !== "auto") {
+            return STRINGS[override] ? override : "en";
+        }
+        const detected = getSystemLanguage();
+        return STRINGS[detected] ? detected : "en";
+    }
+
+    function t(key, replacements) {
+        const lang = getEffectiveLanguage();
+        let str = (STRINGS[lang] && STRINGS[lang][key]) || STRINGS.en[key] || key;
+        if (replacements) {
+            for (const [k, v] of Object.entries(replacements)) {
+                str = str.replace(`{${k}}`, v);
+            }
+        }
+        return str;
+    }
+
     const AI_PROVIDERS = {
         chatgpt: {
             label: "ChatGPT (OpenAI)",
@@ -136,12 +580,12 @@
                     const providerForm = new Form();
                     providerForm.addField(new Form.Field.Option(
                         "aiProvider",
-                        "AI Provider",
+                        t("providerLabel"),
                         ["chatgpt", "claude"],
                         ["ChatGPT (OpenAI)", "Claude (Anthropic)"],
                         "chatgpt"
                     ));
-                    const providerResult = await providerForm.show("Choose your AI provider", "Continue");
+                    const providerResult = await providerForm.show(t("providerFormTitle"), t("continueButton"));
                     providerKey = providerResult.values.aiProvider;
                     provider = AI_PROVIDERS[providerKey];
                     prefs.write("aiProvider", providerKey);
@@ -157,11 +601,11 @@
             if (!storedCreds || !storedCreds.password) {
                 console.log("No credentials found, prompting user (required for first run)...");
                 const form = new Form();
-                form.addField(new Form.Field.Password("apiKey", `${provider.label} API Key`, null));
-                const formPrompt = await form.show(`Enter your ${provider.label} API key (will be stored securely in Keychain)`, "Continue");
+                form.addField(new Form.Field.Password("apiKey", `${provider.label} ${t("apiKeyLabel")}`, null));
+                const formPrompt = await form.show(t("apiKeyPrompt", {provider: provider.label}), t("continueButton"));
                 apiKey = formPrompt.values.apiKey;
                 if (!apiKey) {
-                    throw new Error("API key is required");
+                    throw new Error(t("apiKeyRequired"));
                 }
                 console.log("Storing new API key in Keychain...");
                 credentials.write(provider.credentialService, "api-key", apiKey);
@@ -170,11 +614,11 @@
                 apiKey = storedCreds.password;
                 console.log("Headless: using stored API key");
             } else {
-                const alert = new Alert(`${provider.label} Credentials Found`, "Stored API key found. What would you like to do?");
-                alert.addOption("Use Stored Key");
-                alert.addOption("Clear & Re-enter Key");
-                alert.addOption("Switch AI Provider");
-                alert.addOption("Cancel");
+                const alert = new Alert(`${provider.label} — ${t("credentialsFound")}`, t("credentialsFoundMsg"));
+                alert.addOption(t("useStoredKey"));
+                alert.addOption(t("clearReenter"));
+                alert.addOption(t("switchProvider"));
+                alert.addOption(t("cancelButton"));
 
                 const choice = await alert.show();
 
@@ -185,11 +629,11 @@
                     console.log("Clearing stored credentials...");
                     credentials.remove(provider.credentialService);
                     const form = new Form();
-                    form.addField(new Form.Field.Password("apiKey", `${provider.label} API Key`, null));
-                    const formPrompt = await form.show(`Enter your ${provider.label} API key (will be stored securely in Keychain)`, "Continue");
+                    form.addField(new Form.Field.Password("apiKey", `${provider.label} ${t("apiKeyLabel")}`, null));
+                    const formPrompt = await form.show(t("apiKeyPrompt", {provider: provider.label}), t("continueButton"));
                     apiKey = formPrompt.values.apiKey;
                     if (!apiKey) {
-                        throw new Error("API key is required");
+                        throw new Error(t("apiKeyRequired"));
                     }
                     console.log("Storing new API key in Keychain...");
                     credentials.write(provider.credentialService, "api-key", apiKey);
@@ -207,11 +651,11 @@
                         console.log("Using stored key for", provider.label);
                     } else {
                         const form = new Form();
-                        form.addField(new Form.Field.Password("apiKey", `${provider.label} API Key`, null));
-                        const formPrompt = await form.show(`Enter your ${provider.label} API key (will be stored securely in Keychain)`, "Continue");
+                        form.addField(new Form.Field.Password("apiKey", `${provider.label} ${t("apiKeyLabel")}`, null));
+                        const formPrompt = await form.show(t("apiKeyPrompt", {provider: provider.label}), t("continueButton"));
                         apiKey = formPrompt.values.apiKey;
                         if (!apiKey) {
-                            throw new Error("API key is required");
+                            throw new Error(t("apiKeyRequired"));
                         }
                         credentials.write(provider.credentialService, "api-key", apiKey);
                         console.log("Stored new key for", provider.label);
@@ -247,7 +691,7 @@
                 if (headless) {
                     console.log("Headless: using default scope:", defaultScope);
                     if (defaultScope === "selected") {
-                        throw new Error("No tasks selected. Please select tasks/projects or choose a different scope.");
+                        throw new Error(t("noSelectionError"));
                     } else if (defaultScope === "stale") {
                         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
                         scopeTasks = flattenedTasks.filter(task => {
@@ -260,22 +704,23 @@
                     }
                 } else {
                     const form = new Form();
+                    const scopeOptions = [t("scopeSelected"), t("scopeAll"), t("scopeStale")];
                     const scopeField = new Form.Field.Option(
                         "scope",
-                        "Analyze which tasks?",
-                        ["Selected tasks/projects", "All incomplete tasks", "Tasks older than 30 days"],
+                        t("scopeLabel"),
+                        scopeOptions,
                         null,
-                        "All incomplete tasks"
+                        scopeOptions[1]
                     );
                     form.addField(scopeField);
 
-                    const formPrompt = await form.show("Task Analysis Scope", "Continue");
+                    const formPrompt = await form.show(t("scopeTitle"), t("continueButton"));
                     const scope = formPrompt.values.scope;
                     console.log("User selected scope:", scope);
 
-                    if (scope === "Selected tasks/projects") {
-                        throw new Error("No tasks selected. Please select tasks/projects or choose a different scope.");
-                    } else if (scope === "All incomplete tasks") {
+                    if (scope === scopeOptions[0]) {
+                        throw new Error(t("noSelectionError"));
+                    } else if (scope === scopeOptions[1]) {
                         scopeTasks = flattenedTasks.filter(task => !task.completed && !task.dropped);
                         console.log("Analyzing all incomplete tasks:", scopeTasks.length);
                     } else {
@@ -292,7 +737,7 @@
             if (analyzeItems.length === 0) {
                 console.log("No items found matching criteria");
                 if (!headless) {
-                    new Alert("No Tasks Found", "No tasks match the selected criteria.").show();
+                    new Alert(t("noTasksTitle"), t("noTasksMsg")).show();
                 }
                 return;
             }
@@ -303,9 +748,9 @@
             if (analyzeItems.length > 20) {
                 console.log("Too many items, limiting to 20");
                 if (!headless) {
-                    const alert = new Alert("Too Many Tasks", `Found ${analyzeItems.length} items. Will analyze the first 20 only to avoid timeouts.`);
-                    alert.addOption("Continue");
-                    alert.addOption("Cancel");
+                    const alert = new Alert(t("tooManyTitle"), t("tooManyMsg", {count: analyzeItems.length}));
+                    alert.addOption(t("continueButton"));
+                    alert.addOption(t("cancelButton"));
                     const choice = await alert.show();
                     if (choice === 1) {
                         console.log("User cancelled due to item limit");
@@ -350,6 +795,12 @@
             console.log("Task data prepared, sample:", JSON.stringify(taskData[0], null, 2));
 
             // Call AI API
+            const effectiveLang = getEffectiveLanguage();
+            const langName = LANG_NAMES[effectiveLang] || "English";
+            const langInstruction = effectiveLang !== "en"
+                ? `\n\nIMPORTANT: Write all suggestion text in ${langName}. The JSON keys (index, issue, severity, suggestion, action) and issue/severity/action enum values must remain in English.`
+                : "";
+
             const systemPrompt = `You are a productivity expert analyzing OmniFocus tasks and projects. Identify items that are:
 1. Vague or non-actionable (e.g., "Think about project" instead of "Draft project proposal outline")
 2. Too broad (should be broken into subtasks)
@@ -366,13 +817,13 @@ For each problematic item, provide:
 - Recommended action (clarify/break-down/defer/delete/add-context)
 
 IMPORTANT: Return a JSON object with an "analysis" array. Each item must have: index, issue, severity, suggestion, action.
-Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high", "suggestion": "...", "action": "clarify"}]}`;
+Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high", "suggestion": "...", "action": "clarify"}]}${langInstruction}`;
 
             const userMessage = `Analyze these tasks:\n${JSON.stringify(taskData, null, 2)}`;
 
             // Show progress
             if (!headless) {
-                const progress = new Alert("Analyzing Tasks", `Sending tasks to ${provider.label} for analysis...\n\nThis may take 15-30 seconds.`);
+                const progress = new Alert(t("analyzingTitle"), t("analyzingMsg", {provider: provider.label}));
                 progress.show(() => {});
             }
 
@@ -387,19 +838,20 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
             if (issues.length === 0) {
                 console.log("No issues found, analysis complete");
                 if (!headless) {
-                    new Alert("Analysis Complete", "No significant issues found! Your tasks look good.").show();
+                    new Alert(t("completeTitle"), t("noIssuesMsg")).show();
                 }
                 return;
             }
 
             // Create or get "AI: Needs Improvement" tag
-            console.log("Creating/finding 'AI: Needs Improvement' tag...");
-            let improvementTag = tags.byName("AI: Needs Improvement");
+            const tagName = t("tagName");
+            console.log(`Creating/finding '${tagName}' tag...`);
+            let improvementTag = tags.byName(tagName);
             if (!improvementTag) {
-                improvementTag = new Tag("AI: Needs Improvement", tags.ending);
-                console.log("Created new 'AI: Needs Improvement' tag");
+                improvementTag = new Tag(tagName, tags.ending);
+                console.log(`Created new '${tagName}' tag`);
             } else {
-                console.log("Found existing 'AI: Needs Improvement' tag");
+                console.log(`Found existing '${tagName}' tag`);
             }
 
             // Apply findings to tasks and projects
@@ -418,17 +870,17 @@ Example format: {"analysis": [{"index": 0, "issue": "vague", "severity": "high",
                 console.log(`Updating ${entry.type}: "${entry.item.name}"`);
 
                 const analysisNote = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🤖 AI IMPROVEMENT SUGGESTION
+🤖 ${t("noteHeader")}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📅 Date: ${new Date().toLocaleDateString()}
+📅 ${t("noteDate")}: ${new Date().toLocaleDateString()}
 
-⚠️  Issue Type: ${issue.issue.toUpperCase()}
-📊 Severity: ${issue.severity.toUpperCase()}
+⚠️  ${t("noteIssueType")}: ${issue.issue.toUpperCase()}
+📊 ${t("noteSeverity")}: ${issue.severity.toUpperCase()}
 
-💡 SUGGESTION:
+💡 ${t("noteSuggestion")}:
 ${issue.suggestion}
 
-🎯 Recommended Action: ${issue.action}
+🎯 ${t("noteAction")}: ${issue.action}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
@@ -460,22 +912,22 @@ ${issue.suggestion}
             console.log(`Updated ${updatedCount} items, flagged ${flaggedCount} high-severity`);
 
             // Show summary
-            const summary = `Analysis Complete!\n\n` +
-                `Items analyzed: ${analyzeItems.length}\n` +
-                `Issues found: ${issues.length}\n` +
-                `Items updated: ${updatedCount}\n` +
-                `High-severity flagged: ${flaggedCount}\n\n` +
-                `✅ Tagged with "AI: Needs Improvement"\n` +
-                `📝 Suggestions added to task notes\n` +
-                `🚩 High-severity tasks flagged\n\n` +
-                `Filter by tag to review improvements!`;
+            const summary = `${t("completeTitle")}!\n\n` +
+                `${t("summaryItemsAnalyzed")}: ${analyzeItems.length}\n` +
+                `${t("summaryIssuesFound")}: ${issues.length}\n` +
+                `${t("summaryItemsUpdated")}: ${updatedCount}\n` +
+                `${t("summaryFlagged")}: ${flaggedCount}\n\n` +
+                `✅ ${t("summaryTagLine")}\n` +
+                `📝 ${t("summaryNoteLine")}\n` +
+                `🚩 ${t("summaryFlagLine")}\n\n` +
+                t("summaryFilterTip");
 
             console.log("=== Analysis Summary ===");
             console.log(summary);
             console.log("=== End Debug Log ===");
 
             if (!headless) {
-                new Alert("AI Task Clarifier", summary).show();
+                new Alert(t("summaryTitle"), summary).show();
             }
 
         } catch (error) {
@@ -484,7 +936,7 @@ ${issue.suggestion}
             console.error("Error stack:", error.stack);
             console.error("=== End Debug Log ===");
             if (!headless) {
-                new Alert("Error", error.message).show();
+                new Alert(t("errorTitle"), error.message).show();
             }
         }
     });
